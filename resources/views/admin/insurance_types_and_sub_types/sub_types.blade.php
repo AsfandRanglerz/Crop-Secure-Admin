@@ -182,7 +182,6 @@
                                             <!-- Tehsil Dropdown -->
                                             <select id="tehsilEdit" name="tehsil_id" class="form-control form-select">
                                                 <option value="">Select Tehsil</option>
-                                                <!-- Tehsils will be populated dynamically -->
                                             </select>
                                             @error('tehsil')
                                                 <span class="text-danger">{{ $message }}</span>

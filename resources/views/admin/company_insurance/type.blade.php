@@ -61,7 +61,7 @@
                                 <div class="form-group">
                                     <label for="district_name">District</label>
                                    <!-- ADD FORM -->
-                                    <select id="districtAdd" name="district_name" class="form-control form-select">
+                                    <select id="districtAdd" name="district_name[]" class="form-control form-select">
                                         <option value="">Select District</option>
                                         @foreach ($districts as $district)
                                             <option value="{{ $district->id }}">{{ $district->name }}</option>
@@ -76,7 +76,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="tehsil_id">Tehsil</label>                      
-                                    <select id="tehsilAdd" name="tehsil_id" class="form-control form-select">
+                                    <select id="tehsilAdd" name="tehsil_id[]" class="form-control form-select">
                                         <option value="">Select Tehsil</option>
                                     </select>
                                     @error('tehsil')

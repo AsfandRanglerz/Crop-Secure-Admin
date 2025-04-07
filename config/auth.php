@@ -49,8 +49,8 @@ return [
             'provider' => 'subadmins', // Reference to the 'subadmins' provider
         ],
         'api' => [
-            'driver' => 'passport',
-            'provider' => 'users',
+            'driver' => 'sanctum',
+            'provider' => 'farmers',
             'hash' => false,
         ],
     ],
@@ -84,6 +84,10 @@ return [
         'subadmins' => [
             'driver' => 'eloquent',
             'model' => App\Models\SubAdmin::class,
+        ],
+        'farmers' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Farmer::class,
         ],
 
         // 'users' => [
