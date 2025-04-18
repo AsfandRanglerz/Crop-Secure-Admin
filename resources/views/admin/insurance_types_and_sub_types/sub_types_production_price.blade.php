@@ -7,7 +7,7 @@
     {{-- Add Insurance Sub-Types Modal --}}
     <div class="modal fade" id="InsuranceTypesModal" tabindex="-1" role="dialog"
         aria-labelledby="InsuranceTypesModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="InsuranceTypesModalLabel">Add</h5>
@@ -23,24 +23,34 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Crop</label>
-                                    <select name="name" class="form-control form-select">
-                                        <option value="">Select Crop</option>
-                                        @foreach ($ensuredCrops as $crop)
-                                            <option value="{{ $crop->name }}" {{ old('name') == $crop->name ? 'selected' : '' }}>
-                                                {{ $crop->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <label for="crop_name_id">Crop</label>
+                                <select name="crop_name_id" class="form-control">
+                                    <option value="">Select Crop</option>
+                                    @foreach ($ensuredCrops as $crop)
+                                        <option value="{{ $crop->id }}">{{ $crop->name }}</option>
+                                    @endforeach
+                                </select>
+
                                     @error('name')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="year">Year</label>
+                                    <input type="text" name="year" class="form-control" value="{{ old('year', now()->year) }}" readonly>
+                                    @error('year')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="district_name">District</label>
-                                    <select id="districtAdd" name="district_name" class="form-control form-select">
+                                    <select id="districtAdd" name="crops[0][district_name]" class="form-control form-select">
                                         <option value="">Select District</option>
                                         @foreach ($districts as $district)
                                             <option value="{{ $district->id }}">{{ $district->name }}</option>
@@ -55,11 +65,11 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="tehsil">Tehsil</label>
-                                    <select id="tehsilAdd" name="tehsil" class="form-control form-select">
+                                    <select id="tehsilAdd" name="crops[0][tehsil_id]" class="form-control form-select">
                                         <option value="">Select Tehsil</option>
                                         <!-- Tehsils will be populated here -->
                                     </select>
-                                    @error('tehsil')
+                                    @error('tehsil_id')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -68,17 +78,17 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="current_yield">Cost of Production</label>
-                                    <input type="number" name="cost_of_production" class="form-control" value="{{ old('cost_of_production') }}">
-                                    @error('current_yield')
+                                    <input type="number" name="crops[0][cost_of_production]" class="form-control" value="{{ old('cost_of_production') }}">
+                                    @error('cost_of_production')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="current_yield">Average yield</label>
-                                    <input type="number" name="average_yield" class="form-control" value="{{ old('average_yield') }}">
-                                    @error('current_yield')
+                                    <label for="average_yield">Average yield</label>
+                                    <input type="number" name="crops[0][average_yield]" class="form-control" value="{{ old('average_yield') }}">
+                                    @error('average_yield')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -86,7 +96,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="current_yield">Historical Average Market Price</label>
-                                    <input type="number" name="historical_average_market_price" class="form-control" value="{{ old('historical_average_market_price') }}">
+                                    <input type="number" name="crops[0][historical_average_market_price]" class="form-control" value="{{ old('historical_average_market_price') }}">
                                     @error('historical_average_market_price')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -95,7 +105,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="current_yield">Real-time Market Price (AMP)</label>
-                                    <input type="number" name="real_time_market_price" class="form-control" value="{{ old('real_time_market_price') }}">
+                                    <input type="number" name="crops[0][real_time_market_price]" class="form-control" value="{{ old('real_time_market_price') }}">
                                     @error('real_time_market_price')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -104,39 +114,15 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="current_yield">Insured Yield (IY)</label>
-                                    <input type="number" name="ensured_yield" class="form-control" value="{{ old('ensured_yield') }}">
+                                    <input type="number" name="crops[0][ensured_yield]" class="form-control" value="{{ old('ensured_yield') }}">
                                     @error('ensured_yield')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="year">Year</label>
-                                    <input type="text" name="year" class="form-control" value="{{ old('year', now()->year) }}" readonly>
-                                    @error('year')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            {{-- <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="status">Status</label>
-                                    <select name="status" id="status" class="form-control" required>
-                                        <option value="" {{ old('status') === null ? 'selected' : '' }} disabled>
-                                            Select an Option</option>
-                                        <option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Active
-                                        </option>
-                                        <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Deactive
-                                        </option>
-                                    </select>
-                                    @error('status')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div> --}}
                         </div>
+                        <div id="productionFieldsWrapper"></div>
+                        <button type="button" id="addCropRow" class="btn btn-sm btn-info">Add More</button>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -275,20 +261,6 @@
                                         </div>
                                     </div>
                                 
-
-                                {{-- <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="status">Status</label>
-                                        <select name="status" id="status" class="form-control" required>
-                                            <option value="" {{ old('status', $InsuranceSubType->status) === null ? 'selected' : '' }} disabled>Select an Option</option>
-                                            <option value="1" {{ old('status', $InsuranceSubType->status) == '1' ? 'selected' : '' }}>Active</option>
-                                            <option value="0" {{ old('status', $InsuranceSubType->status) == '0' ? 'selected' : '' }}>Deactive</option>
-                                        </select>
-                                        @error('status')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div> --}}
                             </div>
                             
                         </div>
@@ -345,12 +317,6 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                {{-- <select id="yieldFilter" class="form-control "style="width: 160px;">
-                                    <option value="">Current Yield</option>
-                                    @foreach ($InsuranceSubTypes->pluck('current_yield')->unique() as $yield)
-                                        <option value="{{ $yield }}">{{ $yield }}</option>
-                                    @endforeach
-                                </select> --}}
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
                                 @if (Auth::guard('admin')->check() ||
@@ -380,7 +346,7 @@
                                         @foreach ($InsuranceSubTypes as $InsuranceSubType)
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $InsuranceSubType->name }}</td>
+                                            <td>{{ $InsuranceSubType->crop->name ?? 'N/A' }}</td>
                                             <td class="district">{{ $InsuranceSubType->district->name ?? 'No district' }}</td>
                                             <td class="tehsil">{{ $InsuranceSubType->tehsil->name ?? 'No tehsil' }}</td> 
                                             <td>{{ $InsuranceSubType->cost_of_production }}</td>
@@ -389,13 +355,6 @@
                                             <td>{{ $InsuranceSubType->real_time_market_price }}</td>
                                             <td>{{ $InsuranceSubType->ensured_yield }}</td>
                                             <td class="year">{{ $InsuranceSubType->year }}</td>
-                                            {{-- <td>
-                                                @if ($InsuranceSubType->status == 1)
-                                                <div class="badge badge-success badge-shadow">Activated</div>
-                                                @else
-                                                    <div class="badge badge-danger badge-shadow">Deactivated</div>
-                                                @endif
-                                            </td> --}}
                                             <td>
                                                 <div class="d-flex gap-4">
                                                     @if (Auth::guard('admin')->check() ||
@@ -573,5 +532,74 @@
                 });
         });
     </script>
+
+<script>
+    let productionIndex = 1;
+
+    $('#addCropRow').click(function () {
+        const newFields = `
+            <div class="crop-field-group row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="name">Distrct</label>
+                        <select id="districtAdd" name="crops[${productionIndex}][district_name]" class="form-control form-select">
+                            <option value="">Select District</option>
+                                @foreach ($districts as $district)
+                                    <option value="{{ $district->id }}">{{ $district->name }}</option>
+                                @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="name">Tehsil</label>
+                        <select id="tehsilAdd" name="crops[${productionIndex}][tehsil_id]" class="form-control form-select">
+                                 <option value="">Select Tehsil</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="cost_of_production">Cost of Production</label>
+                        <input type="number" name="crops[${productionIndex}][cost_of_production]" class="form-control" step="0.01">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="average_yield">Average Yield</label>
+                        <input type="number" name="crops[${productionIndex}][average_yield]" class="form-control" step="0.01">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="historical_average_market_price">Historical Average Market Price</label>
+                        <input type="number" name="crops[${productionIndex}][historical_average_market_price]" class="form-control" step="0.01">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="real_time_market_price">Real-time Market Price (AMP)</label>
+                        <input type="number" name="crops[${productionIndex}][real_time_market_price]" class="form-control" step="0.01">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="ensured_yield">Insured Yield (IY)</label>
+                        <input type="number" name="crops[${productionIndex}][ensured_yield]" class="form-control" step="0.01">
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#productionFieldsWrapper').append(newFields);
+        productionIndex++;
+    });
+</script>
+
     
 @endsection

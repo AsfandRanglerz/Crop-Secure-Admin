@@ -15,4 +15,11 @@ class EnsuredCropName extends Model
     // {
     //     return $this->hasMany(EnsuredCropType::class, 'crop_name_id');
     // }
+
+
+    public function insuranceSubTypes()
+{
+    return $this->hasMany(InsuranceSubType::class, 'name', 'id');
+}
+
 }

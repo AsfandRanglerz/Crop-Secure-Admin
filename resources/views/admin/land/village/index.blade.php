@@ -4,12 +4,11 @@
 
 
     {{-- Add village Modal --}}
-    <div class="modal fade" id="villageModal" tabindex="-1" role="dialog" aria-labelledby="villageModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="villageModal" tabindex="-1" role="dialog" aria-labelledby="villageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="villageModalLabel">Add District</h5>
+                    <h5 class="modal-title" id="villageModalLabel">Add Village</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -18,12 +17,39 @@
                     @csrf
                     <div class="modal-body">
                         <input type="hidden" name="uc_id" value="{{ $uc->id }}">
-                        <!-- Message Textbox -->
+    
+                        <!-- Village Name -->
                         <div class="form-group">
-                            <label for="message">Village Name</label>
+                            <label for="name">Village Name</label>
                             <input type="text" name="name" class="form-control">
                         </div>
+    
+                        <!-- Crop Select -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="crop_name_0">Select Crop</label>
+                                <select name="crops[0][crop_name_id]" id="crop_name_0" class="form-control" required>
+                                    <option value="">Select Crop</option>
+                                    @foreach($crops as $crop)
+                                        <option value="{{ $crop->id }}">{{ $crop->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="avg_temp_0">Average Temperature (°C)</label>
+                                <input type="number" step="0.1" name="crops[0][avg_temp]" id="avg_temp_0" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="avg_rainfall_0">Average Rainfall (mm)</label>
+                                <input type="number" step="0.1" name="crops[0][avg_rainfall]" id="avg_rainfall_0" class="form-control" required>
+                            </div>
+                        </div>                        
+
+                        <div id="cropFieldsWrapper"></div>
+                        <button type="button" id="addCropRow" class="btn btn-sm btn-info">Add More</button>
                     </div>
+
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Create</button>
@@ -32,6 +58,7 @@
             </div>
         </div>
     </div>
+    
 
 
     {{-- Edit village Modal --}}
@@ -41,7 +68,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editvillageModalLabel">Edit District</h5>
+                    <h5 class="modal-title" id="editvillageModalLabel">Edit Village</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -51,11 +78,44 @@
                     @method('PUT')
                     <div class="modal-body">
                         <input type="hidden" name="uc_id" value="{{ $uc->id }}">
-                        <!-- Message Textbox -->
+
+                        <!-- Village Name -->
                         <div class="form-group">
                             <label for="message">Village Name</label>
                             <input type="text" name="name" class="form-control" value="{{ $village->name }}">
                         </div>
+
+                        <!-- Existing Crops -->
+                        <label>Crops:</label>
+                        @php $editIndex = 0; @endphp
+                        @foreach ($village->crops as $crop)
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <select name="crops[{{ $editIndex }}][crop_name_id]" class="form-control" required>
+                                        <option value="">Select Crop</option>
+                                        @foreach($crops as $c)
+                                            <option value="{{ $c->id }}" {{ $c->id == $crop->crop_name_id ? 'selected' : '' }}>
+                                                {{ $c->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_temp]" class="form-control"
+                                        value="{{ $crop->avg_temp }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_rainfall]" class="form-control"
+                                        value="{{ $crop->avg_rainfall }}" required>
+                                </div>
+                            </div>
+                            @php $editIndex++; @endphp
+                        @endforeach
+
+                        <!-- Optional: Button to add more crops in edit modal -->
+                        <div id="editCropFieldsWrapper-{{$village->id}}"></div>
+                        <button type="button" class="btn btn-sm btn-info addMoreCropsEdit" data-village-id="{{ $village->id }}" data-index="{{ $editIndex }}">Add More</button>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -66,6 +126,7 @@
         </div>
     </div>
     @endforeach
+
 
 
     <div class="main-content" style="min-height: 562px;">
@@ -158,5 +219,63 @@
                 });
         });
     </script>
+
+{{-- for add crops againt village  --}}
+<script>
+    let cropIndex = 1;
+
+    $('#addCropRow').click(function () {
+        const newFields = `
+            <div class="crop-field-group row mb-3">
+                <div class="col-md-4">
+                    <select name="crops[${cropIndex}][crop_name_id]" class="form-control" required>
+                        <option value="">Select Crop</option>
+                        @foreach($crops as $crop)
+                            <option value="{{ $crop->id }}">{{ $crop->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" name="crops[${cropIndex}][avg_temp]" step="0.1" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" name="crops[${cropIndex}][avg_rainfall]" step="0.1" class="form-control" required>
+                </div>
+            </div>
+        `;
+        $('#cropFieldsWrapper').append(newFields);
+        cropIndex++;
+    });
+
+
+    // edit crops against village 
+    $('.addMoreCropsEdit').on('click', function () {
+        const villageId = $(this).data('village-id');
+        let index = $(this).data('index');
+
+        const newFields = `
+            <div class="crop-field-group row mb-3">
+                <div class="col-md-4">
+                    <select name="crops[${index}][crop_name_id]" class="form-control" required>
+                        <option value="">Select Crop</option>
+                        @foreach($crops as $crop)
+                            <option value="{{ $crop->id }}">{{ $crop->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" name="crops[${index}][avg_temp]" step="0.1" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" name="crops[${index}][avg_rainfall]" step="0.1" class="form-control" required>
+                </div>
+            </div>
+        `;
+
+        $(`#editCropFieldsWrapper-${villageId}`).append(newFields);
+        $(this).data('index', index + 1);
+    });
+</script>
+
 
 @endsection

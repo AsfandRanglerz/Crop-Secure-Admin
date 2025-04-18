@@ -20,4 +20,10 @@ class InsuranceSubType extends Model
         return $this->belongsTo(Tehsil::class, 'tehsil_id', 'id');
     }
 
+    public function crop()
+    {
+        return $this->belongsTo(EnsuredCropName::class, 'crop_name_id', 'id');
+    }
+
+
 }

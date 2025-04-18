@@ -27,3 +27,4 @@ class Controller extends BaseController
         return Response::json(array('status' => $code, 'message' => $error_message), $code)->setStatusCode($code, $error_message);
     }
 }
+// controllers

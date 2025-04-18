@@ -116,29 +116,41 @@ class InsuranceSubTypeController extends Controller
 
     public function production_price_store(Request $request) 
     {
-        // dd($request->toArray());
         $request->validate([
-            'incurance_type_id' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            // 'status' => 'nullable'
+            // 'incurance_type_id' => 'required|string|max:255',
+            // 'district_name' => 'required',
+            // 'tehsil_id' => 'required',
+            // 'year' => 'required|numeric',
+            'crops' => 'required|array|min:1',
+            // 'crops.*.name' => 'required|string',
+            // 'crops.*.cost_of_production' => 'nullable|numeric',
+            // 'crops.*.average_yield' => 'nullable|numeric',
+            // 'crops.*.historical_average_market_price' => 'nullable|numeric',
+            // 'crops.*.real_time_market_price' => 'nullable|numeric',
+            // 'crops.*.ensured_yield' => 'nullable|numeric',
         ]);
+
+        foreach ($request->crops as $crop) {
+            InsuranceSubType::create([
+                'crop_name_id' => $request->crop_name_id,
+                'incurance_type_id' => $request->incurance_type_id,
+                'district_name' => $crop['district_name'] ?? null,
+                'tehsil_id' => $crop['tehsil_id'] ?? null,
+                'cost_of_production' => $crop['cost_of_production'],
+                'average_yield' => $crop['average_yield'] ?? null,
+                'historical_average_market_price' => $crop['historical_average_market_price'] ?? null,
+                'real_time_market_price' => $crop['real_time_market_price'] ?? null,
+                'ensured_yield' => $crop['ensured_yield'] ?? null,
+                'year' => $request->year,
+            ]);
+        }
+        
         // dd($request->toArray());
 
-        InsuranceSubType::create([
-            'name' => $request->name,
-            'incurance_type_id' => $request->incurance_type_id,
-            'district_name' => $request->district_name,
-            'tehsil_id' => $request->tehsil_id,
-            'cost_of_production' => $request->cost_of_production,
-            'average_yield' => $request->average_yield,
-            'historical_average_market_price' => $request->historical_average_market_price,
-            'real_time_market_price' => $request->real_time_market_price,
-            'ensured_yield' => $request->ensured_yield,
-            'year' => $request->year,
-        ]);
-
-        return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])->with(['message' => 'Insurance Sub-Type Created Successfully']);
+        return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])
+            ->with(['message' => 'Insurance Sub-Types Created Successfully']);
     }
+
 
     public function production_price_update(Request $request, $id) 
     {

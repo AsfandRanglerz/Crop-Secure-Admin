@@ -14,4 +14,10 @@ class Village extends Model
     {
         return $this->belongsTo(Uc::class);
     }
+
+        public function crops()
+    {
+        return $this->hasMany(VillageCrop::class);
+    }
+    
 }
