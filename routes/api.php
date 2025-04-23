@@ -2,8 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\AuthorizedDealerController;
+use App\Http\Controllers\Api\LandController;
 use App\Http\Controllers\Api\LandDataManagement;
+use App\Http\Controllers\Api\CropInsuranceController;
+use App\Http\Controllers\Api\AuthorizedDealerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,3 +51,18 @@ Route::middleware('auth:sanctum')->group(function () {
     
 });
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/land', [LandController::class, 'store']);
+    Route::get('/showlands', [LandController::class, 'showlands']);
+});
+
+Route::get('/area-units', [LandController::class, 'getAreaUnits']);
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('insurance/form-options', [CropInsuranceController::class, 'getFormOptions']);
+    Route::get('insurance/insurancetype', [CropInsuranceController::class, 'getinsurancetype']);
+    Route::get('insurance/companies/{insuranceTypeId}', [CropInsuranceController::class, 'getCompaniesByInsuranceType']);
+    Route::get('insurance/benchmarks/{insuranceTypeId}', [CropInsuranceController::class, 'getBenchmarksByInsuranceType']);
+    Route::post('insurance/store', [CropInsuranceController::class, 'store']);
+});

@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class WelcomeMail extends Mailable
+class WelcomeDealerMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -16,8 +16,7 @@ class WelcomeMail extends Mailable
      *
      * @return void
      */
-
-     public $user;
+    public $user;
 
     public function __construct($user)
     {
@@ -31,7 +30,11 @@ class WelcomeMail extends Mailable
      */
     public function build()
     {
-        return $this->subject('Welcome')
-        ->view('emails.welcome')
-        ->with(['data' => $this->user]);    }
+        // return $this->markdown('emails.welcomedealer')->subject('Welcome to Authorized Dealer Registration')
+        // ->with(['data' => $this->user]);    
+
+        return $this->view('emails.welcomedealer')
+        ->subject('Welcome to Authorized Dealer Registration')
+        ->with(['data' => $this->user]);
+    }
 }
