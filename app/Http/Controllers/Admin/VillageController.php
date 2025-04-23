@@ -32,7 +32,7 @@ class VillageController extends Controller
         public function store(Request $request)
     {
         $request->validate([
-            'uc_id' => 'required|exists:union_councils,id',
+            'uc_id' => 'required|exists:ucs,id',
             'name' => 'required|string|unique:villages,name',
             'crops' => 'required|array|min:1',
             'crops.*.crop_name_id' => 'required|exists:ensured_crop_name,id',

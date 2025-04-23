@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Mail\ResetPasswordMail;
+use App\Mail\SendOtp;
+use App\Mail\WelcomeMail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -20,6 +22,57 @@ class AuthController extends Controller
         return response()->json(['message' => 'i m here.'], 200);
 
     }
+
+    public function register(Request $request)
+    {
+        // Validate the incoming request
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|unique:farmers,email',
+            'cnic' => [
+                'required',
+                'unique:farmers,cnic'
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        // raw password for email
+        $rawPassword = $request->password;
+
+        $user = Farmer::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'cnic' => $request->cnic,
+            'contact' => $request->phone,
+            'dob' => $request->dob,
+        ]);
+
+        $mailData = [
+            'name' => $user->name,
+            'useremail' => $user->email,
+            'password' => $rawPassword,
+            'logo' => 'http://localhost/Crop-Secure-Admin/public/admin/assets/img/logo.png'
+        ];
+
+
+        // dd($mailData);
+        Mail::to($user->email)->send(new WelcomeMail($mailData));
+
+        // Create Sanctum token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Farmer registered successfully',
+            'Farmer' => $user->makeHidden(['password']),
+            'token' => $token,
+        ]);
+    }
+
 
     public function login(Request $request)
     {
@@ -51,131 +104,181 @@ class AuthController extends Controller
     }
     
 
-    public function sendResetLink(Request $request)
+    public function sendOtp(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email',
+            ]);
 
-        $farmer = Farmer::where('email', $request->email)->first();
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
 
-        if (!$farmer) {
-            return response()->json(['message' => 'Email not found.'], 404);
+            $user = Farmer::where('email', $request->email)
+                        ->first();
+
+            if (!$user) {
+                return response()->json(['message' => 'Please enter a valid email address.'], 404);
+            }
+
+            $otp = random_int(1000, 9999);
+
+            DB::table('password_resets')->updateOrInsert(
+                ['email' => $request->email],
+                [
+                    'token' => $otp,
+                    'created_at' => now(),
+                ]
+            );
+
+            // send email
+            Mail::to($request->email)->send(new SendOtp($otp));
+
+            return response()->json([
+                'message' => 'OTP has been sent to your email successfully.',
+                'email' => $request->email
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred while sending the OTP.'], 500);
         }
-
-        $email = $farmer->email;
-
-        $existing = DB::table('password_resets')->where('email', $email)->first();
-        if ($existing) {
-            return response()->json(['message' => 'Reset link already sent.'], 200);
-        }
-
-        $token = Str::random(60);
-        DB::table('password_resets')->insert([
-            'email' => $email,
-            'token' => $token,
-            'created_at' => now()
-        ]);
-
-        $link = url("/api/verify-reset-token/{$token}");
-        Mail::to($email)->send(new ResetPasswordMail(['url' => $link]));
-
-        return response()->json(['message' => 'Reset link sent successfully.'], 200);
     }
 
-    public function verifyResetToken($token)
+
+    public function verifyOtp(Request $request)
     {
-        $record = DB::table('password_resets')->where('token', $token)->first();
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email',
+                'otp' => 'required|integer',
+            ]);
 
-        if (!$record) {
-            return response()->json(['message' => 'Invalid or expired token.'], 404);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $check = DB::table('password_resets')
+                        ->where('email', $request->email)
+                        ->where('token', $request->otp)
+                        ->first();
+
+            if ($check) {
+
+                DB::table('password_resets')->where('email', $request->email)->delete();
+
+                return response()->json([
+                    'message' => 'OTP verified successfully.'
+                ], 200);
+            }
+
+            return response()->json(['message' => 'Invalid OTP. Please try again.'], 401);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred while verifying the OTP.'], 500);
         }
-
-        return response()->json(['message' => 'Token is valid.', 'email' => $record->email], 200);
     }
 
-    public function resetPassword(Request $request)
+
+
+
+    public function passwordReset(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'token' => 'required',
-            'password' => 'required|min:8|confirmed',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required|string|min:8',
+            ]);
+    
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+    
+            $user = Farmer::where('email', $request->email)->first();
+    
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+    
+            if (Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'message' => 'Your new password cannot be the same as the old one.'
+                ], 400);
+            }
 
-        $record = DB::table('password_resets')->where([
-            ['email', '=', $request->email],
-            ['token', '=', $request->token],
-        ])->first();
-
-        if (!$record) {
-            return response()->json(['message' => 'Invalid token or email.'], 400);
+            $user->password = Hash::make($request->password);
+            $user->save();
+    
+            return response()->json([
+                'message' => 'Password changed successfully.'
+            ], 200);
+    
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred while resetting the password.'], 500);
         }
-
-        $hashedPassword = Hash::make($request->password);
-
-        $farmer = Farmer::where('email', $request->email)->first();
-
-        if ($farmer) {
-            $farmer->update(['password' => $hashedPassword]);
-        } else {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
-
-        DB::table('password_resets')->where('email', $request->email)->delete();
-
-        return response()->json(['message' => 'Password has been reset successfully.'], 200);
     }
+    
 
-    public function getProfile(Request $request)
+    public function logout(Request $request)
     {
-        // Check if the user is authenticated as Farmer
-        $user = Auth::guard('api')->user(); // Retrieve authenticated user
-
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401); // If no user found, return 401
+        try {
+            $request->user()->currentAccessToken()->delete();
+            return response()->json(['message' => 'Logged out successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while logging out.'], 500);
         }
-
-        return response()->json([
-            'data' => $user
-        ]);
     }
 
-    public function updateProfile(Request $request)
-{
-    $user = Auth::guard('api')->user();
+    // public function getProfile(Request $request)
+    // {
+    //     // Check if the user is authenticated as Farmer
+    //     $user = Auth::guard('api')->user(); // Retrieve authenticated user
 
-    if (!$user) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
+    //     if (!$user) {
+    //         return response()->json(['message' => 'Unauthorized'], 401); // If no user found, return 401
+    //     }
 
-    // Custom validator to handle validation errors manually
-    $validator = Validator::make($request->all(), [
-        'name' => 'required|string',
-        'email' => 'required|email|unique:farmers,email,' . $user->id,
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
-    ]);
+    //     return response()->json([
+    //         'data' => $user
+    //     ]);
+    // }
 
-    if ($validator->fails()) {
-        return response()->json([
-            'error' => 'Validation failed',
-            'messages' => $validator->errors()
-        ], 422);
-    }
+    // public function updateProfile(Request $request)
+    // {
+    //     $user = Auth::guard('api')->user();
 
-    $data = $request->only(['name', 'email']);
+    //     if (!$user) {
+    //         return response()->json(['error' => 'Unauthorized'], 401);
+    //     }
 
-    if ($request->hasFile('image')) {
-        $file = $request->file('image');
-        $extension = $file->getClientOriginalExtension();
-        $filename = time() . '.' . $extension;
-        $file->move(public_path('farmers/assets/images'), $filename);
-        $data['image'] = 'farmers/assets/images/' . $filename;
-    }
+    //     // Custom validator to handle validation errors manually
+    //     $validator = Validator::make($request->all(), [
+    //         'name' => 'required|string',
+    //         'email' => 'required|email|unique:farmers,email,' . $user->id,
+    //         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+    //     ]);
 
-    $user->update($data);
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'error' => 'Validation failed',
+    //             'messages' => $validator->errors()
+    //         ], 422);
+    //     }
 
-    return response()->json(['message' => 'Profile updated successfully']);
-}
+    //     $data = $request->only(['name', 'email']);
+
+    //     if ($request->hasFile('image')) {
+    //         $file = $request->file('image');
+    //         $extension = $file->getClientOriginalExtension();
+    //         $filename = time() . '.' . $extension;
+    //         $file->move(public_path('farmers/assets/images'), $filename);
+    //         $data['image'] = 'farmers/assets/images/' . $filename;
+    //     }
+
+    //     $user->update($data);
+
+    //     return response()->json(['message' => 'Profile updated successfully']);
+    // }
     
 
 }
