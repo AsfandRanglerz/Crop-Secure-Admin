@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Farmer;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use App\Mail\ResetPasswordMail;
+use Carbon\Carbon;
 use App\Mail\SendOtp;
+use App\Models\Farmer;
 use App\Mail\WelcomeMail;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -229,56 +230,65 @@ class AuthController extends Controller
         }
     }
 
-    // public function getProfile(Request $request)
-    // {
-    //     // Check if the user is authenticated as Farmer
-    //     $user = Auth::guard('api')->user(); // Retrieve authenticated user
+    public function getProfile(Request $request)
+    {
+        // Check if the user is authenticated as Farmer
+        $user = Auth::guard('api')->user(); // Retrieve authenticated user
 
-    //     if (!$user) {
-    //         return response()->json(['message' => 'Unauthorized'], 401); // If no user found, return 401
-    //     }
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401); // If no user found, return 401
+        }
+        $dob= Carbon::parse($user->dob)->format('Y-m-d');
+        return response()->json([
+            'data' => [ 
+            'id'  => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'contact' => $user->contact,
+            'cnic' => $user->cnic,
+            'image' => $user->image,
+            'status' => $user->status,
+            'dob' => $dob,
+            ]
+        ],200);
+    }
 
-    //     return response()->json([
-    //         'data' => $user
-    //     ]);
-    // }
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::guard('api')->user();
 
-    // public function updateProfile(Request $request)
-    // {
-    //     $user = Auth::guard('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
-    //     if (!$user) {
-    //         return response()->json(['error' => 'Unauthorized'], 401);
-    //     }
+        // Custom validator to handle validation errors manually
+        // $validator = Validator::make($request->all(), [
+        //     'name' => 'required|string',
+        //     'email' => 'required|email|unique:farmers,email,' . $user->id,
+        //     'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+        // ]);
 
-    //     // Custom validator to handle validation errors manually
-    //     $validator = Validator::make($request->all(), [
-    //         'name' => 'required|string',
-    //         'email' => 'required|email|unique:farmers,email,' . $user->id,
-    //         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
-    //     ]);
+        // if ($validator->fails()) {
+        //     return response()->json([
+        //         'error' => 'Validation failed',
+        //         'messages' => $validator->errors()
+        //     ], 422);
+        // }
 
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'error' => 'Validation failed',
-    //             'messages' => $validator->errors()
-    //         ], 422);
-    //     }
+        $data = $request->only(['name', 'email','contact']);
 
-    //     $data = $request->only(['name', 'email']);
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $extension = $file->getClientOriginalExtension();
+            $filename = time() . '.' . $extension;
+            $file->move(public_path('admin/assets/images/users'), $filename);
+            $data['image'] = 'public/admin/assets/images/users/' . $filename;
+        }
 
-    //     if ($request->hasFile('image')) {
-    //         $file = $request->file('image');
-    //         $extension = $file->getClientOriginalExtension();
-    //         $filename = time() . '.' . $extension;
-    //         $file->move(public_path('farmers/assets/images'), $filename);
-    //         $data['image'] = 'farmers/assets/images/' . $filename;
-    //     }
+        $user->update($data);
 
-    //     $user->update($data);
-
-    //     return response()->json(['message' => 'Profile updated successfully']);
-    // }
+        return response()->json(['message' => 'Profile updated successfully'], 200);
+    }
     
 
 }

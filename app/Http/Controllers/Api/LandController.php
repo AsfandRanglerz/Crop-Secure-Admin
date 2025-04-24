@@ -49,6 +49,7 @@ if ($request->hasFile('certificate')) {
 
 public function getAreaUnits()
 {
+    $user = Auth::user();
     return response()->json(AreaUnit::all());
 }
 

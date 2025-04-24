@@ -21,7 +21,7 @@ class CropInsuranceController extends Controller
             'crops' => EnsuredCropName::pluck('name')->toArray(),
             
             
-            // 'area_units' => AreaUnit::select('id', 'unit_name')->get(),
+            
             
         ]);
     }
@@ -41,9 +41,11 @@ class CropInsuranceController extends Controller
     // Get companies based on selected insurance type
     public function getCompaniesByInsuranceType($insuranceTypeId)
     {
-        $companies = InsuranceCompany::whereHas('insuranceTypes', function ($q) use ($insuranceTypeId) {
-            $q->where('insurance_type_id', $insuranceTypeId);
-        })->select('id', 'name')->get();
+        $companies = CompanyInsuranceType::where('insurance_type_id', $insuranceTypeId)
+        ->with('insuranceCompany:id,name') // eager load only required fields
+        ->get()
+        ->pluck('insuranceCompany')
+        ->values();
 
        
         return response()->json(['message' => 'Companies retrieved successfully', 'data' => $companies], 200);
@@ -53,8 +55,33 @@ class CropInsuranceController extends Controller
     public function getBenchmarksByInsuranceType($insuranceTypeId)
     {
         $benchmarks = CompanyInsuranceType::where('insurance_type_id', $insuranceTypeId)
-            ->with('insuranceCompany:id,name')
-            ->get(['id', 'insurance_company_id', 'benchmark', 'price']);
+            // ->with('insuranceCompany:id,name')
+            ->get(['id', 'insurance_type_id', 'benchmark', 'price_benchmark'])
+            ->map(function ($bench) {
+                
+                $bench->benchmark = preg_split('/\r\n|\r|\n/', $bench->benchmark);
+                // Clean extra spaces from each item
+                $bench->benchmark = array_filter(array_map('trim', $bench->benchmark));
+                
+                return $bench;
+                
+                $bench->price_benchmark = preg_split('/\r\n|\r|\n/', $bench->price_benchmark);
+                // Clean extra spaces from each item
+                $bench->price_benchmark = array_filter(array_map('trim', $bench->price_benchmark));
+                
+                return $bench;
+
+            })
+            ->map(function ($pricebench) {
+                
+                
+                $pricebench->price_benchmark = preg_split('/\r\n|\r|\n/', $pricebench->price_benchmark);
+                // Clean extra spaces from each item
+                $pricebench->price_benchmark = array_filter(array_map('trim', $pricebench->price_benchmark));
+                
+                return $pricebench;
+
+            });
 
     
         return response()->json(['message' => 'Benchmarks retrieved successfully', 'data' => $benchmarks], 200);
@@ -63,16 +90,40 @@ class CropInsuranceController extends Controller
     // Store insurance request
     public function store(Request $request)
     {
-        // $request->validate([
-        //     'crop_id' => 'required|exists:ensured_crop_names,id',
-        //     'area_unit_id' => 'required|exists:area_units,id',
-        //     'area' => 'required|numeric|min:0.1',
-        //     'insurance_type_id' => 'required|exists:insurance_types,id',
-        //     'insurance_company_id' => 'required|exists:insurance_companies,id',
-        //     'benchmark_id' => 'required|exists:company_insurance_types,id',
-        //     'premium_price' => 'required|numeric|min:0',
-        //     'sum_insured' => 'required|numeric|min:0',
-        // ]);
+       $user = Auth::user();
+       
+        $benchmarkData = CompanyInsuranceType::where('insurance_type_id', $request->insurance_type)
+        ->where('insurance_company_id', $request->company)
+        ->first();
+
+    if (!$benchmarkData) {
+        return response()->json(['message' => 'Benchmark not found.'], 404);
+    }
+
+    // Explode values by newline and trim whitespace
+    $benchmarks = array_map('trim', explode("\n", $benchmarkData->benchmark));
+    $prices = array_map('trim', explode("\n", $benchmarkData->price_benchmark));
+
+    // \Log::info('Parsed Benchmarks', ['benchmarks' => $benchmarks]);
+    // \Log::info('Parsed Prices', ['prices' => $prices]);
+
+    $benchmark = trim((string) $request->benchmark);
+    $index = array_search($benchmark, $benchmarks);
+
+    if ($index === false || !isset($prices[$index])) {
+        return response()->json(['message' => 'Benchmark price not found.'], 404);
+    }
+
+    $premiumPrice = $prices[$index] * $request->area;
+
+    $crop = EnsuredCropName::where('name', $request->crop)->first();
+
+    if (!$crop) {
+        return response()->json(['message' => 'Crop not found.'], 404);
+    }
+
+    // Multiply by area
+    $sumInsured = $crop->sum_insured_value * $request->area;
 
         $insurance = CropInsurance::create([
             // 'user_id' => Auth::id(),
@@ -82,8 +133,8 @@ class CropInsuranceController extends Controller
             'insurance_type' => $request->insurance_type,
             'company' => $request->company,
             'benchmark' => $request->benchmark,
-            // 'premium_price' => $request->premium_price,
-            // 'sum_insured' => $request->sum_insured,
+            'premium_price' => $premiumPrice,
+            'sum_insured' => $sumInsured,
         ]);
 
         return response()->json(['message' => 'Crop insurance submitted successfully', 'data' => $insurance], 200);

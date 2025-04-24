@@ -48,21 +48,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('ucs/{id}/villages', [LandDataManagement::class, 'getVillages']);
        
     });
-    
-});
 
-Route::middleware('auth:sanctum')->group(function () {
+    #lands
     Route::post('/land', [LandController::class, 'store']);
     Route::get('/showlands', [LandController::class, 'showlands']);
-});
+    Route::get('/area-units', [LandController::class, 'getAreaUnits']);
 
-Route::get('/area-units', [LandController::class, 'getAreaUnits']);
-
-
-Route::middleware('auth:sanctum')->group(function () {
+    #crops insurance
     Route::get('insurance/form-options', [CropInsuranceController::class, 'getFormOptions']);
     Route::get('insurance/insurancetype', [CropInsuranceController::class, 'getinsurancetype']);
     Route::get('insurance/companies/{insuranceTypeId}', [CropInsuranceController::class, 'getCompaniesByInsuranceType']);
     Route::get('insurance/benchmarks/{insuranceTypeId}', [CropInsuranceController::class, 'getBenchmarksByInsuranceType']);
     Route::post('insurance/store', [CropInsuranceController::class, 'store']);
+    
 });
+
+
+
+
+
+
