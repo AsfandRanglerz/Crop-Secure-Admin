@@ -2,11 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\InsuranceType;
+use App\Models\InsuranceCompany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CropInsurance extends Model
 {
     use HasFactory;
     protected $guarded = [];
+
+    public function companys()
+    {
+        return $this->belongsTo(InsuranceCompany::class, 'company');
+    }
+
+    public function insuranceType()
+    {
+        return $this->belongsTo(InsuranceType::class, 'insurance_type');
+    }
 }

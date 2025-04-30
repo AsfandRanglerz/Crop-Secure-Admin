@@ -33,7 +33,15 @@ class AuthController extends Controller
                 'required',
                 'unique:farmers,cnic'
             ],
-        ]);
+            'phone' => [
+                'required',
+                'unique:farmers,contact'
+            ],
+        ],
+    [
+        'phone.required' => 'The phone number is required',
+        'phone.unique' => 'The phone number has already been taken',
+    ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -46,6 +54,7 @@ class AuthController extends Controller
 
         $user = Farmer::create([
             'name' => $request->name,
+            'fname' => $request->fname,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'cnic' => $request->cnic,

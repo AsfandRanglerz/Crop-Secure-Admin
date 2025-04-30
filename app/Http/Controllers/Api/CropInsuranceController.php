@@ -139,4 +139,21 @@ class CropInsuranceController extends Controller
 
         return response()->json(['message' => 'Crop insurance submitted successfully', 'data' => $insurance], 200);
     }
+
+    public function getinsurance()
+    {
+        $user = Auth::user();
+        
+        $insurances = CropInsurance::with(['companys', 'insuranceType'])
+            ->get()
+            ->map(function ($insurance) {
+                return [
+                    'company' => $insurance->companys->name ?? 'N/A',
+                    'insurance_type' => $insurance->insuranceType->name ?? 'N/A',
+                    'premium_price' => $insurance->premium_price,
+                ];
+            });
+
+        return response()->json(['data' => $insurances], 200);
+    }
 }
