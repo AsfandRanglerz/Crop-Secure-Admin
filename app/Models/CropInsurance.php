@@ -28,4 +28,5 @@ class CropInsurance extends Model
     return $this->belongsTo(InsuranceSubType::class, 'sub_type_id'); // adjust if needed
 }
 
+   
 }
