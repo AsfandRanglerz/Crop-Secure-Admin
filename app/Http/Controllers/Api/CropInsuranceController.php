@@ -157,7 +157,7 @@ public function getinsurance()
         return response()->json(['data' => $insurances], 200);
     }
 
-    public function claim()
+public function claim()
 {
     $user = Auth::user();
 
