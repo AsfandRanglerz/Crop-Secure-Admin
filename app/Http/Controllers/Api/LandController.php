@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Land;
 use App\Models\AreaUnit;
 use Illuminate\Http\Request;
+use App\Models\CropInsurance;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 
@@ -71,6 +72,22 @@ public function showlands()
         });
 
         return response()->json(['message' => 'Land retrieved successfully', 'lands' => $lands], 200);
+}
+
+public function landrecord(Request $request){
+    $user = Auth::user();
+    $land = CropInsurance::create([
+        'district_id' => $request->district_id,
+        'tehsil_id' => $request->tehsil_id,
+        'uc' => $request->uc,
+        'village' => $request->village,
+        'other' => $request->other,
+    ]);
+
+    return response()->json([
+        'message' => 'Land record saved successfully',
+        'data' => $land
+    ], 200);
 }
 
 }
