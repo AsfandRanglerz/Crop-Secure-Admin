@@ -139,4 +139,87 @@ class CropInsuranceController extends Controller
 
         return response()->json(['message' => 'Crop insurance submitted successfully', 'data' => $insurance], 200);
     }
+public function getinsurance()
+    {
+        $user = Auth::user();
+        
+        $insurances = CropInsurance::with(['companys', 'insuranceType'])
+            ->get()
+            ->map(function ($insurance) {
+                return [
+                    'company' => $insurance->companys->name ?? 'N/A',
+                    'insurance_type' => $insurance->insuranceType->name ?? 'N/A',
+                    'premium_price' => $insurance->premium_price,
+                    'sum_insured' => $insurance->sum_insured,
+                ];
+            });
+
+        return response()->json(['data' => $insurances], 200);
+    }
+
+    public function claim()
+{
+    $user = Auth::user();
+
+    $insurances = CropInsurance::with(['companys', 'insuranceType', 'insuranceSubType'])
+        ->get()
+        ->map(function ($insurance) {
+            $sumInsured = $insurance->sum_insured;
+            $benchmark = $insurance->benchmark; // e.g., 100, 90, 60
+            $currentYield = $insurance->insuranceSubType->current_yield ?? null;
+
+            $refundAmount = 0;
+
+            if ($currentYield !== null && $benchmark > $currentYield) {
+                $yieldLossPercentage = $benchmark - $currentYield;
+                $refundAmount = ($yieldLossPercentage / 100) * $sumInsured;
+            }
+
+            return [
+                'crop' => $insurance->crop,
+                'company' => $insurance->companys->name ?? 'N/A',
+                'insurance_type' => $insurance->insuranceType->name ?? 'N/A',
+                'premium_price' => $insurance->premium_price,
+                'sum_insured' => $sumInsured,
+                'benchmark' => $benchmark,
+                'current_yield' => $currentYield ?? 'N/A',
+                'refund_amount' => $refundAmount,
+            ];
+        });
+
+    return response()->json(['data' => $insurances], 200);
+}
+
+public function getclaim()
+{
+    $user = Auth::user();
+
+    $insurances = CropInsurance::with(['companys', 'insuranceType', 'insuranceSubType'])
+        ->get()
+        ->map(function ($insurance) {
+            $sumInsured = $insurance->sum_insured;
+            $benchmark = $insurance->benchmark; // e.g., 100, 90, 60
+            $currentYield = $insurance->insuranceSubType->current_yield ?? null;
+
+            $refundAmount = 0;
+
+            if ($currentYield !== null && $benchmark > $currentYield) {
+                $yieldLossPercentage = $benchmark - $currentYield;
+                $refundAmount = ($yieldLossPercentage / 100) * $sumInsured;
+            }
+
+            return [
+                'crop' => $insurance->crop,
+                // 'company' => $insurance->companys->name ?? 'N/A',
+                // 'insurance_type' => $insurance->insuranceType->name ?? 'N/A',
+                // 'premium_price' => $insurance->premium_price,
+                // 'sum_insured' => $sumInsured,
+                // 'benchmark' => $benchmark,
+                // 'current_yield' => $currentYield ?? 'N/A',
+                'refund_amount' => $refundAmount,
+            ];
+        });
+
+    return response()->json(['data' => $insurances], 200);
+}
 }

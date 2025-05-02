@@ -153,7 +153,7 @@ class InsuranceSubTypeController extends Controller
         $districts = District::all();         // Fetch all districts
         $tehsils = Tehsil::all();             // Fetch all tehsils
         $InsuranceType = InsuranceType::find($id);
-        $InsuranceSubTypes = InsuranceSubType::with(['district', 'tehsil'])
+        $InsuranceSubTypes = InsuranceSubType::with(['district', 'tehsil', 'crop'])
         ->where('incurance_type_id', $id)
         ->orderBy('status', 'desc')
         ->latest()

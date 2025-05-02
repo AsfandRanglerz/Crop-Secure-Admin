@@ -52,7 +52,6 @@ class CreateCropInsurancesTable extends Migration
             $table->foreign('tehsil_id')->references('id')->on('tehsils')->onDelete('set null');
         });
         
-        
     }
 
     /**

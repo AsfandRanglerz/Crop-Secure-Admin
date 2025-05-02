@@ -28,15 +28,20 @@
                                 </div>
                             </div>
                             
-                                <div class="col">
-                                    <div class="form-group mb-0">
-                                        <label for="name">Sum Insured</label>
+                            <div class="col">
+                                <div class="form-group mb-0">
+                                    <label for="sum">Sum Insured</label>
+                                    <div class="input-group">
                                         <input type="number" name="sum" class="form-control" value="{{ old('sum') }}">
-                                        @error('sum')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="border: 2px solid #cbd2d8;">PKR</span>
+                                        </div>
                                     </div>
+                                    @error('sum')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
                                 </div>
+                            </div>                            
                                 <small class="text-muted ml-3">(Note:The sum insured value applied to 100% benchmark against 1 acre)</small>
                             </div> 
                            
@@ -220,7 +225,7 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $EnsuredCrop->name }}</td>
-                                                <td>{{ number_format($EnsuredCrop->sum_insured_value) }}</td>
+                                                <td>{{ number_format($EnsuredCrop->sum_insured_value) }} PKR</td>
                                                 <td>{{ $EnsuredCrop->harvest_start_time }} {{ $currentYear }}</td>
                                                 <td>{{ $EnsuredCrop->harvest_end_time }} {{ $currentYear }}</td>
                                                 <td>{{ $EnsuredCrop->insurance_start_time }} {{ $currentYear }}</td>
