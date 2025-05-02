@@ -9,8 +9,11 @@ use App\Models\InsuranceType;
 use App\Models\EnsuredCropName;
 use App\Models\InsuranceSubType;
 use App\Http\Controllers\Controller;
+use App\Models\CropInsurance;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
+use App\Notifications\InsuranceYieldUpdated;
+use App\Helpers\NotificationHelper;
 
 class InsuranceSubTypeController extends Controller
 {
@@ -34,28 +37,73 @@ class InsuranceSubTypeController extends Controller
         return view('admin.insurance_types_and_sub_types.sub_types', compact('sideMenuPermissions', 'sideMenuName', 'InsuranceSubTypes', 'InsuranceType','ensuredCrops', 'districts', 'tehsils'));
     }
     
-    public function store(Request $request) 
-    {
-        // dd($request);
-        $request->validate([
-            'incurance_type_id' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            // 'status' => 'nullable'
-        ]);
-        // dd($request);
 
-        InsuranceSubType::create([
+    public function store(Request $request)
+    {
+        $insuranceSubType = InsuranceSubType::create([
             'incurance_type_id' => $request->incurance_type_id,
             'name' => $request->name,
             'district_name' => $request->district_name,
             'tehsil_id' => $request->tehsil_id,
             'current_yield' => $request->current_yield,
             'year' => $request->year,
-            // 'status' => $request->status,
         ]);
-
-        return redirect()->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])->with(['message' => 'Insurance Sub-Type Created Successfully']);
+    
+        $farmers = CropInsurance::with('user')
+            ->where('crop', $request->name)
+            ->where('district_id', $request->district_id)
+            ->where('tehsil_id', $request->tehsil_id)
+            ->where('year', $request->year)
+            ->get();
+    
+        foreach ($farmers as $record) {
+            $benchmark = $record->benchmark_percent;
+            $area = $record->area;
+            $sumInsuredBase = $record->sum_insured_100_percent;
+            $sumInsured = ($benchmark / 100) * ($sumInsuredBase * $area);
+            $lossPercentage = $benchmark - $request->current_yield;
+    
+            $compensation = 0;
+            $status = 'no loss';
+            if ($lossPercentage > 0) {
+                $compensation = ($lossPercentage / 100) * $sumInsured;
+                $status = 'loss';
+            }
+    
+            $record->update([
+                'compensation' => $compensation,
+                'status' => $status,
+            ]);
+    
+            $user = $record->user;
+            if ($user && $user->fcm_token) {
+                NotificationHelper::sendFcmNotification(
+                    $user->fcm_token,
+                    'Insurance Update: ' . $record->crop,
+                    $compensation > 0
+                        ? 'You are eligible for Rs. ' . number_format($compensation)
+                        : 'No compensation. Yield met or exceeded benchmark.',
+                    [
+                        'compensation' => $compensation,
+                        'status' => $status,
+                        'crop' => $record->crop,
+                        'year' => $record->year,
+                        'area' => $area,
+                        'benchmark' => $benchmark,
+                        'current_yield' => $request->current_yield,
+                        'sum_insured' => $sumInsured,
+                        'sum_insured_base' => $sumInsuredBase,
+                    ]
+                );
+            }
+        }
+    
+        return redirect()
+            ->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])
+            ->with(['message' => 'Yield recorded and farmers notified successfully']);
     }
+    
+
     
     public function update(Request $request, $id) 
     {
