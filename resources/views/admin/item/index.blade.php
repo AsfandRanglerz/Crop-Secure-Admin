@@ -21,7 +21,7 @@
                             <div class="col">
                                 <div class="form-group">
                                     <label for="name">Name</label>
-                                    <input type="text" name="name" placeholder="Enter Item Name" class="form-control" required>
+                                    <input type="text" name="name" class="form-control" required>
                                     @error('name')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror

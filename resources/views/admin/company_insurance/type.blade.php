@@ -24,7 +24,6 @@
                     <div class="modal-body">
                         <input type="hidden" name="insurance_company_id" value="{{ $Company->id }}">
                         <div class="row">
-                            
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="insurance_type_id">Types</label>
@@ -38,7 +37,6 @@
                                     @enderror
                                 </div>
                             </div>
-
                         </div>
                         <div class="row align-items-end">
                             <div class="col-md-4">
@@ -88,7 +86,12 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="benchmark">Benchmark</label>
-                                    <input type="text" name="benchmark[0][]" class="form-control" value="{{ old('benchmark') }}">
+                                    <div class="input-group">
+                                        <input type="number" name="benchmark[0][]" class="form-control" value="{{ old('benchmark') }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" style="border: 1px solid #cbd2d8;">%</span>
+                                        </div>
+                                    </div>
                                     @error('benchmark')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -98,7 +101,12 @@
                                 <div class="form-group">
                                     <label for="price_benchmark">Price Benchmark</label>
                                     <div class="d-flex">
-                                        <input type="text" name="price_benchmark[0][]" class="form-control" value="{{ old('price_benchmark') }}">
+                                        <div class="input-group">
+                                            <input type="number" name="price_benchmark[0][]" class="form-control" value="{{ old('price_benchmark') }}">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
+                                            </div>
+                                        </div>
                                         @error('price_benchmark')
                                             <span class="text-danger">{{ $message }}</span>
                                         @enderror
@@ -110,8 +118,10 @@
                             </div>
                             
                             <!-- Container for dynamically added fields -->
-                            <div id="benchmarksContainer" class="col-md-12"></div>
-                            <div id="fieldsContainer"></div>
+                            <div id="benchmarksContainer" class="col-md-12">
+                                <div id="fieldsContainer"></div>
+                            </div>
+                            
                             <div class="col-" style="margin-left: 20px;">
                                 <button type="button" class="btn btn-success" id="addMore">
                                     Add More <span class="ml-2 fa fa-plus"></span>
@@ -183,7 +193,7 @@
                                         <option value="">Select District</option>
                                         @foreach ($districts as $district)
                                             <option value="{{ $district->id }}" 
-                                                {{ old('district_name', $InsuranceSubType->district_name ?? '') == $district->id ? 'selected' : '' }}>
+                                                {{ old('district_name', $InsuranceType->district_name ?? '') == $district->id ? 'selected' : '' }}>
                                                 {{ $district->name }}
                                             </option>
                                         @endforeach
@@ -195,18 +205,18 @@
                         </div>
 
                                 <!-- Tehsil Dropdown -->
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="tehsil_id">Tehsil</label>
-                                        <!-- Tehsil Dropdown -->
-                                        <select id="tehsilEdit" name="tehsil_id" class="form-control form-select">
-                                            <option value="">Select Tehsil</option>
-                                        </select>
-                                        @error('tehsil')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="tehsil_id">Tehsil</label>
+                                <!-- Tehsil Dropdown -->
+                                <select id="tehsilEdit" name="tehsil_id" class="form-control form-select">
+                                    <option value="">Select Tehsil</option>
+                                </select>
+                                @error('tehsil')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
 
                     </div>
                     
@@ -217,8 +227,13 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Benchmark</label>
-                                <input type="text" name="benchmark[{{ $InsuranceType->id }}][]" class="form-control"
-                                    value="{{ old('benchmark', trim($existingBenchmarks[0] ?? '')) }}">
+                                    <div class="input-group">
+                                        <input type="number" name="benchmark[{{ $InsuranceType->id }}][]" class="form-control"
+                                        value="{{ old('benchmark', trim($existingBenchmarks[0] ?? '')) }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" style="border: 1px solid #cbd2d8;">%</span>
+                                        </div>
+                                    </div>
                             </div>
                         </div>
                         <!-- Initial Price Benchmark Field -->
@@ -226,8 +241,13 @@
                             <div class="form-group">
                                 <label>Price Benchmark</label>
                                 <div class="d-flex">
-                                    <input type="text" name="price_benchmark[{{ $InsuranceType->id }}][]" class="form-control"
-                                        value="{{ old('price_benchmark', trim($existingPriceBenchmarks[0] ?? '')) }}">
+                                        <div class="input-group">
+                                            <input type="number" name="price_benchmark[{{ $InsuranceType->id }}][]" class="form-control"
+                                            value="{{ old('price_benchmark', trim($existingPriceBenchmarks[0] ?? '')) }}">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
+                                            </div>
+                                        </div>
                                     <button type="button" class="btn btn-success ml-2 addBenchmark"
                                         data-insurance-id="{{ $InsuranceType->id }}">
                                         <i class="fa fa-plus"></i>
@@ -305,8 +325,8 @@
                                                 {{ $InsuranceType->insuranceType->name }}
                                             </td>
                                             <td>{{ $InsuranceType->crop }}</td>
-                                            <td class="district">{{ $InsuranceSubType->district->name ?? 'No district' }}</td>
-                                            <td class="tehsil">{{ $InsuranceSubType->tehsil->name ?? 'No tehsil' }}</td> 
+                                            <td class="district">{{ $InsuranceType->district->name ?? 'No district' }}</td>
+                                            <td class="tehsil">{{ $InsuranceType->tehsil->name ?? 'No tehsil' }}</td> 
                                             <td>
                                                 @if (!empty($InsuranceType->benchmark) && !empty($InsuranceType->price_benchmark))
                                                     @php
@@ -431,31 +451,31 @@
         });
     
         /** ========== EDIT FORM HANDLING ========== */
-        function loadTehsilsForEdit(districtId, selectedTehsil = null) {
-            $('#tehsilEdit').empty().append('<option value="">Select Tehsil</option>');
-    
-            if (districtId) {
-                $.ajax({
-                    url: `{{ route('get.tehsils', ':districtId') }}`.replace(':districtId', districtId),
-                    method: 'GET',
-                    success: function (data) {
-                        data.forEach(function (tehsil) {
-                            let isSelected = selectedTehsil == tehsil.id ? 'selected' : '';
-                            $('#tehsilEdit').append(
-                                `<option value="${tehsil.id}" ${isSelected}>${tehsil.name}</option>`
-                            );
-                        });
-                    },
-                    error: function (xhr) {
-                        console.error('Error fetching tehsils:', xhr);
-                    }
-                });
-            }
+        function loadTehsilsForEdit(districtId) {
+        $('#tehsilEdit').empty().append('<option value="">Select Tehsil</option>');
+
+        if (districtId) {
+            $.ajax({
+                url: `{{ route('get.tehsils', ':districtId') }}`.replace(':districtId', districtId),
+                method: 'GET',
+                success: function (data) {
+                    data.forEach(function (tehsil) {
+                        $('#tehsilEdit').append(
+                            `<option value="${tehsil.id}">${tehsil.name}</option>`
+                        );
+                    });
+                },
+                error: function (xhr) {
+                    console.error('Error fetching tehsils:', xhr);
+                }
+            });
         }
-    
+    }
+
+
         // Auto-load tehsils in edit form when the page loads
-        let selectedDistrict = "{{ old('district_name', $InsuranceSubType->district_name ?? '') }}"; 
-        let selectedTehsil = "{{ old('tehsil_id', $InsuranceSubType->tehsil_id ?? '') }}"; 
+        let selectedDistrict = "{{ old('district_name', $InsuranceType->district_name ?? '') }}"; 
+        let selectedTehsil = "{{ old('tehsil_id', $InsuranceType->tehsil_id ?? '') }}"; 
     
         if (selectedDistrict) {
             $('#districtEdit').val(selectedDistrict).trigger('change'); // Set district
@@ -482,13 +502,23 @@ $(document).ready(function () {
             <div class="row align-items-end benchmark-field" data-index="${benchmarkIndex}">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <input type="text" name="benchmark[0][]" class="form-control" placeholder="Enter Benchmark" required>
+                        <div class="input-group">
+                            <input type="number" name="benchmark[0][]" class="form-control" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <div class="d-flex">
-                            <input type="text" name="price_benchmark[0][]" class="form-control" placeholder="Enter Price Benchmark" required>
+                            <div class="input-group">
+                                <input type="number" name="price_benchmark[0][]" class="form-control" required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
+                                </div>
+                            </div>
                             <span class="btn btn-danger ml-2 removeBenchmark">
                                 <i class="fa fa-trash"></i>
                             </span>
@@ -552,13 +582,23 @@ $(document).ready(function () {
                     <div class="row align-items-end benchmark-group">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <input type="text" name="benchmark[${rowIndex}][]" class="form-control" placeholder="Enter Benchmark">
+                                <div class="input-group">
+                                    <input type="number" name="benchmark[${rowIndex}][]" class="form-control">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" style="border: 1px solid #cbd2d8;">%</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div class="d-flex">
-                                    <input type="text" name="price_benchmark[${rowIndex}][]" class="form-control" placeholder="Enter Price Benchmark">
+                                    <div class="input-group">
+                                        <input type="number" name="price_benchmark[${rowIndex}][]" class="form-control">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
+                                        </div>
+                                    </div>
                                     <span class="btn btn-danger ml-2 removeField">
                                         <i class="fa fa-trash"></i>
                                     </span>
@@ -583,13 +623,23 @@ $(document).ready(function () {
             <div class="row align-items-end benchmark-group">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <input type="text" name="benchmark[${parentIndex}][]" class="form-control" placeholder="Enter Benchmark">
+                        <div class="input-group">
+                            <input type="number" name="benchmark[${parentIndex}][]" class="form-control">
+                            <div class="input-group-append">
+                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <div class="d-flex">
-                            <input type="text" name="price_benchmark[${parentIndex}][]" class="form-control" placeholder="Enter Price Benchmark">
+                            <div class="input-group">
+                                <input type="number" name="price_benchmark[${parentIndex}][]" class="form-control">
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
+                                </div>
+                            </div>
                             <span class="btn btn-danger ml-2 removeBenchmark">
                                 <i class="fa fa-trash"></i>
                             </span>
@@ -646,15 +696,23 @@ $(document).ready(function () {
             <div class="row benchmark-row align-items-center">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>Benchmark</label>
-                        <input type="text" name="benchmark[${insuranceId}][]" class="form-control" value="${benchmarkValue}">
+                        <div class="input-group">
+                            <input type="number" name="benchmark[${insuranceId}][]" class="form-control" value="${benchmarkValue}">
+                            <div class="input-group-append">
+                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>Price Benchmark</label>
                         <div class="d-flex">
-                            <input type="text" name="price_benchmark[${insuranceId}][]" class="form-control" value="${priceBenchmarkValue}">
+                            <div class="input-group">
+                                <input type="number" name="price_benchmark[${insuranceId}][]" class="form-control" value="${priceBenchmarkValue}">
+                                <div class="input-group-append">
+                                    <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
+                                </div>
+                            </div>
                             <button type="button" class="btn btn-danger ml-2 removeBenchmark">
                                 <i class="fa fa-trash"></i>
                             </button>

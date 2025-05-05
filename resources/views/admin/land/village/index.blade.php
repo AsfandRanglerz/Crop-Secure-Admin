@@ -36,12 +36,22 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label for="avg_temp_0">Average Temperature (°C)</label>
-                                <input type="number" step="0.1" name="crops[0][avg_temp]" id="avg_temp_0" class="form-control" required>
+                                <label for="avg_temp_0">Average Temperature</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" name="crops[0][avg_temp]" id="avg_temp_0" class="form-control" required>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">°C</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <label for="avg_rainfall_0">Average Rainfall (mm)</label>
-                                <input type="number" step="0.1" name="crops[0][avg_rainfall]" id="avg_rainfall_0" class="form-control" required>
+                                <label for="avg_rainfall_0">Average Rainfall</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" name="crops[0][avg_rainfall]" id="avg_rainfall_0" class="form-control" required>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">mm</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>                        
 
@@ -86,12 +96,13 @@
                         </div>
 
                         <!-- Existing Crops -->
-                        <label>Crops:</label>
                         @php $editIndex = 0; @endphp
                         @foreach ($village->crops as $crop)
-                            <div class="row mb-3">
+                            <div class="row mb-4">
+                                <!-- Crop Name -->
                                 <div class="col-md-4">
-                                    <select name="crops[{{ $editIndex }}][crop_name_id]" class="form-control" required>
+                                    <label for="crop_name_{{ $editIndex }}" class="form-label">Select Crop</label>
+                                    <select name="crops[{{ $editIndex }}][crop_name_id]" id="crop_name_{{ $editIndex }}" class="form-control" required>
                                         <option value="">Select Crop</option>
                                         @foreach($crops as $c)
                                             <option value="{{ $c->id }}" {{ $c->id == $crop->crop_name_id ? 'selected' : '' }}>
@@ -100,17 +111,34 @@
                                         @endforeach
                                     </select>
                                 </div>
+
+                                <!-- Average Temperature -->
                                 <div class="col-md-4">
-                                    <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_temp]" class="form-control"
-                                        value="{{ $crop->avg_temp }}" required>
+                                    <label for="avg_temp_{{ $editIndex }}" class="form-label">Average Temperature</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_temp]" id="avg_temp_{{ $editIndex }}"
+                                            class="form-control" value="{{ $crop->avg_temp }}" required>
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">°C</span>
+                                            </div>
+                                    </div>
                                 </div>
+
+                                <!-- Average Rainfall -->
                                 <div class="col-md-4">
-                                    <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_rainfall]" class="form-control"
-                                        value="{{ $crop->avg_rainfall }}" required>
+                                    <label for="avg_rainfall_{{ $editIndex }}" class="form-label">Average Rainfall</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_rainfall]" id="avg_rainfall_{{ $editIndex }}"
+                                            class="form-control" value="{{ $crop->avg_rainfall }}" required>
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">mm</span>
+                                            </div>
+                                    </div>
                                 </div>
                             </div>
                             @php $editIndex++; @endphp
                         @endforeach
+
 
                         <!-- Optional: Button to add more crops in edit modal -->
                         <div id="editCropFieldsWrapper-{{$village->id}}"></div>
@@ -235,10 +263,20 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <input type="number" name="crops[${cropIndex}][avg_temp]" step="0.1" class="form-control" required>
+                    <div class="input-group">
+                        <input type="number" name="crops[${cropIndex}][avg_temp]" step="0.1" class="form-control" required>
+                        <div class="input-group-append">
+                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">°C</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <input type="number" name="crops[${cropIndex}][avg_rainfall]" step="0.1" class="form-control" required>
+                   <div class="input-group">
+                        <input type="number" name="crops[${cropIndex}][avg_rainfall]" step="0.1" class="form-control" required>
+                        <div class="input-group-append">
+                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">mm</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -263,10 +301,20 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <input type="number" name="crops[${index}][avg_temp]" step="0.1" class="form-control" required>
+                    <div class="input-group">
+                        <input type="number" name="crops[${index}][avg_temp]" step="0.1" class="form-control" required>
+                        <div class="input-group-append">
+                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">°C</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <input type="number" name="crops[${index}][avg_rainfall]" step="0.1" class="form-control" required>
+                    <div class="input-group">
+                        <input type="number" name="crops[${index}][avg_rainfall]" step="0.1" class="form-control" required>
+                        <div class="input-group-append">
+                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">mm</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
