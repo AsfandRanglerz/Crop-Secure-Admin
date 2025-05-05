@@ -134,7 +134,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="current_yield">Insured Yield (IY)</label>
+                                    <label for="current_yield">Insured Yield</label>
                                     <div class="input-group">
                                         <input type="number" name="crops[0][ensured_yield]" class="form-control" value="{{ old('ensured_yield') }}">
                                         <div class="input-group-append">
@@ -317,9 +317,9 @@
                                     <select id="cropFilter" class="form-control form-select w-auto rounded mr-2">
                                         <option value="">Crops</option>
                                         @foreach ($InsuranceSubTypes->unique('crop_name_id') as $subtype)
-                                            <option value="{{ $subtype->crop_name_id }}">
+                                            <option value="{{ strtolower($subtype->crop->name ?? '') }}">
                                                 {{ $subtype->crop->name ?? 'Unknown Crop' }}
-                                            </option>
+                                            </option>      
                                         @endforeach
                                     </select>                                    
                                     
@@ -509,7 +509,7 @@
                 let crop = row.querySelector("td:nth-child(2)").textContent.toLowerCase();
                 let district = row.querySelector("td:nth-child(3)").textContent.toLowerCase();
                 let tehsil = row.querySelector("td:nth-child(4)").textContent.toLowerCase();
-                let year = row.querySelector("td:nth-child(6)").textContent.toLowerCase();
+                let year = row.querySelector("td:nth-child(10)").textContent.toLowerCase();
     
                 // Check if the row matches all filters
                 let matchesCrop = cropValue === "" || crop.includes(cropValue);
@@ -532,7 +532,7 @@
         tehsilFilter.addEventListener("change", filterTable);
         yearFilter.addEventListener("change", filterTable);
     });
-    </script>
+</script>
 
     <script>
         $(document).ready(function() {
