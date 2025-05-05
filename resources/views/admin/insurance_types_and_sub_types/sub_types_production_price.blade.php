@@ -77,17 +77,28 @@
                             
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="current_yield">Cost of Production</label>
-                                    <input type="number" name="crops[0][cost_of_production]" class="form-control" value="{{ old('cost_of_production') }}">
+                                    <label for="cost_of_production">Cost of Production</label>
+                                    <div class="input-group">
+                                        <input type="number" name="crops[0][cost_of_production]" class="form-control" value="{{ old('cost_of_production') }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">PKR</span>
+                                        </div>
+                                    </div>
                                     @error('cost_of_production')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+                            
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="average_yield">Average yield</label>
-                                    <input type="number" name="crops[0][average_yield]" class="form-control" value="{{ old('average_yield') }}">
+                                    <div class="input-group">
+                                        <input type="number" name="crops[0][average_yield]" class="form-control" value="{{ old('average_yield') }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">%</span>
+                                        </div>
+                                    </div>
                                     @error('average_yield')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -96,7 +107,12 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="current_yield">Historical Average Market Price</label>
-                                    <input type="number" name="crops[0][historical_average_market_price]" class="form-control" value="{{ old('historical_average_market_price') }}">
+                                    <div class="input-group">
+                                        <input type="number" name="crops[0][historical_average_market_price]" class="form-control" value="{{ old('historical_average_market_price') }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">PKR</span>
+                                        </div>
+                                    </div>
                                     @error('historical_average_market_price')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -105,7 +121,12 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="current_yield">Real-time Market Price (AMP)</label>
-                                    <input type="number" name="crops[0][real_time_market_price]" class="form-control" value="{{ old('real_time_market_price') }}">
+                                    <div class="input-group">
+                                        <input type="number" name="crops[0][real_time_market_price]" class="form-control" value="{{ old('real_time_market_price') }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">PKR</span>
+                                        </div>
+                                    </div>
                                     @error('real_time_market_price')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -114,7 +135,12 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="current_yield">Insured Yield (IY)</label>
-                                    <input type="number" name="crops[0][ensured_yield]" class="form-control" value="{{ old('ensured_yield') }}">
+                                    <div class="input-group">
+                                        <input type="number" name="crops[0][ensured_yield]" class="form-control" value="{{ old('ensured_yield') }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">%</span>
+                                        </div>
+                                    </div>
                                     @error('ensured_yield')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -205,21 +231,20 @@
                                         @enderror
                                     </div>
                                 </div>
-
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="cost_of_production">Cost of Production</label>
+                                        <input type="text" name="cost_of_production" class="form-control" value="{{ old('cost_of_production', $InsuranceSubType->cost_of_production) }}">
+                                        @error('cost_of_production')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="average_yield">Average Yield</label>
                                             <input type="text" name="average_yield" class="form-control" value="{{ old('average_yield', $InsuranceSubType->average_yield) }}">
                                             @error('average_yield')
-                                                <span class="text-danger">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="cost_of_production">Cost of Production</label>
-                                            <input type="text" name="cost_of_production" class="form-control" value="{{ old('cost_of_production', $InsuranceSubType->cost_of_production) }}">
-                                            @error('cost_of_production')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
                                         </div>
@@ -289,12 +314,14 @@
                                 <h4 class="mb-0">{{ $InsuranceType->name }}</h4>
                                 
                                 <div class="d-flex gap-5">
-                                    <select id="cropFilter" class="form-control form-select w-auto rounded mr-2" >
+                                    <select id="cropFilter" class="form-control form-select w-auto rounded mr-2">
                                         <option value="">Crops</option>
-                                        @foreach ($InsuranceSubTypes->pluck('name')->unique() as $name)
-                                            <option value="{{ $name }}">{{ $name }}</option>
+                                        @foreach ($InsuranceSubTypes->unique('crop_name_id') as $subtype)
+                                            <option value="{{ $subtype->crop_name_id }}">
+                                                {{ $subtype->crop->name ?? 'Unknown Crop' }}
+                                            </option>
                                         @endforeach
-                                    </select>
+                                    </select>                                    
                                     
                                     <select id="districtFilter" class="form-control form-select w-auto rounded mr-2" >
                                         <option value="">Districts</option>
@@ -563,35 +590,60 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="cost_of_production">Cost of Production</label>
-                        <input type="number" name="crops[${productionIndex}][cost_of_production]" class="form-control" step="0.01">
+                       <div class="input-group">
+                            <input type="number" name="crops[${productionIndex}][cost_of_production]" class="form-control" step="0.01">
+                            <div class="input-group-append">
+                                <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">PKR</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="average_yield">Average Yield</label>
-                        <input type="number" name="crops[${productionIndex}][average_yield]" class="form-control" step="0.01">
+                        <div class="input-group">
+                            <input type="number" name="crops[${productionIndex}][average_yield]" class="form-control" step="0.01">
+                            <div class="input-group-append">
+                                <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="historical_average_market_price">Historical Average Market Price</label>
-                        <input type="number" name="crops[${productionIndex}][historical_average_market_price]" class="form-control" step="0.01">
+                       <div class="input-group">
+                            <input type="number" name="crops[${productionIndex}][historical_average_market_price]" class="form-control" step="0.01">
+                            <div class="input-group-append">
+                                <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">PKR</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="real_time_market_price">Real-time Market Price (AMP)</label>
-                        <input type="number" name="crops[${productionIndex}][real_time_market_price]" class="form-control" step="0.01">
+                        <div class="input-group">
+                            <input type="number" name="crops[${productionIndex}][real_time_market_price]" class="form-control" step="0.01">
+                            <div class="input-group-append">
+                                <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">PKR</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="ensured_yield">Insured Yield (IY)</label>
-                        <input type="number" name="crops[${productionIndex}][ensured_yield]" class="form-control" step="0.01">
+                        <div class="input-group">
+                            <input type="number" name="crops[${productionIndex}][ensured_yield]" class="form-control" step="0.01">
+                            <div class="input-group-append">
+                                <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -600,6 +652,5 @@
         productionIndex++;
     });
 </script>
-
     
 @endsection

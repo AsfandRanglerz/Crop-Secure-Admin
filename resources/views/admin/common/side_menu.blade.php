@@ -127,6 +127,17 @@
                     </a>
                 </li>
             @endif
+
+            @if (Auth::guard('admin')->check() || $sideMenuName->contains('ContactUs'))
+            <!-- Terms & Conditions Section -->
+                <li
+                    class="dropdown {{ request()->is(['admin/admin/contact-us', 'admin/admin/contact-us-createview']) ? 'active' : '' }}">
+                    <a href="{{ url('admin/admin/contact-us') }}" class="nav-link">
+                        <i data-feather="mail"></i><span>Contact Us</span>
+                    </a>
+                </li>
+            @endif
+
             
             <li class="dropdown {{ request()->is('admin/about-us*') ? 'active' : '' }}">
                 <a href="{{ url('/admin/about-us') }}" class="nav-link"><i

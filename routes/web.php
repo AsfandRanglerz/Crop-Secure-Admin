@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\LandDataManagementController;
 use App\Http\Controllers\Admin\CompanyInsuranceTypeController;
 use App\Http\Controllers\Admin\InsuranceClaimRequestController;
 use App\Http\Controllers\Admin\CompanyInsuranceSubTypeController;
+use App\Http\Controllers\Admin\ContactUsController;
 use App\Models\AboutUs;
 use App\Models\PrivacyPolicy;
 use App\Models\TermCondition;
@@ -262,4 +263,13 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::post('/notification-store',  'store')->name('notification.store');
         Route::delete('/notification-destroy/{id}',  'destroy')->name('notification.destroy');
     });
+
+    //contact controller
+
+    Route::get('/contact-us', [ContactUsController::class, 'index'])->name('contact.index');
+    Route::get('/contact-us-create', [ContactUsController::class, 'create'])->name('contact.create');
+    Route::post('/contact-us-store', [ContactUsController::class, 'store'])->name('contact.store');
+    Route::get('/contact-us-edit/{id}', [ContactUsController::class, 'updateview'])->name('contact.updateview');
+    Route::post('/contact-us-update/{id}', [ContactUsController::class, 'update'])->name('contact.update');
+
 });
