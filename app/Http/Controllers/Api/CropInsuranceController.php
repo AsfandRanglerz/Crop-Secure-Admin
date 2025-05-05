@@ -222,4 +222,19 @@ public function getclaim()
 
     return response()->json(['data' => $insurances], 200);
 }
+
+public function postclaim(Request $request){
+    $user = Auth::user();
+     $claim = CropInsurance::create([
+        'crop' => $request->crop,
+        'area_unit' => $request->area_unit,
+        'area' => $request->area,
+        'insurance_type' => $request->insurance_type,
+        'company' => $request->company,
+        'benchmark' => $request->benchmark,
+        'premium_price' => $request->premium_price,
+        'sum_insured' => $request->sum_insured,
+     ]);
+return response()->json(['message' => 'Claim submitted successfully', 'data' => $claim], 200);
+}
 }

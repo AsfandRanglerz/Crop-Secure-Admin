@@ -65,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getinsurances', [CropInsuranceController::class, 'getinsurance']);
     Route::get('/claims', [CropInsuranceController::class, 'claim']);
     Route::get('/getclaims', [CropInsuranceController::class, 'getclaim']);
+    Route::post('/postclaims', [CropInsuranceController::class, 'postclaim']);
     Route::post('insurance/store', [CropInsuranceController::class, 'store']);
 
     #contact us
