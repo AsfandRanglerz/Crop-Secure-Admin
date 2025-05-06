@@ -86,19 +86,29 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $email = $request->header('email') ?? $request->input('email');
+        $loginInput = $request->header('email') ?? $request->input('email');
         $password = $request->header('password') ?? $request->input('password');
     
-        if (!$email || !$password) {
-            return response()->json(['message' => 'Email or Password required'], 422);
+        // if (!$loginInput || !$password) {
+        //     return response()->json(['message' => 'Email or Password required'], 422);
+        // }
+    
+        // $user = Farmer::where('email', $email)->first();
+        // Try to find user by email, CNIC, or contact (phone)
+            $user = Farmer::where('email', $loginInput)
+            ->orWhere('cnic', $loginInput)
+            ->orWhere('contact', $loginInput)
+            ->first();
+    
+        if (!$user) {
+            return response()->json(['message' => 'Account not found.Please try again or register.'], 401);
         }
     
-        $user = Farmer::where('email', $email)->first();
-    
-        if (!$user || !Hash::check($password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        if(!Hash::check($password, $user->password))
+        {
+            return response()->json(['message' => 'Incorrect password'], 401);
         }
-    
+
         if ($user->status != 1) {
             return response()->json(['message' => 'Your account is deactivated'], 403);
         }
@@ -108,7 +118,17 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login Successful',
             'token' => $token,
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'fname' => $user->fname,
+                'email' => $user->email,
+                'contact' => $user->contact,
+                'cnic' => $user->cnic,
+                'dob' => $user->dob ? Carbon::parse($user->dob)->format('d/m/Y') : null,
+                'status' => $user->status,
+                'image' => $user->image,
+            ],
             'role' => 'farmer'
         ]);
     }
@@ -207,7 +227,7 @@ class AuthController extends Controller
             $user = Farmer::where('email', $request->email)->first();
     
             if (!$user) {
-                return response()->json(['message' => 'User not found.'], 404);
+                return response()->json(['message' => 'Account not found.Please try again.'], 404);
             }
     
             if (Hash::check($request->password, $user->password)) {
