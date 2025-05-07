@@ -50,7 +50,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="district_name">District</label>
-                                    <select id="districtAdd" name="crops[0][district_name]" class="form-control form-select">
+                                    <select class="form-control form-select district-select" name="crops[0][district_name]">
                                         <option value="">Select District</option>
                                         @foreach ($districts as $district)
                                             <option value="{{ $district->id }}">{{ $district->name }}</option>
@@ -65,7 +65,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="tehsil">Tehsil</label>
-                                    <select id="tehsilAdd" name="crops[0][tehsil_id]" class="form-control form-select">
+                                    <select class="form-control form-select tehsil-select" name="crops[0][tehsil_id]">
                                         <option value="">Select Tehsil</option>
                                         <!-- Tehsils will be populated here -->
                                     </select>
@@ -202,7 +202,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="district_name">District</label>
-                                        <select id="districtEdit" name="district_name" class="form-control form-select">
+                                        <select name="district_name" class="form-control form-select district-select">
                                             <option value="">Select District</option>
                                             @foreach ($districts as $district)
                                                 <option value="{{ $district->id }}" 
@@ -222,7 +222,7 @@
                                     <div class="form-group">
                                         <label for="tehsil_id">Tehsil</label>
                                         <!-- Tehsil Dropdown -->
-                                        <select id="tehsilEdit" name="tehsil_id" class="form-control form-select">
+                                        <select name="tehsil_id" class="form-control form-select tehsil-select" data-selected="{{ old('tehsil_id', $InsuranceSubType->tehsil_id) }}">
                                             <option value="">Select Tehsil</option>
                                             <!-- Tehsils will be populated dynamically -->
                                         </select>
@@ -429,17 +429,19 @@
 <script>
      $(document).ready(function () {
         /** ========== ADD FORM HANDLING ========== */
-        $('#districtAdd').change(function () {
-            let districtId = $(this).val();
-            $('#tehsilAdd').empty().append('<option value="">Select Tehsil</option>');
-    
+        $(document).on('change', '.district-select', function () {
+        let districtId = $(this).val();
+        let $tehsilSelect = $(this).closest('.row').find('.tehsil-select');
+
+        $tehsilSelect.empty().append('<option value="">Select Tehsil</option>');
+
             if (districtId) {
                 $.ajax({
                     url: `{{ route('get.tehsils', ':districtId') }}`.replace(':districtId', districtId),
                     method: 'GET',
                     success: function (data) {
                         data.forEach(function (tehsil) {
-                            $('#tehsilAdd').append(`<option value="${tehsil.id}">${tehsil.name}</option>`);
+                            $tehsilSelect.append(`<option value="${tehsil.id}">${tehsil.name}</option>`);
                         });
                     },
                     error: function (xhr) {
@@ -450,42 +452,44 @@
         });
     
         /** ========== EDIT FORM HANDLING ========== */
-        function loadTehsilsForEdit(districtId, selectedTehsil = null) {
-            $('#tehsilEdit').empty().append('<option value="">Select Tehsil</option>');
-    
-            if (districtId) {
-                $.ajax({
-                    url: `{{ route('get.tehsils', ':districtId') }}`.replace(':districtId', districtId),
-                    method: 'GET',
-                    success: function (data) {
-                        data.forEach(function (tehsil) {
-                            let isSelected = selectedTehsil == tehsil.id ? 'selected' : '';
-                            $('#tehsilEdit').append(
-                                `<option value="${tehsil.id}" ${isSelected}>${tehsil.name}</option>`
-                            );
-                        });
-                    },
-                    error: function (xhr) {
-                        console.error('Error fetching tehsils:', xhr);
-                    }
-                });
-            }
+        function loadTehsils($districtSelect, selectedTehsil = null) {
+        let districtId = $districtSelect.val();
+        let $row = $districtSelect.closest('.row');
+        let $tehsilSelect = $row.find('.tehsil-select');
+
+        $tehsilSelect.empty().append('<option value="">Select Tehsil</option>');
+
+        if (districtId) {
+            $.ajax({
+                url: `{{ route('get.tehsils', ':districtId') }}`.replace(':districtId', districtId),
+                method: 'GET',
+                success: function (data) {
+                    data.forEach(function (tehsil) {
+                        let isSelected = selectedTehsil == tehsil.id ? 'selected' : '';
+                        $tehsilSelect.append(`<option value="${tehsil.id}" ${isSelected}>${tehsil.name}</option>`);
+                    });
+                },
+                error: function (xhr) {
+                    console.error('Error fetching tehsils:', xhr);
+                }
+            });
         }
-    
-        // Auto-load tehsils in edit form when the page loads
-        let selectedDistrict = "{{ old('district_name', $InsuranceSubType->district_name ?? '') }}"; 
-        let selectedTehsil = "{{ old('tehsil_id', $InsuranceSubType->tehsil_id ?? '') }}"; 
-    
-        if (selectedDistrict) {
-            $('#districtEdit').val(selectedDistrict).trigger('change'); // Set district
-            loadTehsilsForEdit(selectedDistrict, selectedTehsil); // Load tehsils and set selected one
+    }
+
+    // Handle district change for all district dropdowns
+    $(document).on('change', '.district-select', function () {
+        let $district = $(this);
+        loadTehsils($district);
+    });
+
+    // On page load, load tehsils for all pre-filled district fields (edit case)
+    $('.district-select').each(function () {
+        let $district = $(this);
+        let selectedTehsil = $district.data('selected-tehsil') || $district.closest('.row').find('.tehsil-select').data('selected');
+        if ($district.val()) {
+            loadTehsils($district, selectedTehsil);
         }
-    
-        // Update tehsils when changing district in edit form
-        $('#districtEdit').change(function () {
-            let districtId = $(this).val();
-            loadTehsilsForEdit(districtId);
-        });
+    });
     });
 </script>
 <script>
@@ -569,7 +573,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="name">Distrct</label>
-                        <select id="districtAdd" name="crops[${productionIndex}][district_name]" class="form-control form-select">
+                        <select class="form-control form-select district-select" name="crops[${productionIndex}][district_name]">
                             <option value="">Select District</option>
                                 @foreach ($districts as $district)
                                     <option value="{{ $district->id }}">{{ $district->name }}</option>
@@ -581,7 +585,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="name">Tehsil</label>
-                        <select id="tehsilAdd" name="crops[${productionIndex}][tehsil_id]" class="form-control form-select">
+                        <select class="form-control form-select tehsil-select" name="crops[${productionIndex}][tehsil_id]">
                                  <option value="">Select Tehsil</option>
                         </select>
                     </div>
