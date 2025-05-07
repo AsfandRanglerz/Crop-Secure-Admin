@@ -34,6 +34,8 @@ Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/password-reset', [AuthController::class, 'passwordReset']);
 
+//land data management
+Route::get('/districts', [LandDataManagement::class, 'getDistricts']);  
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -44,7 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
    
     Route::prefix('land')->group(function () {
 
-        Route::get('districts', [LandDataManagement::class, 'getDistricts']);  
         Route::get('districts/{id}/tehsils', [LandDataManagement::class, 'getTehsils']);   
         Route::get('tehsils/{id}/ucs', [LandDataManagement::class, 'getUcs']);   
         Route::get('ucs/{id}/villages', [LandDataManagement::class, 'getVillages']);

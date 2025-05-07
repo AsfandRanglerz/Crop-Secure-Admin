@@ -22,7 +22,16 @@ class AuthorizedDealerController extends Controller
                 'required',
                 'unique:authorized_dealers,cnic'
             ],
-        ]);
+            'phone' => [
+                'required',
+                'unique:authorized_dealers,contact'
+            ],
+        ],
+    [
+        'phone.required' => 'The phone number is required',
+        'phone.unique' => 'The phone number has already been taken',
+    ]
+    );
 
         if ($validator->fails()) {
             return response()->json([
@@ -35,11 +44,14 @@ class AuthorizedDealerController extends Controller
 
         $user = AuthorizedDealer::create([
             'name' => $request->name,
+            'father_name' => $request->father_name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'cnic' => $request->cnic,
             'contact' => $request->phone,
-            // 'dob' => $request->dob,
+            'dob' => $request->dob,
+            'district' => $request->district,
+
         ]);
 
         $mailData = [
