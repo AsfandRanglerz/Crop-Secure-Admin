@@ -26,10 +26,13 @@
                                         <tr>
                                             <th>Sr.</th>
                                             <th>Name</th>
+                                            <th>Father Name</th>
                                             <th>Email</th>
                                             <th>Image</th>
                                             <th>CNIC</th>
+                                            <th>DOB</th>
                                             <th>Contact</th>
+                                            <th>District</th>
                                             <th>Items</th>
                                             <th>Status</th>
                                             <th scope="col">Actions</th>
@@ -40,13 +43,16 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $dealer->name }}</td>
+                                                <td>{{ $dealer->father_name }}</td>
                                                 <td>{{ $dealer->email }}</td>
                                                 <td>
                                                     <img src="{{ asset($dealer->image) }}" alt=""
                                                         height="50"width="50" class="image">
                                                 </td>
                                                 <td>{{ $dealer->cnic }}</td>
+                                                <td>{{ $dealer->dob }}</td>
                                                 <td>{{ $dealer->contact }}</td>
+                                                <td>{{ $dealer->district }}</td>
                                                 <td>
                                                     <a href="
                                                     {{ route('dealer.item.index', $dealer->id) }}

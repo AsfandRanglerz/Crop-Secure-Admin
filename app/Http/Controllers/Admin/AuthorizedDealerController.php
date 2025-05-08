@@ -84,9 +84,12 @@ class AuthorizedDealerController extends Controller
         // Create a new dealer record
         AuthorizedDealer::create([
             'name' => $request->name,
+            'father_name' => $request->father_name,
             'email' => $request->email,
             'password' => bcrypt($password),
             'cnic' => $request->cnic,
+            'dob' => $request->dob,
+            'district' => $request->district,
             'contact' => $request->contact,
             'status' => $request->status,
             'image' => $image
@@ -150,6 +153,9 @@ class AuthorizedDealerController extends Controller
 
         $dealer->update([
             'name' => $request->name,
+            'father_name' => $request->father_name,
+            'dob' => $request->dob,
+            'district' => $request->district,
             'email' => $request->email,
             'cnic' => $request->cnic,
             'contact' => $request->contact,

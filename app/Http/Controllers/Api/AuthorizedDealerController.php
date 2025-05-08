@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Farmer;
 use App\Mail\WelcomeMail;
 use Illuminate\Http\Request;
 use App\Mail\WelcomeDealerMail;
@@ -17,14 +18,33 @@ class AuthorizedDealerController extends Controller
     {
         // Validate the incoming request
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:authorized_dealers,email',
+            'email' => [
+                'required',
+                'email',
+                'unique:authorized_dealers,email',
+                function ($attribute, $value, $fail) {
+                    if (Farmer::where('email', $value)->exists()) {
+                        $fail('The email has already been used by a farmer');
+                    }
+                }
+            ],
             'cnic' => [
                 'required',
-                'unique:authorized_dealers,cnic'
+                'unique:authorized_dealers,cnic',
+                function ($attribute, $value, $fail) {
+                    if (Farmer::where('cnic', $value)->exists()) {
+                        $fail('The cnic has already been used by a farmer');
+                    }
+                }
             ],
             'phone' => [
                 'required',
-                'unique:authorized_dealers,contact'
+                'unique:authorized_dealers,contact',
+                function ($attribute, $value, $fail) {
+                    if (Farmer::where('contact', $value)->exists()) {
+                        $fail('The phone number has already been used by a farmer');
+                    }
+                }
             ],
         ],
     [
@@ -33,12 +53,15 @@ class AuthorizedDealerController extends Controller
     ]
     );
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors()->first(),
-            ], 422);
-        }
+    $errors = $validator->errors();
 
+    if ($errors->has('cnic')) {
+        return response()->json(['message' => $errors->first('cnic')], 422);
+    } elseif ($errors->has('email')) {
+        return response()->json(['message' => $errors->first('email')], 422);
+    } elseif ($errors->has('phone')) {
+        return response()->json(['message' => $errors->first('phone')], 422);
+    }
         // raw password for email
         $rawPassword = $request->password;
 

@@ -23,6 +23,16 @@
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>
+                                    <!-- Father Name Field -->
+                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                        <div class="form-group">
+                                            <label for="father_name">Father Name</label>
+                                            <input type="text" class="form-control" id="father_name" name="father_name" 
+                                            value="{{ $dealer->father_name }}"
+                                             required>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
 
                                     <!-- Email Field -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
@@ -44,6 +54,15 @@
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>
+                                    <!-- DOB Field -->
+                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                        <div class="form-group">
+                                            <label for="dob">DOB</label>
+                                            <input type="date" class="form-control" id="dob" name="dob" value="{{ $dealer->dob ? $dealer->dob->format('Y-m-d') : '' }}"
+                                                required>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
 
                                     <!-- Contact Field -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
@@ -53,6 +72,18 @@
                                                 required>
                                             <div class="invalid-feedback"></div>
                                             @error('contact')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- District Field -->
+                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                        <div class="form-group">
+                                            <label for="district">District</label>
+                                            <input type="text" class="form-control" id="district" name="district" value="{{ $dealer->district }}"
+                                                required>
+                                            <div class="invalid-feedback"></div>
+                                            @error('district')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
                                         </div>

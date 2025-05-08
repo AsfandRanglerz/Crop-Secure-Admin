@@ -9,6 +9,7 @@ use App\Mail\WelcomeMail;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\ResetPasswordMail;
+use App\Models\AuthorizedDealer;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -28,14 +29,33 @@ class AuthController extends Controller
     {
         // Validate the incoming request
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:farmers,email',
+            'email' => ['required',
+            'email',
+            'unique:farmers,email',
+            function ($attribute, $value, $fail) {
+                if (AuthorizedDealer::where('email', $value)->exists()) {
+                    $fail('The email has already been used by a authorized dealer');
+                }
+            }
+        
+        ],
             'cnic' => [
                 'required',
-                'unique:farmers,cnic'
+                'unique:farmers,cnic',
+                function ($attribute, $value, $fail) {
+                    if (AuthorizedDealer::where('cnic', $value)->exists()) {
+                        $fail('The cnic has already been used by a authorized dealer');
+                    }
+                }
             ],
             'phone' => [
                 'required',
-                'unique:farmers,contact'
+                'unique:farmers,contact',
+                function ($attribute, $value, $fail) {
+                    if (AuthorizedDealer::where('contact', $value)->exists()) {
+                        $fail('The phone number has already been used by a authorized dealer');
+                    }
+                }
             ],
         ],
     [
@@ -43,11 +63,15 @@ class AuthController extends Controller
         'phone.unique' => 'The phone number has already been taken',
     ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors()->first(),
-            ], 422);
-        }
+    $errors = $validator->errors();
+
+    if ($errors->has('cnic')) {
+        return response()->json(['message' => $errors->first('cnic')], 422);
+    } elseif ($errors->has('email')) {
+        return response()->json(['message' => $errors->first('email')], 422);
+    } elseif ($errors->has('phone')) {
+        return response()->json(['message' => $errors->first('phone')], 422);
+    }
 
         // raw password for email
         $rawPassword = $request->password;
@@ -284,7 +308,7 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = Auth::guard('api')->user();
+        $user = Auth::user();
 
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -304,7 +328,10 @@ class AuthController extends Controller
         //     ], 422);
         // }
 
-        $data = $request->only(['name', 'email','contact']);
+        // $data = $request->only(['name', 'fname','dob']);
+        $user->name = $request->name ?? $user->name;
+        $user->fname = $request->fname ?? $user->fname;
+        $user->dob = $request->dob ?? $user->dob;
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -314,9 +341,20 @@ class AuthController extends Controller
             $data['image'] = 'public/admin/assets/images/users/' . $filename;
         }
 
-        $user->update($data);
-
-        return response()->json(['message' => 'Profile updated successfully'], 200);
+        // $user->update($data);
+        $user->save();
+        return response()->json(['message' => 'Profile updated successfully',
+        
+            'id' => $user->id,
+            'name' => $user->name,
+            'fname' => $user->fname,
+            'email' => $user->email,
+            'cnic' => $user->cnic,
+            'phone' => $user->contact,
+            'dob' => $user->dob ? Carbon::parse($user->dob)->format('d/m/Y') : null,
+            'image' => $user->image ,
+        
+    ],200);
     }
     
 

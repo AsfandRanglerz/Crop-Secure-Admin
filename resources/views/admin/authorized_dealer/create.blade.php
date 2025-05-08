@@ -22,6 +22,16 @@
                                         </div>
                                     </div>
 
+                                    <!-- Father Name Field -->
+                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                        <div class="form-group">
+                                            <label for="father_name">Father Name</label>
+                                            <input type="text" class="form-control" id="father_name" name="father_name" value="{{ old('father_name') }}"
+                                                required>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+
                                     <!-- Email Field -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
                                         <div class="form-group">
@@ -48,6 +58,19 @@
                                         </div>
                                     </div>
 
+                                    <!-- DOB -->
+                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                        <div class="form-group">
+                                            <label for="dob">DOB</label>
+                                            <input type="date" class="form-control" id="dob" name="dob" value="{{ old('dob') }}"
+                                                required>
+                                            <div class="invalid-feedback"></div>
+                                        @error('dob')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        </div>
+                                    </div>
+
                                     <!-- Contact Field -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
                                         <div class="form-group">
@@ -61,6 +84,18 @@
                                         </div>
                                     </div>
 
+                                    <!-- District -->
+                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                        <div class="form-group">
+                                            <label for="district">District</label>
+                                            <input type="text" class="form-control" id="district" name="district" value="{{ old('district') }}"
+                                                required>
+                                            <div class="invalid-feedback"></div>
+                                            @error('district')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
 
                                     <!-- Status Dropdown -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
