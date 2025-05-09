@@ -98,7 +98,7 @@
                                     </div>
 
                                     <!-- Status Dropdown -->
-                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                    {{-- <div class="col-sm-6 pl-sm-0 pr-sm-3">
                                         <div class="form-group mb-2">
                                             <label for="status">Status</label>
                                             <select name="status" id="status" class="form-control" required>
@@ -110,7 +110,7 @@
                                                 </option>
                                             </select>
                                         </div>
-                                    </div>
+                                    </div> --}}
 
 
                                     <!-- Image Upload -->

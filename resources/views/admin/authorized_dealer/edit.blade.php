@@ -58,7 +58,7 @@
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
                                         <div class="form-group">
                                             <label for="dob">DOB</label>
-                                            <input type="date" class="form-control" id="dob" name="dob" value="{{ $dealer->dob ? $dealer->dob->format('Y-m-d') : '' }}"
+                                            <input type="date" class="form-control" id="dob" name="dob" value="{{ $dealer->dob ? \Carbon\Carbon::parse($dealer->dob)->format('d/m/Y') : '' }}"
                                                 required>
                                             <div class="invalid-feedback"></div>
                                         </div>
@@ -76,21 +76,24 @@
                                             @enderror
                                         </div>
                                     </div>
-                                    <!-- District Field -->
+                                    <!-- District Dropdown -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
-                                        <div class="form-group">
+                                        <div class="form-group mb-2">
                                             <label for="district">District</label>
-                                            <input type="text" class="form-control" id="district" name="district" value="{{ $dealer->district }}"
-                                                required>
-                                            <div class="invalid-feedback"></div>
-                                            @error('district')
+                                            <select name="district" id="district" class="form-control" required>
+                                                <option value="" disabled selected>Select an District</option>
+                                                @foreach ($districts as $district)
+                                                <option value="{{ $district->id }}" {{ old('district') == $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
+                                                @endforeach
+                                                @error('district_id')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
+                                            </select>
                                         </div>
                                     </div>
 
                                     <!-- Status Dropdown -->
-                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                    {{-- <div class="col-sm-6 pl-sm-0 pr-sm-3">
                                         <div class="form-group mb-2">
                                             <label for="status">Status</label>
                                             <select name="status" id="status" class="form-control">
@@ -103,7 +106,7 @@
                                                 >Deactive</option>
                                             </select>
                                         </div>
-                                    </div>
+                                    </div> --}}
 
                                     <!-- Image Upload -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">

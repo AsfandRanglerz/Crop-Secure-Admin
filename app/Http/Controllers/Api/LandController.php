@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Uc;
 use App\Models\Land;
+use App\Models\Tehsil;
+use App\Models\Village;
 use App\Models\AreaUnit;
+use App\Models\District;
 use Illuminate\Http\Request;
 use App\Models\CropInsurance;
 use App\Http\Controllers\Controller;
@@ -89,5 +93,27 @@ public function landrecord(Request $request){
         'data' => $land
     ], 200);
 }
+public function getDistricts()
+    {
+        $districts = District::select('id', 'name')->get();
+        return response()->json($districts);
+    }
 
+    public function getTehsils($district_id)
+    {
+        $tehsils = Tehsil::where('district_id', $district_id)->select('id', 'name')->get();
+        return response()->json($tehsils);
+    }
+
+    public function getUCs($tehsil_id)
+    {
+        $ucs = Uc::where('tehsil_id', $tehsil_id)->select('id', 'name')->get();
+        return response()->json($ucs);
+    }
+
+    public function getVillages($uc_id)
+    {
+        $villages = Village::where('uc_id', $uc_id)->select('id', 'name')->get();
+        return response()->json($villages);
+    }
 }

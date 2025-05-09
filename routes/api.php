@@ -28,6 +28,11 @@ Route::post('/dealer', [AuthorizedDealerController::class, 'authorizeDealerRegis
 
 // Route::get('user', [AuthController::class, 'user']);
 
+//get land record
+Route::get('/landdistricts', [LandController::class, 'getDistricts']);  
+Route::get('/tehsils/{district_id}', [LandController::class, 'getTehsils']);
+Route::get('/ucs/{tehsil_id}', [LandController::class, 'getUCs']);
+Route::get('/villages/{uc_id}', [LandController::class, 'getVillages']);
 
 // password reset
 Route::post('/send-otp', [AuthController::class, 'sendOtp']);

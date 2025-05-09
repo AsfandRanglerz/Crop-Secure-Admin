@@ -34,7 +34,7 @@
                                             <th>Contact</th>
                                             <th>District</th>
                                             <th>Items</th>
-                                            <th>Status</th>
+                                            {{-- <th>Status</th> --}}
                                             <th scope="col">Actions</th>
                                         </tr>
                                     </thead>
@@ -58,13 +58,13 @@
                                                     {{ route('dealer.item.index', $dealer->id) }}
                                                      " class="btn btn-primary">View</a>
                                                 </td>
-                                                <td>
+                                                {{-- <td>
                                                     @if ($dealer->status == 1)
                                                     <div class="badge badge-success badge-shadow">Activated</div>
                                                     @else
                                                     <div class="badge badge-danger badge-shadow">Deactivated</div>
                                                 @endif
-                                                </td>
+                                                </td> --}}
                                                 <td>
                                                     <div class="d-flex gap-4">
                                                         @if (Auth::guard('admin')->check() || ($sideMenuPermissions->contains(fn ($permission) => $permission['side_menu_name'] === 'Authorized Dealers' && $permission['permissions']->contains('edit'))))
