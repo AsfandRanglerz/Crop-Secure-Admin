@@ -60,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     #lands
     Route::post('/land', [LandController::class, 'store']);
     Route::post('/land-record', [LandController::class, 'landrecord']);
+    Route::get('/getlandrecord', [LandController::class, 'getLandRecord']);
     Route::get('/showlands', [LandController::class, 'showlands']);
     Route::get('/area-units', [LandController::class, 'getAreaUnits']);
 

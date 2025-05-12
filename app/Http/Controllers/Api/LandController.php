@@ -81,6 +81,7 @@ public function showlands()
 public function landrecord(Request $request){
     $user = Auth::user();
     $land = CropInsurance::create([
+        'user_id' => Auth::id(),
         'district_id' => $request->district_id,
         'tehsil_id' => $request->tehsil_id,
         'uc' => $request->uc,
@@ -93,6 +94,41 @@ public function landrecord(Request $request){
         'data' => $land
     ], 200);
 }
+
+public function getLandRecord()
+{
+    $user = Auth::user();
+
+    // If you're saving user_id in CropInsurance, filter by user
+    $records = CropInsurance::with([
+        'district:id,name',
+        'tehsil:id,name'
+    ])
+    ->select('district_id', 'tehsil_id', 'uc', 'village', 'other')
+    ->where('user_id', $user->id) // Optional: only if related to user
+    ->get();
+
+    if ($records->isEmpty()) {
+        return response()->json([
+            'message' => 'No land records found',
+        ], 404);
+    }
+$formatted = $records->map(function ($record) {
+        return [
+            'district_name' => $record->district->name ?? null,
+            'tehsil_name' => $record->tehsil->name ?? null,
+            'uc' => $record->uc,
+            'village' => $record->village,
+            'other' => $record->other,
+        ];
+    });
+
+    return response()->json([
+        'message' => 'Land records retrieved successfully',
+        'data' => $formatted,
+    ], 200);
+}
+
 public function getDistricts()
     {
         $districts = District::select('id', 'name')->get();
@@ -102,18 +138,36 @@ public function getDistricts()
     public function getTehsils($district_id)
     {
         $tehsils = Tehsil::where('district_id', $district_id)->select('id', 'name')->get();
+        if ($tehsils->isEmpty()) {
+        return response()->json([
+            'message' => 'No tehsil found.',
+        ], 404);
+    }
         return response()->json($tehsils);
     }
 
     public function getUCs($tehsil_id)
     {
         $ucs = Uc::where('tehsil_id', $tehsil_id)->select('id', 'name')->get();
+
+         if ($ucs->isEmpty()) {
+        return response()->json([
+            'message' => 'No UC found.',
+        ], 404);
+    }
         return response()->json($ucs);
     }
 
     public function getVillages($uc_id)
     {
         $villages = Village::where('uc_id', $uc_id)->select('id', 'name')->get();
+
+    if ($villages->isEmpty()) {
+        return response()->json([
+            'message' => 'No village found.',
+        ], 404);
+    }
+        
         return response()->json($villages);
     }
 }

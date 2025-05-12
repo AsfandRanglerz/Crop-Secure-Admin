@@ -22,4 +22,5 @@ class Farmer extends Authenticatable
     return $this->hasMany(ProductSelection::class);
 }
 
+
 }
