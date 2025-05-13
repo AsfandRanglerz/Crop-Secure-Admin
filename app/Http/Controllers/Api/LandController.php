@@ -58,7 +58,7 @@ public function getAreaUnits()
     return response()->json(AreaUnit::all());
 }
 
-public function showlands()
+public function showLands()
 {
     $user = Auth::user();
 

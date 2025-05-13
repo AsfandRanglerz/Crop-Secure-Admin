@@ -49,21 +49,21 @@ Route::post('/admin-reset-password-link', [AdminController::class, 'adminResetPa
 Route::get('/change_password/{id}', [AdminController::class, 'change_password']);
 Route::post('/admin-reset-password', [AdminController::class, 'ResetPassword']);
 
+Route::get('/aboutUs', function () {
+    $data = AboutUs::first();
+    return view('aboutUs.aboutUs', compact('data'));
+}); 
+Route::get('/privacyPolicy', function () {
+    $data = PrivacyPolicy::first();
+    return view('privacyPolicy.privacy', compact('data'));
+});
+Route::get('/terms-conditions', function () {
+    $data = TermCondition::first();
+    return view('terms_and_condition.termsConditions', compact('data'));
+});
 Route::prefix('admin')->middleware('admin')->group(function () {
 
 // webview links
-    Route::get('/aboutUs', function () {
-        $data = AboutUs::first();
-        return view('aboutUs.aboutUs', compact('data'));
-    }); 
-    Route::get('/privacyPolicy', function () {
-        $data = PrivacyPolicy::first();
-        return view('privacyPolicy.privacy', compact('data'));
-    });
-    Route::get('/terms-conditions', function () {
-        $data = TermCondition::first();
-        return view('terms_and_condition.termsConditions', compact('data'));
-    });
 
     Route::get('dashboard', [AdminController::class, 'getdashboard']);
     Route::get('profile', [AdminController::class, 'getProfile']);
