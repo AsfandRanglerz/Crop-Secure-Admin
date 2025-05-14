@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\LandController;
 use App\Http\Controllers\Api\ProductController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Api\LandDataManagement;
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\CropInsuranceController;
 use App\Http\Controllers\Api\AuthorizedDealerController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +29,10 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/dealer', [AuthorizedDealerController::class, 'authorizeDealerRegister']);
 
 // Route::get('user', [AuthController::class, 'user']);
+
+//FAQs
+Route::get('/faqs', [FaqController::class, 'getfaq']);
+
 
 //get land record
 Route::get('/landdistricts', [LandController::class, 'getDistricts']);  
