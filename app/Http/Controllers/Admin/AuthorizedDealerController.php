@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\Admin\AdminController;
+use App\Models\District;
 
 class AuthorizedDealerController extends Controller
 {
@@ -45,6 +46,7 @@ class AuthorizedDealerController extends Controller
 
     public function create()
     {
+        $districts = District::all()->sortBy('name');
         $sideMenuName = [];
 
         if (Auth::guard('subadmin')->check()) {
@@ -53,7 +55,7 @@ class AuthorizedDealerController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
         }
 
-        return view('admin.authorized_dealer.create', compact('sideMenuName'));
+        return view('admin.authorized_dealer.create', compact('sideMenuName', 'districts'));
     }
 
     public function store(Request $request)
@@ -67,6 +69,7 @@ class AuthorizedDealerController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
         // dd($request);
+        $district = District::find($request->district);
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -81,17 +84,44 @@ class AuthorizedDealerController extends Controller
         /**generate random password */
         $password = random_int(10000000, 99999999);
 
+        // Clean and format CNIC
+        $rawCnic = preg_replace('/[^0-9]/', '', $request->cnic);
+        $formattedCnic = null;
+        if ($rawCnic && strlen($rawCnic)) {
+            $formattedCnic = preg_replace("/^(\d{5})(\d{7})(\d{1})$/", "$1-$2-$3", $rawCnic);
+        }
+
+        // formated phone number +92
+        $formattedContact = null;
+        $rawContact = preg_replace('/[^0-9]/', '', $request->contact);
+
+        if (preg_match('/^03\d{9}$/', $rawContact)) {
+            $formattedContact = '+92' . substr($rawContact, 1);
+        }
+        elseif (preg_match('/^923\d{9}$/', $rawContact)) {
+            $formattedContact = '+' . $rawContact;
+        }
+        elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
+            $formattedContact = $request->contact;
+        }
+        else {
+            return back()->withErrors([
+                'contact' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
+            ]);
+        }
+
+
         // Create a new dealer record
         AuthorizedDealer::create([
             'name' => $request->name,
             'father_name' => $request->father_name,
             'email' => $request->email,
             'password' => bcrypt($password),
-            'cnic' => $request->cnic,
+            'cnic' => $formattedCnic,
             'dob' => $request->dob,
-            'district' => $request->district,
-            'contact' => $request->contact,
-            'status' => $request->status,
+            'district' => $district->name,
+            'contact' => $formattedContact,
+            // 'status' => $request->status,
             'image' => $image
         ]);
 
@@ -109,6 +139,7 @@ class AuthorizedDealerController extends Controller
 
     public function edit($id)
     {
+        $districts = District::all()->sortBy('name');
         $dealer = AuthorizedDealer::find($id);
         $sideMenuName = [];
 
@@ -118,7 +149,7 @@ class AuthorizedDealerController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
         }
 
-        return view('admin.authorized_dealer.edit', compact('sideMenuName', 'dealer'));
+        return view('admin.authorized_dealer.edit', compact('sideMenuName', 'dealer', 'districts'));
     }
 
     public function update(Request $request, $id)
@@ -131,10 +162,9 @@ class AuthorizedDealerController extends Controller
             'status' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
-        // dd($request);
 
         $dealer = AuthorizedDealer::findOrFail($id);
-
+        $district = District::find($request->district);
         $image = $dealer->image;
 
         if ($request->hasFile('image')) {
@@ -151,20 +181,46 @@ class AuthorizedDealerController extends Controller
             $dealer->image = $image;
         }
 
+        // Format CNIC
+        $rawCnic = preg_replace('/[^0-9]/', '', $request->cnic);
+        $formattedCnic = null;
+        if ($rawCnic && strlen($rawCnic)) {
+            $formattedCnic = preg_replace("/^(\d{5})(\d{7})(\d{1})$/", "$1-$2-$3", $rawCnic);
+        }
+
+        // Format Contact Number
+        $formattedContact = null;
+        $rawContact = preg_replace('/[^0-9]/', '', $request->contact);
+
+        if (preg_match('/^03\d{9}$/', $rawContact)) {
+            $formattedContact = '+92' . substr($rawContact, 1);
+        }
+        elseif (preg_match('/^923\d{9}$/', $rawContact)) {
+            $formattedContact = '+' . $rawContact;
+        }
+        elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
+            $formattedContact = $request->contact;
+        }
+        else {
+            return back()->withErrors([
+                'contact' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
+            ]);
+        }
+
         $dealer->update([
             'name' => $request->name,
             'father_name' => $request->father_name,
             'dob' => $request->dob,
-            'district' => $request->district,
+            'district' => $district->name,
             'email' => $request->email,
-            'cnic' => $request->cnic,
-            'contact' => $request->contact,
-            'status' => $request->status,
+            'cnic' => $formattedCnic,
+            'contact' => $formattedContact,
             'image' => $image
         ]);
 
         return redirect()->route('dealer.index')->with(['message' => 'Dealer Updated Successfully']);
     }
+
 
     public function destroy($id)
     {
