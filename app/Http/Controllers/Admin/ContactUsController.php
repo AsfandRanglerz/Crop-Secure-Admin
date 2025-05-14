@@ -72,7 +72,7 @@ class ContactUsController extends Controller
 
     public function updateview($id) {
         $find = ContactUs::find($id);
-        return view('contact.edit', compact('find'));
+        return view('admin.contact.edit', compact('find'));
 
     }
 

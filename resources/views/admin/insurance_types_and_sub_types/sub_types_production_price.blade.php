@@ -376,11 +376,11 @@
                                             <td>{{ $InsuranceSubType->crop->name ?? 'N/A' }}</td>
                                             <td class="district">{{ $InsuranceSubType->district->name ?? 'No district' }}</td>
                                             <td class="tehsil">{{ $InsuranceSubType->tehsil->name ?? 'No tehsil' }}</td> 
-                                            <td>{{ $InsuranceSubType->cost_of_production }}</td>
+                                            <td>{{ $InsuranceSubType->cost_of_production }} PKR</td>
                                             <td>{{ $InsuranceSubType->average_yield }}%</td>
-                                            <td>{{ $InsuranceSubType->historical_average_market_price }}</td>
-                                            <td>{{ $InsuranceSubType->real_time_market_price }}</td>
-                                            <td>{{ $InsuranceSubType->ensured_yield }}</td>
+                                            <td>{{ $InsuranceSubType->historical_average_market_price }} PKR</td>
+                                            <td>{{ $InsuranceSubType->real_time_market_price }} PKR</td>
+                                            <td>{{ $InsuranceSubType->ensured_yield }}%</td>
                                             <td class="year">{{ $InsuranceSubType->year }}</td>
                                             <td>
                                                 <div class="d-flex gap-4">
@@ -430,8 +430,10 @@
      $(document).ready(function () {
         /** ========== ADD FORM HANDLING ========== */
         $(document).on('change', '.district-select', function () {
-        let districtId = $(this).val();
-        let $tehsilSelect = $(this).closest('.row').find('.tehsil-select');
+        let $district = $(this);
+        loadTehsils($district);
+        // let districtId = $(this).val();
+        // let $tehsilSelect = $(this).closest('.row').find('.tehsil-select');
 
         $tehsilSelect.empty().append('<option value="">Select Tehsil</option>');
 
@@ -492,6 +494,7 @@
     });
     });
 </script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Get all filter dropdowns

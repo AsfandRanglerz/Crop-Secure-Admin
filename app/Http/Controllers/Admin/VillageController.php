@@ -29,7 +29,7 @@ class VillageController extends Controller
         return view('admin.land.village.index', compact('uc', 'villages','sideMenuName', 'crops'));
     }
     
-        public function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'uc_id' => 'required|exists:ucs,id',

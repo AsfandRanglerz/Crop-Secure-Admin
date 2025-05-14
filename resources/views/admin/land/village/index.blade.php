@@ -1,7 +1,11 @@
 @extends('admin.layout.app')
 @section('title', 'Villages')
 @section('content')
-
+<style>
+    .pac-container {
+    z-index: 1051 !important; 
+}
+</style>
 
     {{-- Add village Modal --}}
     <div class="modal fade" id="villageModal" tabindex="-1" role="dialog" aria-labelledby="villageModalLabel" aria-hidden="true">
@@ -21,7 +25,7 @@
                         <!-- Village Name -->
                         <div class="form-group">
                             <label for="name">Village Name</label>
-                            <input type="text" name="name" class="form-control">
+                            <input type="text" id="village_name" name="name" class="form-control">
                         </div>
     
                         <!-- Crop Select -->
@@ -220,6 +224,48 @@
 @endsection
 
 @section('js')
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeS_6C9oYYmoRemrYTCgureWbaJ3IN-7c&libraries=places"></script>
+
+    <script>
+        let placeSelected = false;
+
+        function initAutocomplete() {
+            const input = document.getElementById('village_name');
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                types: ['(regions)'],
+                componentRestrictions: { country: 'pk' } 
+            });
+
+            // When a suggestion is selected
+            autocomplete.addListener('place_changed', function () {
+                const place = autocomplete.getPlace();
+                if (place && place.place_id) {
+                    placeSelected = true;
+                } else {
+                    placeSelected = false;
+                }
+            });
+
+            // Reset the flag on manual typing (user didn't pick a suggestion)
+            input.addEventListener('keydown', function () {
+                placeSelected = false;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initAutocomplete();
+
+            document.getElementById('villageModal').addEventListener('submit', function (e) {
+                if (!placeSelected) {
+                    e.preventDefault();
+                    alert('⚠️ Please select a valid village from the Google');
+                    return false;
+                }
+            });
+        });
+    </script>
+
 
     <script>
         $(document).ready(function() {

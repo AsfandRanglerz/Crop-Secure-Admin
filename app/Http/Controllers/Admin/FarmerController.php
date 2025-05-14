@@ -45,7 +45,7 @@ class FarmerController extends Controller
             'name' => 'required|string|max:255',
             'fname' => 'required|string|max:255',
             'email' => 'required|email|unique:farmers,email',
-            'cnic' => 'nullable|string|unique:farmers,cnic',
+            'cnic' => 'required|string|unique:farmers,cnic',
             'contact' => 'required|string|unique:farmers,contact',
             'dob' => 'nullable|date',
             'status' => 'nullable',
@@ -66,14 +66,41 @@ class FarmerController extends Controller
         /**generate random password */
         $password = random_int(10000000, 99999999);
 
+         // Clean and format CNIC
+        $rawCnic = preg_replace('/[^0-9]/', '', $request->cnic);
+        $formattedCnic = null;
+        if ($rawCnic && strlen($rawCnic)) {
+            $formattedCnic = preg_replace("/^(\d{5})(\d{7})(\d{1})$/", "$1-$2-$3", $rawCnic);
+        }
+
+        // formated phone number +92
+        $formattedContact = null;
+        $rawContact = preg_replace('/[^0-9]/', '', $request->contact);
+
+        if (preg_match('/^03\d{9}$/', $rawContact)) {
+            $formattedContact = '+92' . substr($rawContact, 1);
+        }
+        elseif (preg_match('/^923\d{9}$/', $rawContact)) {
+            $formattedContact = '+' . $rawContact;
+        }
+        elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
+            $formattedContact = $request->contact;
+        }
+        else {
+            return back()->withErrors([
+                'contact' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
+            ]);
+        }
+
+
         // Create a new farmer record
         Farmer::create([
             'name' => $request->name,
             'fname' => $request->fname,
             'email' => $request->email,
             'password' => bcrypt($password),
-            'cnic' => $request->cnic,
-            'contact' => $request->contact,
+            'cnic' => $formattedCnic,
+            'contact' => $formattedContact,
             'dob' => $request->dob,
             'status' => $request->status,
             'image' => $image
@@ -136,12 +163,38 @@ class FarmerController extends Controller
             $farmer->image = $image;
         }
 
+         // Format CNIC
+        $rawCnic = preg_replace('/[^0-9]/', '', $request->cnic);
+        $formattedCnic = null;
+        if ($rawCnic && strlen($rawCnic)) {
+            $formattedCnic = preg_replace("/^(\d{5})(\d{7})(\d{1})$/", "$1-$2-$3", $rawCnic);
+        }
+
+        // Format Contact Number
+        $formattedContact = null;
+        $rawContact = preg_replace('/[^0-9]/', '', $request->contact);
+
+        if (preg_match('/^03\d{9}$/', $rawContact)) {
+            $formattedContact = '+92' . substr($rawContact, 1);
+        }
+        elseif (preg_match('/^923\d{9}$/', $rawContact)) {
+            $formattedContact = '+' . $rawContact;
+        }
+        elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
+            $formattedContact = $request->contact;
+        }
+        else {
+            return back()->withErrors([
+                'contact' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
+            ]);
+        }
+
         $farmer->update([
             'name' => $request->name,
             'fname' => $request->fname,
             'email' => $request->email,
-            'cnic' => $request->cnic,
-            'contact' => $request->contact,
+            'cnic' => $formattedCnic,
+            'contact' => $formattedContact,
             'dob' => $request->dob,
             'status' => $request->status,
             'image' => $image

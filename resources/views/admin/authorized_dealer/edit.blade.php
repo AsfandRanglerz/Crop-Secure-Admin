@@ -77,7 +77,7 @@
                                         </div>
                                     </div>
                                     <!-- District Dropdown -->
-                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
                                         <div class="form-group mb-2">
                                             <label for="district">District</label>
                                             <select name="district" id="district" class="form-control" required>

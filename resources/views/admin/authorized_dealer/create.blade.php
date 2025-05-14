@@ -86,14 +86,14 @@
 
                                     <!-- District -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
-                                        <div class="form-group">
+                                        <div class="form-group mb-2">
                                             <label for="district">District</label>
-                                            <input type="text" class="form-control" id="district" name="district" value="{{ old('district') }}"
-                                                required>
-                                            <div class="invalid-feedback"></div>
-                                            @error('district')
-                                                <span class="text-danger">{{ $message }}</span>
-                                            @enderror
+                                            <select name="district" id="district" class="form-control" required>
+                                                <option value="" disabled selected>Select an District</option>
+                                                @foreach ($districts as $district)
+                                                    <option value="{{ $district->id }}">{{ $district->name }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
 

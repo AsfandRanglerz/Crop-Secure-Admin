@@ -25,7 +25,7 @@
                                     <thead>
                                         <tr>
                                             <th>Sr.</th>
-                                            <th>Farmer Name</th>
+                                            <th>Name</th>
                                             <th>Father Name</th>
                                             <th>Email</th>
                                             <th>Image</th>

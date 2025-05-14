@@ -50,7 +50,7 @@
                                                         height="50"width="50" class="image">
                                                 </td>
                                                 <td>{{ $dealer->cnic }}</td>
-                                                <td>{{ $dealer->dob }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($dealer->dob)->format('d/m/Y') }}</td>
                                                 <td>{{ $dealer->contact }}</td>
                                                 <td>{{ $dealer->district }}</td>
                                                 <td>
