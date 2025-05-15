@@ -26,6 +26,9 @@
                         <div class="form-group">
                             <label for="name">Village Name</label>
                             <input type="text" id="village_name" name="name" class="form-control">
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+
                         </div>
     
                         <!-- Crop Select -->
@@ -227,44 +230,51 @@
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeS_6C9oYYmoRemrYTCgureWbaJ3IN-7c&libraries=places"></script>
 
-    <script>
-        let placeSelected = false;
+   <script>
+    let placeSelected = false;
 
-        function initAutocomplete() {
-            const input = document.getElementById('village_name');
-            const autocomplete = new google.maps.places.Autocomplete(input, {
-                types: ['(regions)'],
-                componentRestrictions: { country: 'pk' } 
-            });
-
-            // When a suggestion is selected
-            autocomplete.addListener('place_changed', function () {
-                const place = autocomplete.getPlace();
-                if (place && place.place_id) {
-                    placeSelected = true;
-                } else {
-                    placeSelected = false;
-                }
-            });
-
-            // Reset the flag on manual typing (user didn't pick a suggestion)
-            input.addEventListener('keydown', function () {
-                placeSelected = false;
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            initAutocomplete();
-
-            document.getElementById('villageModal').addEventListener('submit', function (e) {
-                if (!placeSelected) {
-                    e.preventDefault();
-                    alert('⚠️ Please select a valid village from the Google');
-                    return false;
-                }
-            });
+    function initAutocomplete() {
+        const input = document.getElementById('village_name');
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+            types: ['(regions)'],
+            componentRestrictions: { country: 'pk' } 
         });
+
+        // When a suggestion is selected
+        autocomplete.addListener('place_changed', function () {
+            const place = autocomplete.getPlace();
+            if (place && place.geometry && place.place_id) {
+                placeSelected = true;
+
+                // Extract and set latitude and longitude
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lng;
+            } else {
+                placeSelected = false;
+            }
+        });
+
+        // Reset the flag on manual typing (user didn't pick a suggestion)
+        input.addEventListener('keydown', function () {
+            placeSelected = false;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initAutocomplete();
+
+        document.getElementById('villageModal').addEventListener('submit', function (e) {
+            if (!placeSelected) {
+                e.preventDefault();
+                alert('⚠️ Please select a valid village from Google suggestions.');
+                return false;
+            }
+        });
+    });
     </script>
+
 
 
     <script>
