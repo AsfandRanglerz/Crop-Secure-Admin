@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\CompanyInsuranceTypeController;
 use App\Http\Controllers\Admin\InsuranceClaimRequestController;
 use App\Http\Controllers\Admin\CompanyInsuranceSubTypeController;
 use App\Http\Controllers\Admin\ContactUsController;
+
 use App\Models\AboutUs;
 use App\Models\PrivacyPolicy;
 use App\Models\TermCondition;
@@ -42,14 +43,12 @@ use App\Models\TermCondition;
 /*Admin routes
  * */
 
-Route::get('/admin', [AuthController::class, 'getLoginPage']);
+Route::get('/admin', [AuthController::class, 'getLoginPage'])->name('login');
 Route::post('/login', [AuthController::class, 'Login']);
 Route::get('/admin-forgot-password', [AdminController::class, 'forgetPassword']);
 Route::post('/admin-reset-password-link', [AdminController::class, 'adminResetPasswordLink']);
 Route::get('/change_password/{id}', [AdminController::class, 'change_password']);
 Route::post('/admin-reset-password', [AdminController::class, 'ResetPassword']);
-
-Route::prefix('admin')->middleware('admin')->group(function () {
 
 // webview links
     Route::get('/aboutUs', function () {
@@ -64,6 +63,8 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         $data = TermCondition::first();
         return view('terms_and_condition.termsConditions', compact('data'));
     });
+
+Route::prefix('admin')->middleware('admin')->group(function () {
 
     Route::get('dashboard', [AdminController::class, 'getdashboard']);
     Route::get('profile', [AdminController::class, 'getProfile']);
@@ -88,12 +89,12 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Sub Admin #################
     Route::controller(SubAdminController::class)->group(function () {
-        Route::get('/subadmin',  'index')->name('subadmin.index');
-        Route::get('/subadmin-create',  'create')->name('subadmin.create');
-        Route::post('/subadmin-store',  'store')->name('subadmin.store');
-        Route::get('/subadmin-edit/{id}',  'edit')->name('subadmin.edit');
-        Route::post('/subadmin-update/{id}',  'update')->name('subadmin.update');
-        Route::delete('/subadmin-destroy/{id}',  'destroy')->name('subadmin.destroy');
+        Route::get('/subadmin',  'index')->name('subadmin.index')->middleware('check.subadmin.permission:SubAdmin,view');
+        Route::get('/subadmin-create',  'create')->name('subadmin.create')->middleware('check.subadmin.permission:SubAdmin,create');
+        Route::post('/subadmin-store',  'store')->name('subadmin.store')->middleware('check.subadmin.permission:SubAdmin,create');
+        Route::get('/subadmin-edit/{id}',  'edit')->name('subadmin.edit')->middleware('check.subadmin.permission:SubAdmin,edit');
+        Route::post('/subadmin-update/{id}',  'update')->name('subadmin.update')->middleware('check.subadmin.permission:SubAdmin,edit');
+        Route::delete('/subadmin-destroy/{id}',  'destroy')->name('subadmin.destroy')->middleware('check.subadmin.permission:SubAdmin,delete');
 
         Route::post('/update-permissions/{id}', 'updatePermissions')->name('update.permissions');
 
@@ -130,12 +131,12 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Farmers #################
     Route::controller(FarmerController::class)->group(function () {
-        Route::get('/farmers',  'index')->name('farmers.index');
-        Route::get('/farmer-create',  'create')->name('farmer.create');
-        Route::post('/farmer-store',  'store')->name('farmer.store');
-        Route::get('/farmer-edit/{id}',  'edit')->name('farmer.edit');
-        Route::post('/farmer-update/{id}',  'update')->name('farmer.update');
-        Route::delete('/farmer-destroy/{id}',  'destroy')->name('farmer.destroy');
+        Route::get('/farmers',  'index')->name('farmers.index')->middleware('check.subadmin.permission:Farmers,view');
+        Route::get('/farmer-create',  'create')->name('farmer.create')->middleware('check.subadmin.permission:Farmers,create');
+        Route::post('/farmer-store',  'store')->name('farmer.store')->middleware('check.subadmin.permission:Farmers,create');
+        Route::get('/farmer-edit/{id}',  'edit')->name('farmer.edit')->middleware('check.subadmin.permission:Farmers,edit');
+        Route::post('/farmer-update/{id}',  'update')->name('farmer.update')->middleware('check.subadmin.permission:Farmers,edit');
+        Route::delete('/farmer-destroy/{id}',  'destroy')->name('farmer.destroy')->middleware('check.subadmin.permission:Farmers,delete');
     });
 
     // ############ Ensured Crops For Farmer #################

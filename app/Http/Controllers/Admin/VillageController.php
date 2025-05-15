@@ -44,6 +44,8 @@ class VillageController extends Controller
         $village = Village::create([
             'uc_id' => $request->uc_id,
             'name' => $request->name,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
         ]);
         
         // add crops along with village
