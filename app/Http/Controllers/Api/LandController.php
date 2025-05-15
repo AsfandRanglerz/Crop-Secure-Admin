@@ -86,6 +86,8 @@ public function landrecord(Request $request){
         'tehsil_id' => $request->tehsil_id,
         'uc' => $request->uc,
         'village' => $request->village,
+        'village_latitude' => $request->village_latitude,
+        'village_longitude' => $request->village_longitude,
         'other' => $request->other,
     ]);
 
@@ -104,7 +106,7 @@ public function getLandRecord()
         'district:id,name',
         'tehsil:id,name'
     ])
-    ->select('district_id', 'tehsil_id', 'uc', 'village', 'other')
+    ->select('district_id', 'tehsil_id', 'uc', 'village', 'village_latitude','village_longitude','other')
     ->where('user_id', $user->id) // Optional: only if related to user
     ->get();
 
@@ -119,6 +121,8 @@ $formatted = $records->map(function ($record) {
             'tehsil_name' => $record->tehsil->name ?? null,
             'uc' => $record->uc,
             'village' => $record->village,
+            'village_latitude' => $record->village_latitude,
+            'village_longitude' => $record->village_longitude,
             'other' => $record->other,
         ];
     });
@@ -160,7 +164,7 @@ public function getDistricts()
 
     public function getVillages($uc_id)
     {
-        $villages = Village::where('uc_id', $uc_id)->select('id', 'name')->get();
+        $villages = Village::where('uc_id', $uc_id)->select('id', 'name', 'latitude', 'longitude')->get();
 
     if ($villages->isEmpty()) {
         return response()->json([
