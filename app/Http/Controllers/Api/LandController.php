@@ -58,14 +58,14 @@ public function getAreaUnits()
     return response()->json(AreaUnit::all());
 }
 
-public function showLands()
+public function showLands(Request $request)
 {
     $user = Auth::user();
 
     $page = $request->input('page', 1);
     $perPage = $request->input('limit', 10); // Default: 10 items per page
     $offSet = ($page - 1) * $perPage;
-    
+
     $lands = Land::select('id', 'location','area_unit', 'image', 'certificate')
         ->offset($offSet)
         ->limit($perPage)
