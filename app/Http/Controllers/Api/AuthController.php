@@ -358,4 +358,20 @@ class AuthController extends Controller
     }
     
 
+    public function deleteAccount(Request $request)
+{
+    $user = Auth::user();
+
+    if ($user) {
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account deleted successfully.'
+        ], 200);
+    }
+
+    return response()->json([
+        'message' => 'User not authenticated.'
+    ], 401);
+}
 }

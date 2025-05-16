@@ -67,7 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/land', [LandController::class, 'store']);
     Route::post('/land-record', [LandController::class, 'landrecord']);
     Route::get('/getlandrecord', [LandController::class, 'getLandRecord']);
-    Route::get('/showlands', [LandController::class, 'showLands']);
+    Route::get('/getOwnershipLands', [LandController::class, 'showLands']);
     Route::get('/area-units', [LandController::class, 'getAreaUnits']);
 
     #crops insurance
@@ -91,7 +91,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getlist', [ProductController::class, 'getAddedList']);
     Route::post('/deletelist/{id}', [ProductController::class, 'deleteFromList']);
 
-    
+    //delete account
+    Route::post('/delete-account', [AuthController::class, 'deleteAccount']);
+
 });
 
 

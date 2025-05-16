@@ -62,8 +62,13 @@ public function showLands()
 {
     $user = Auth::user();
 
-    $lands = Land::
-        select('id', 'location','area_unit', 'image', 'certificate')
+    $page = $request->input('page', 1);
+    $perPage = $request->input('limit', 10); // Default: 10 items per page
+    $offSet = ($page - 1) * $perPage;
+    
+    $lands = Land::select('id', 'location','area_unit', 'image', 'certificate')
+        ->offset($offSet)
+        ->limit($perPage)
         ->get()
         ->map(function ($land) {
             return [
@@ -75,7 +80,7 @@ public function showLands()
             ];
         });
 
-        return response()->json(['message' => 'Land retrieved successfully', 'lands' => $lands], 200);
+         return response()->json($lands, 200);
 }
 
 public function landrecord(Request $request){
