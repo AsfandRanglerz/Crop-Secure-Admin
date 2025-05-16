@@ -15,6 +15,7 @@ class admin
      * @param  \Closure  $next
      * @return mixed
      */
+    
     public function handle(Request $request, Closure $next)
     {
 

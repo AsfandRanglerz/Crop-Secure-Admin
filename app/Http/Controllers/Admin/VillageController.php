@@ -76,7 +76,9 @@ class VillageController extends Controller
 
         // Update village name
         $village->update([
-            'name' => $request->name
+            'name' => $request->name,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
         ]);
 
         // delete old crop data

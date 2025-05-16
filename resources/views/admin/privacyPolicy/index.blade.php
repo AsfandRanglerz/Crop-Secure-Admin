@@ -27,8 +27,8 @@
                                         <th scope="row">1</th>
                                         <td>
                                             @if ($data)
-                                            
-                                            {!! $data->description !!}
+                                                {!! \Illuminate\Support\Str::words(strip_tags($data->description), 20, '...') !!}
+                                                <a href="#" data-toggle="modal" data-target="#privacyModal">Read more</a>
                                             @else
                                                 N/A
                                             @endif
@@ -49,6 +49,23 @@
             </div>
         </section>
     </div>
+    <!-- Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" role="dialog" aria-labelledby="privacyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {!! $data->description !!}
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 @section('js')
     

@@ -241,7 +241,7 @@
                 var statusText = $(this).siblings('.custom-switch-description');
 
                 $.ajax({
-                    url: "{{ route('subadmin.StatusChange') }}", // Change this to your actual route
+                    url: "{{ route('subadmin.StatusChange') }}",
                     type: "POST",
                     data: {
                         _token: "{{ csrf_token() }}",
@@ -251,6 +251,8 @@
                     success: function(response) {
                         if (response.success) {
                             statusText.text(status ? 'Activated' : 'Deactivated');
+                            toastr.success('Status Updated Successfully');
+
                         } else {
                             alert('Something went wrong!');
                             toggleSwitch.prop('checked', !status); // Revert on failure

@@ -99,7 +99,9 @@
                         <!-- Village Name -->
                         <div class="form-group">
                             <label for="message">Village Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ $village->name }}">
+                            <input type="text" id="village_name_edit_{{ $village->id }}" name="name" class="form-control" value="{{ $village->name }}">
+                            <input type="hidden" id="latitude_edit_{{ $village->id }}" name="latitude" value="{{ $village->latitude }}">
+                            <input type="hidden" id="longitude_edit_{{ $village->id }}" name="longitude" value="{{ $village->longitude }}">
                         </div>
 
                         <!-- Existing Crops -->
@@ -230,41 +232,63 @@
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeS_6C9oYYmoRemrYTCgureWbaJ3IN-7c&libraries=places"></script>
 
-   <script>
+<script>
     let placeSelected = false;
+    const placeSelectedEdit = {}; // Store flags for each edit modal
 
     function initAutocomplete() {
         const input = document.getElementById('village_name');
         const autocomplete = new google.maps.places.Autocomplete(input, {
             types: ['(regions)'],
-            componentRestrictions: { country: 'pk' } 
+            componentRestrictions: { country: 'pk' }
         });
 
-        // When a suggestion is selected
         autocomplete.addListener('place_changed', function () {
             const place = autocomplete.getPlace();
             if (place && place.geometry && place.place_id) {
                 placeSelected = true;
-
-                // Extract and set latitude and longitude
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
-                document.getElementById('latitude').value = lat;
-                document.getElementById('longitude').value = lng;
+                document.getElementById('latitude').value = place.geometry.location.lat();
+                document.getElementById('longitude').value = place.geometry.location.lng();
             } else {
                 placeSelected = false;
             }
         });
 
-        // Reset the flag on manual typing (user didn't pick a suggestion)
         input.addEventListener('keydown', function () {
             placeSelected = false;
+        });
+    }
+
+    function initEditAutocomplete(villageId) {
+        const input = document.getElementById(`village_name_edit_${villageId}`);
+        const latInput = document.getElementById(`latitude_edit_${villageId}`);
+        const lngInput = document.getElementById(`longitude_edit_${villageId}`);
+
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+            types: ['(regions)'],
+            componentRestrictions: { country: 'pk' }
+        });
+
+        autocomplete.addListener('place_changed', function () {
+            const place = autocomplete.getPlace();
+            if (place && place.geometry && place.place_id) {
+                placeSelectedEdit[villageId] = true;
+                latInput.value = place.geometry.location.lat();
+                lngInput.value = place.geometry.location.lng();
+            } else {
+                placeSelectedEdit[villageId] = false;
+            }
+        });
+
+        input.addEventListener('keydown', function () {
+            placeSelectedEdit[villageId] = false;
         });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         initAutocomplete();
 
+        // Validation for Add modal
         document.getElementById('villageModal').addEventListener('submit', function (e) {
             if (!placeSelected) {
                 e.preventDefault();
@@ -272,8 +296,21 @@
                 return false;
             }
         });
+
+        // Initialize edit autocomplete and validation
+        @foreach($villages as $village)
+            initEditAutocomplete({{ $village->id }});
+
+            document.getElementById('editvillageModal-{{ $village->id }}').addEventListener('submit', function (e) {
+                if (typeof placeSelectedEdit[{{ $village->id }}] !== 'undefined' && !placeSelectedEdit[{{ $village->id }}]) {
+                    e.preventDefault();
+                    alert('⚠️ Please select a valid village from Google suggestions.');
+                    return false;
+                }
+            });
+        @endforeach
     });
-    </script>
+</script>
 
 
 
@@ -303,8 +340,8 @@
         });
     </script>
 
-{{-- for add crops againt village  --}}
-<script>
+    {{-- for add crops againt village  --}}
+    <script>
     let cropIndex = 1;
 
     $('#addCropRow').click(function () {

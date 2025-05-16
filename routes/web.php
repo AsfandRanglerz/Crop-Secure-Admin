@@ -89,8 +89,8 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Sub Admin #################
     Route::controller(SubAdminController::class)->group(function () {
-        Route::get('/subadmin',  'index')->name('subadmin.index')->middleware('check.subadmin.permission:SubAdmin,view');
-        Route::get('/subadmin-create',  'create')->name('subadmin.create')->middleware('check.subadmin.permission:SubAdmin,create');
+        Route::get('/subadmin',  'index')->name('subadmin.index')->middleware('check.subadmin.permission:Sub Admins,view');
+        Route::get('/subadmin-create',  'create')->name('subadmin.create')->middleware('check.subadmin.permission:Sub Admins,create');
         Route::post('/subadmin-store',  'store')->name('subadmin.store')->middleware('check.subadmin.permission:SubAdmin,create');
         Route::get('/subadmin-edit/{id}',  'edit')->name('subadmin.edit')->middleware('check.subadmin.permission:SubAdmin,edit');
         Route::post('/subadmin-update/{id}',  'update')->name('subadmin.update')->middleware('check.subadmin.permission:SubAdmin,edit');
@@ -103,30 +103,30 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Authorized Dealers #################
     Route::controller(AuthorizedDealerController::class)->group(function () {
-        Route::get('/dealer',  'index')->name('dealer.index');
-        Route::get('/dealer-create',  'create')->name('dealer.create');
-        Route::post('/dealer-store',  'store')->name('dealer.store');
-        Route::get('/dealer-edit/{id}',  'edit')->name('dealer.edit');
-        Route::post('/dealer-update/{id}',  'update')->name('dealer.update');
-        Route::delete('/dealer-destroy/{id}',  'destroy')->name('dealer.destroy');
+        Route::get('/dealer',  'index')->name('dealer.index')->middleware('check.subadmin.permission:Authorized Dealers,view');
+        Route::get('/dealer-create',  'create')->name('dealer.create')->middleware('check.subadmin.permission:Authorized Dealers,create');
+        Route::post('/dealer-store',  'store')->name('dealer.store')->middleware('check.subadmin.permission:Authorized Dealers,create');
+        Route::get('/dealer-edit/{id}',  'edit')->name('dealer.edit')->middleware('check.subadmin.permission:Authorized Dealers,edit');
+        Route::post('/dealer-update/{id}',  'update')->name('dealer.update')->middleware('check.subadmin.permission:Authorized Dealers,edit');
+        Route::delete('/dealer-destroy/{id}',  'destroy')->name('dealer.destroy')->middleware('check.subadmin.permission:Authorized Dealers,delete');
     });
 
     // ############ Dealer Items #################
     Route::controller(DealerItemController::class)->group(function () {
-        Route::get('/dealer-items/{id}',  'index')->name('dealer.item.index');
-        Route::get('/dealer-item-create/{id}',  'create')->name('dealer.item.create');
-        Route::post('/dealer-item-store',  'store')->name('dealer.item.store');
-        Route::get('/dealer-item-edit/{dealer_id}/{item_id}',  'edit')->name('dealer.item.edit');
-        Route::post('/dealer-item-update/{id}',  'update')->name('dealer.item.update');
-        Route::delete('/dealer-item-destroy/{id}',  'destroy')->name('dealer.item.destroy');
+        Route::get('/dealer-items/{id}',  'index')->name('dealer.item.index')->middleware('check.subadmin.permission:Dealer Items,view');
+        Route::get('/dealer-item-create/{id}',  'create')->name('dealer.item.create')->middleware('check.subadmin.permission:Dealer Items,create');
+        Route::post('/dealer-item-store',  'store')->name('dealer.item.store')->middleware('check.subadmin.permission:Dealer Items,create');
+        Route::get('/dealer-item-edit/{dealer_id}/{item_id}',  'edit')->name('dealer.item.edit')->middleware('check.subadmin.permission:Dealer Items,edit');
+        Route::post('/dealer-item-update/{id}',  'update')->name('dealer.item.update')->middleware('check.subadmin.permission:Dealer Items,edit');
+        Route::delete('/dealer-item-destroy/{id}',  'destroy')->name('dealer.item.destroy')->middleware('check.subadmin.permission:Dealer Items,delete');
     });
 
     // ############ Items for Dealers Selection #################
     Route::controller(ItemController::class)->group(function () {
-        Route::get('/items',  'index')->name('items.index');
-        Route::post('/item-store',  'store')->name('item.store');
-        Route::post('/item-update/{id}',  'update')->name('item.update');
-        Route::delete('/item-destroy/{id}',  'destroy')->name('item.destroy');
+        Route::get('/items',  'index')->name('items.index')->middleware('check.subadmin.permission:Dealer Items,view');
+        Route::post('/item-store',  'store')->name('item.store')->middleware('check.subadmin.permission:Dealer Items,create');
+        Route::post('/item-update/{id}',  'update')->name('item.update')->middleware('check.subadmin.permission:Dealer Items,edit');
+        Route::delete('/item-destroy/{id}',  'destroy')->name('item.destroy')->middleware('check.subadmin.permission:Dealer Items,delete');
     });
 
     // ############ Farmers #################
@@ -141,83 +141,82 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Ensured Crops For Farmer #################
     Route::controller(EnsuredCropController::class)->group(function () {
-        Route::get('/ensured-crops',  'index')->name('ensured.crops.index');
-        Route::post('/ensured-crops-store',  'store')->name('ensured.crops.store');
-        Route::post('/ensured-crops-update/{id}',  'update')->name('ensured.crops.update');
-        Route::delete('/ensured-crops-destroy/{id}',  'destroy')->name('ensured.crops.destroy');
+        Route::get('/ensured-crops',  'index')->name('ensured.crops.index')->middleware('check.subadmin.permission:Ensured Crops,view');
+        Route::post('/ensured-crops-store',  'store')->name('ensured.crops.store')->middleware('check.subadmin.permission:Ensured Crops,create');
+        Route::post('/ensured-crops-update/{id}',  'update')->name('ensured.crops.update')->middleware('check.subadmin.permission:Ensured Crops,edit');
+        Route::delete('/ensured-crops-destroy/{id}',  'destroy')->name('ensured.crops.destroy')->middleware('check.subadmin.permission:Ensured Crops,delete');
     });
 
     // ############ Ensured Crops Name #################
     Route::controller(EnsuredCropNameController::class)->group(function () {
         // For Farmer
-        Route::get('/ensured-crop-name',  'index')->name('ensured.crop.name.index');
-        Route::post('/ensured-crops-name-store',  'store')->name('ensured.crop.name.store');
-        Route::post('/ensured-crops-name-update/{id}',  'update')->name('ensured.crop.name.update');
-        Route::delete('/ensured-crops-name-destroy/{id}',  'destroy')->name('ensured.crop.name.destroy');
+        Route::get('/ensured-crop-name',  'index')->name('ensured.crop.name.index')->middleware('check.subadmin.permission:Ensured Crops,view');
+        Route::post('/ensured-crops-name-store',  'store')->name('ensured.crop.name.store')->middleware('check.subadmin.permission:Ensured Crops,create');
+        Route::post('/ensured-crops-name-update/{id}',  'update')->name('ensured.crop.name.update')->middleware('check.subadmin.permission:Ensured Crops,edit');
+        Route::delete('/ensured-crops-name-destroy/{id}',  'destroy')->name('ensured.crop.name.destroy')->middleware('check.subadmin.permission:Ensured Crops,delete');
     });
 
     // ############ Land Data Management #################
     Route::controller(LandDataManagementController::class)->group(function () {
-        Route::get('/land-data-management',  'index')->name('land.index');
-
-        Route::get('/get-insurance-types/{companyId}','getInsuranceTypes');
-        Route::get('/get-insurance-subtypes/{typeId}','getInsuranceSubTypes');
+        Route::get('/land-data-management',  'index')->name('land.index')->middleware('check.subadmin.permission:Land Data Management,view');
+        Route::get('/get-insurance-types/{companyId}','getInsuranceTypes')->middleware('check.subadmin.permission:Land Data Management,view');
+        Route::get('/get-insurance-subtypes/{typeId}','getInsuranceSubTypes')->middleware('check.subadmin.permission:Land Data Management,view');
     });
 
     // ############ Area Units #################
     Route::controller(AreaUnitController::class)->group(function () {
-        Route::get('/units',  'index')->name('units.index');
-        Route::post('/unit-store',  'store')->name('unit.store');
-        Route::put('/unit-update/{id}',  'update')->name('unit.update');
-        Route::delete('/unit-destroy/{id}',  'destroy')->name('unit.destroy');
+        Route::get('/units',  'index')->name('units.index')->middleware('check.subadmin.permission:Land Data Management,view');
+        Route::post('/unit-store',  'store')->name('unit.store')->middleware('check.subadmin.permission:Land Data Management,create');
+        Route::put('/unit-update/{id}',  'update')->name('unit.update')->middleware('check.subadmin.permission:Land Data Management,edit');
+        Route::delete('/unit-destroy/{id}',  'destroy')->name('unit.destroy')->middleware('check.subadmin.permission:Land Data Management,delete');
     });
 
     // ############ union council #################
     Route::controller(UcController::class)->group(function () {
-        Route::get('/union/{id}',  'index')->name('union.index');
-        Route::post('/union-store',  'store')->name('union.store');
-        Route::put('/union-update/{id}',  'update')->name('union.update');
-        Route::delete('/union-destroy/{id}',  'destroy')->name('union.destroy');
+        Route::get('/union/{id}',  'index')->name('union.index')->middleware('check.subadmin.permission:Land Data Management,view');
+        Route::post('/union-store',  'store')->name('union.store')->middleware('check.subadmin.permission:Land Data Management,create');
+        Route::put('/union-update/{id}',  'update')->name('union.update')->middleware('check.subadmin.permission:Land Data Management,edit');
+        Route::delete('/union-destroy/{id}',  'destroy')->name('union.destroy')->middleware('check.subadmin.permission:Land Data Management,delete');
     });
 
     // ############ village council #################
     Route::controller(VillageController::class)->group(function () {
-        Route::get('/village/{id}',  'index')->name('village.index');
-        Route::post('/village-store',  'store')->name('village.store');
-        Route::put('/village-update/{id}',  'update')->name('village.update');
-        Route::delete('/village-destroy/{id}',  'destroy')->name('village.destroy');
+        Route::get('/village/{id}',  'index')->name('village.index')->middleware('check.subadmin.permission:Land Data Management,view');
+        Route::post('/village-store',  'store')->name('village.store')->middleware('check.subadmin.permission:Land Data Management,create');
+        Route::put('/village-update/{id}',  'update')->name('village.update')->middleware('check.subadmin.permission:Land Data Management,edit');
+        Route::delete('/village-destroy/{id}',  'destroy')->name('village.destroy')->middleware('check.subadmin.permission:Land Data Management,delete');
     });
 
     // ############ Tehsil #################
     Route::controller(TehsilController::class)->group(function () {
-        Route::get('/tehsil/{id}',  'index')->name('tehsil.index');
-        Route::post('/tehsil-store',  'store')->name('tehsil.store');
-        Route::put('/tehsil-update/{id}',  'update')->name('tehsil.update');
-        Route::delete('/tehsil-destroy/{id}',  'destroy')->name('tehsil.destroy');
+        Route::get('/tehsil/{id}',  'index')->name('tehsil.index')->middleware('check.subadmin.permission:Land Data Management,view');
+        Route::post('/tehsil-store',  'store')->name('tehsil.store')->middleware('check.subadmin.permission:Land Data Management,create');
+        Route::put('/tehsil-update/{id}',  'update')->name('tehsil.update')->middleware('check.subadmin.permission:Land Data Management,edit');
+        Route::delete('/tehsil-destroy/{id}',  'destroy')->name('tehsil.destroy')->middleware('check.subadmin.permission:Land Data Management,delete');
     });
 
     // ############ District Management #################
     Route::controller(DistrictController::class)->group(function () {
-        Route::post('/district-store',  'store')->name('district.store');
-        Route::post('/district-update/{id}',  'update')->name('district.update');
-        Route::delete('/district-destroy/{id}',  'destroy')->name('district.destroy');
+        Route::post('/district-store',  'store')->name('district.store')->middleware('check.subadmin.permission:Land Data Management,view');
+        Route::post('/district-update/{id}',  'update')->name('district.update')->middleware('check.subadmin.permission:Land Data Management,create');
+        Route::delete('/district-destroy/{id}',  'destroy')->name('district.destroy')->middleware('check.subadmin.permission:Land Data Management,delete');
         Route::get('/get-tehsils/{district_id}', 'getTehsils')->name('get.tehsils');
     });
 
     // ############ Insurance Company #################
     Route::controller(InsuranceCompanyController::class)->group(function () {
-        Route::get('/insurance-company',  'index')->name('insurance.company.index');
-        Route::post('/insurance-company-store',  'store')->name('insurance.company.store');
-        Route::post('/insurance-company-update/{id}',  'update')->name('insurance.company.update');
-        Route::delete('/insurance-company-destroy/{id}',  'destroy')->name('insurance.company.destroy');
+        Route::get('/insurance-company',  'index')->name('insurance.company.index')->middleware('check.subadmin.permission:Insurance Companies,view');
+        Route::post('/insurance-company-store',  'store')->name('insurance.company.store')->middleware('check.subadmin.permission:Insurance Companies,create');
+        Route::post('/insurance-company-update/{id}',  'update')->name('insurance.company.update')->middleware('check.subadmin.permission:Insurance Companies,edit');
+        Route::delete('/insurance-company-destroy/{id}',  'destroy')->name('insurance.company.destroy')->middleware('check.subadmin.permission:Insurance Companies,delete');
     });
 
     // ############ Company Insurance Types #################
     Route::controller(CompanyInsuranceTypeController::class)->group(function () {
-        Route::get('/company-insurance-types/{id}',  'index')->name('company.insurance.types.index');
-        Route::post('/company-insurance-types-store',  'store')->name('company.insurance.types.store');
-        Route::post('/company-insurance-types-update/{id}',  'update')->name('company.insurance.types.update');
-        Route::delete('/company-insurance-types-destroy/{id}',  'destroy')->name('company.insurance.types.destroy');
+        Route::get('/company-insurance-types/{id}',  'index')->name('company.insurance.types.index')->middleware('check.subadmin.permission:Insurance Companies,view');
+        Route::post('/company-insurance-types-store',  'store')->name('company.insurance.types.store')->middleware('check.subadmin.permission:Insurance Companies,create');
+        Route::post('/company-insurance-types-update/{id}',  'update')->name('company.insurance.types.update')->middleware('check.subadmin.permission:Insurance Companies,edit');
+        Route::delete('/company-insurance-types-destroy/{id}',  'destroy')->name('company.insurance.types.destroy')->middleware('check.subadmin.permission:Insurance Companies,delete');
     });
     
     // ############ Company Insurance Sub-Types #################
@@ -230,43 +229,42 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Insurance Types #################
     Route::controller(InsuranceTypeController::class)->group(function () {
-        Route::get('/insurance-type',  'index')->name('insurance.type.index');
-        Route::post('/insurance-type-store',  'store')->name('insurance.type.store');
-        Route::post('/insurance-type-update/{id}',  'update')->name('insurance.type.update');
-        Route::delete('/insurance-type-destroy/{id}',  'destroy')->name('insurance.type.destroy');
+        Route::get('/insurance-type',  'index')->name('insurance.type.index')->middleware('check.subadmin.permission:Insurance Types,view');
+        Route::post('/insurance-type-store',  'store')->name('insurance.type.store')->middleware('check.subadmin.permission:Insurance Types,create');
+        Route::post('/insurance-type-update/{id}',  'update')->name('insurance.type.update')->middleware('check.subadmin.permission:Insurance Types,edit');
+        Route::delete('/insurance-type-destroy/{id}',  'destroy')->name('insurance.type.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
     });
 
     // ############ Insurance Sub-Types #################
     Route::controller(InsuranceSubTypeController::class)->group(function () {
-        Route::get('/insurance-sub-type/{id}',  'index')->name('insurance.sub.type.index');
-        Route::post('/insurance-sub-type-store',  'store')->name('insurance.sub.type.store');
-        Route::post('/insurance-sub-type-update/{id}',  'update')->name('insurance.sub.type.update');
-        Route::delete('/insurance-sub-type-destroy/{id}',  'destroy')->name('insurance.sub.type.destroy');
-        Route::get('/insurance-sub-type-production-price/{id}',  'production_price')->name('insurance.sub.type.productionPrice');
-        Route::post('/insurance-sub-type-production-price-store',  'production_price_store')->name('insurance.sub.type.productionPrice.store');
-        Route::post('/insurance-sub-type-production-price-update/{id}',  'production_price_update')->name('insurance.sub.type.productionPrice.update');
-        Route::delete('/insurance-sub-type-production-price-destroy/{id}',  'production_price_destroy')->name('insurance.sub.type.productionPrice.destroy');
+        Route::get('/insurance-sub-type/{id}',  'index')->name('insurance.sub.type.index')->middleware('check.subadmin.permission:Insurance Types,view');
+        Route::post('/insurance-sub-type-store',  'store')->name('insurance.sub.type.store')->middleware('check.subadmin.permission:Insurance Types,create');
+        Route::post('/insurance-sub-type-update/{id}',  'update')->name('insurance.sub.type.update')->middleware('check.subadmin.permission:Insurance Types,edit');
+        Route::delete('/insurance-sub-type-destroy/{id}',  'destroy')->name('insurance.sub.type.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
+        Route::get('/insurance-sub-type-production-price/{id}',  'production_price')->name('insurance.sub.type.productionPrice')->middleware('check.subadmin.permission:Insurance Types,view');
+        Route::post('/insurance-sub-type-production-price-store',  'production_price_store')->name('insurance.sub.type.productionPrice.store')->middleware('check.subadmin.permission:Insurance Types,store');
+        Route::post('/insurance-sub-type-production-price-update/{id}',  'production_price_update')->name('insurance.sub.type.productionPrice.update')->middleware('check.subadmin.permission:Insurance Types,edit');
+        Route::delete('/insurance-sub-type-production-price-destroy/{id}',  'production_price_destroy')->name('insurance.sub.type.productionPrice.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
     });
 
     // ############ Insurance Claim Requests #################
     Route::controller(InsuranceClaimRequestController::class)->group(function () {
-        Route::get('/insurance-claim',  'index')->name('insurance.claim.index');
-        Route::get('/insurance-claim-create',  'create')->name('insurance.claim.create');
-        Route::post('/insurance-claim-store',  'store')->name('insurance.claim.store');
-        Route::get('/insurance-claim-edit/{id}',  'edit')->name('insurance.claim.edit');
-        Route::post('/insurance-claim-update/{id}',  'update')->name('insurance.claim.update');
-        Route::delete('/insurance-claim-destroy/{id}',  'destroy')->name('insurance.claim.destroy');
+        Route::get('/insurance-claim',  'index')->name('insurance.claim.index')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
+        Route::get('/insurance-claim-create',  'create')->name('insurance.claim.create')->middleware('check.subadmin.permission:Insurance Claim Requests,create');
+        Route::post('/insurance-claim-store',  'store')->name('insurance.claim.store')->middleware('check.subadmin.permission:Insurance Claim Requests,create');
+        Route::get('/insurance-claim-edit/{id}',  'edit')->name('insurance.claim.edit')->middleware('check.subadmin.permission:Insurance Claim Requests,edit');
+        Route::post('/insurance-claim-update/{id}',  'update')->name('insurance.claim.update')->middleware('check.subadmin.permission:Insurance Claim Requests,edit');
+        Route::delete('/insurance-claim-destroy/{id}',  'destroy')->name('insurance.claim.destroy')->middleware('check.subadmin.permission:Insurance Claim Requests,delete');
     });
 
     // ############ Notifications #################
     Route::controller(NotificationController::class)->group(function () {
-        Route::get('/notification',  'index')->name('notification.index');
-        Route::post('/notification-store',  'store')->name('notification.store');
-        Route::delete('/notification-destroy/{id}',  'destroy')->name('notification.destroy');
+        Route::get('/notification',  'index')->name('notification.index')->middleware('check.subadmin.permission:Notifications,view');
+        Route::post('/notification-store',  'store')->name('notification.store')->middleware('check.subadmin.permission:Notifications,create');
+        Route::delete('/notification-destroy/{id}',  'destroy')->name('notification.destroy')->middleware('check.subadmin.permission:Notifications,delete');
     });
 
     //contact controller
-
     Route::get('/contact-us', [ContactUsController::class, 'index'])->name('contact.index');
     Route::get('/contact-us-create', [ContactUsController::class, 'create'])->name('contact.create');
     Route::post('/contact-us-store', [ContactUsController::class, 'store'])->name('contact.store');

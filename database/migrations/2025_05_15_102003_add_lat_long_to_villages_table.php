@@ -27,7 +27,8 @@ class AddLatLongToVillagesTable extends Migration
     public function down()
     {
         Schema::table('villages', function (Blueprint $table) {
-            //
+            $table->dropColumn('latitude');
+            $table->dropColumn('longitude');
         });
     }
 }
