@@ -28,7 +28,9 @@ class AddFatherNameToAuthorizedDealersTable extends Migration
     public function down()
     {
         Schema::table('authorized_dealers', function (Blueprint $table) {
-            //
+            $table->dropColumn('father_name');
+            $table->dropColumn('dob');
+            $table->dropColumn('district');
         });
     }
 }

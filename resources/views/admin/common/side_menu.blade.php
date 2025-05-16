@@ -54,7 +54,7 @@
                 </li>
             @endif
 
-            @if (Auth::guard('admin')->check() || $sideMenuName->contains('Ensured Crops'))
+            @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insured Crops'))
                 <li class="dropdown {{ request()->is('admin/ensured-crop-name*') || request()->is('admin/crop-type*') ? 'active' : '' }}">
                     <a href="
                 {{ route('ensured.crop.name.index') }}
