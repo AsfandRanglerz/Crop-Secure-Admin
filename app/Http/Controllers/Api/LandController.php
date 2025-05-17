@@ -69,6 +69,7 @@ public function showLands(Request $request)
     $lands = Land::select('id', 'location','area_unit', 'image', 'certificate')
         ->offset($offSet)
         ->limit($perPage)
+        ->orderBy('id', 'desc')
         ->get()
         ->map(function ($land) {
             return [
