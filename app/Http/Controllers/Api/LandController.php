@@ -37,7 +37,7 @@ if ($request->hasFile('certificate')) {
     $file = $request->file('certificate');
     $filename = time() . '_certificate_' . $file->getClientOriginalName();
     $file->move(public_path('admin/assets/images/users'), $filename);
-    $certificate = 'public/admin/assets/images/users/' . $filename;
+    $certificate = 'admin/assets/images/users/' . $filename;
 }
 
     $land = Land::create([
@@ -52,48 +52,49 @@ if ($request->hasFile('certificate')) {
     return response()->json(['message' => 'Land added successfully', 'land' => $land], 200);
 }
 
-public function getAreaUnits()
-{
-    $user = Auth::user();
-    return response()->json(AreaUnit::all());
-}
+    public function getAreaUnits()
+    {
+        $user = Auth::user();
+        return response()->json(AreaUnit::all());
+    }
 
-public function showlands()
-{
-    $user = Auth::user();
+    public function showlands()
+    {
+        $user = Auth::user();
 
-    $lands = Land::
-        select('id', 'location','area_unit', 'image', 'certificate')
-        ->get()
-        ->map(function ($land) {
-            return [
-                'id' => $land->id,
-                'location' => $land->location,
-                'area_unit' => $land->area_unit,
-                'image' => $land->image,
-                'certificate' => $land->certificate,
-            ];
-        });
+        $lands = Land::
+            select('id', 'location','area_unit', 'image', 'certificate')
+            ->get()
+            ->map(function ($land) {
+                return [
+                    'id' => $land->id,
+                    'location' => $land->location,
+                    'area_unit' => $land->area_unit,
+                    'image' => $land->image,
+                    'certificate' => $land->certificate,
+                ];
+            });
 
         return response()->json(['message' => 'Land retrieved successfully', 'lands' => $lands], 200);
-}
+    }
 
-public function landrecord(Request $request){
-    $user = Auth::user();
-    $land = CropInsurance::create([
-        'district_id' => $request->district_id,
-        'tehsil_id' => $request->tehsil_id,
-        'uc' => $request->uc,
-        'village' => $request->village,
-        'other' => $request->other,
-    ]);
+    public function landrecord(Request $request){
+        $user = Auth::user();
+        $land = CropInsurance::create([
+            'district_id' => $request->district_id,
+            'tehsil_id' => $request->tehsil_id,
+            'uc' => $request->uc,
+            'village' => $request->village,
+            'other' => $request->other,
+        ]);
 
-    return response()->json([
-        'message' => 'Land record saved successfully',
-        'data' => $land
-    ], 200);
-}
-public function getDistricts()
+        return response()->json([
+            'message' => 'Land record saved successfully',
+            'data' => $land
+        ], 200);
+    }
+
+    public function getDistricts()
     {
         $districts = District::select('id', 'name')->get();
         return response()->json($districts);

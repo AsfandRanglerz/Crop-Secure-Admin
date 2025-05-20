@@ -24,7 +24,7 @@ class AdminController extends Controller
     {
         $totalFarmers = Farmer::all()->count();
         $totalDealers = AuthorizedDealer::all()->count();
-        // $totalInsuranceCrops = EnsuredCrop::all()->count();
+        $totalInsuranceCrops = EnsuredCrop::all()->count();
         // dd($totalFarmers);
         $sideMenuName = [];
         $sideMenuPermissions = [];
@@ -34,8 +34,8 @@ class AdminController extends Controller
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
             $sideMenuName = $subAdminData['sideMenuName'];
         }
-        // dd($sideMenuName);
-        return view('admin.index', compact('sideMenuName', 'totalFarmers', 'totalDealers'));
+        // dd($sideMenuPermissions);
+        return view('admin.index', compact('sideMenuPermissions', 'sideMenuName', 'totalFarmers', 'totalDealers', 'totalInsuranceCrops'));
     }
 
     public function getProfile()

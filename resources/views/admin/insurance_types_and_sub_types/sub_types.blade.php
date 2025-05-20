@@ -195,7 +195,7 @@
                                             <div class="input-group">
                                                 <input type="text" name="current_yield" class="form-control" value="{{ old('current_yield', $InsuranceSubType->current_yield) }}">
                                                 <div class="input-group-prepend">
-                                                    <span class="input-group-text   font-weight-bold" style="border: 2px solid #cbd2d8;">%</span>
+                                                    <span class="input-group-text font-weight-bold" style="border: 2px solid #cbd2d8;">%</span>
                                                 </div>
                                             </div>
                                             @error('current_yield')

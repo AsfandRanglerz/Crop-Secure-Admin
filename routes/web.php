@@ -270,5 +270,4 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::post('/contact-us-store', [ContactUsController::class, 'store'])->name('contact.store');
     Route::get('/contact-us-edit/{id}', [ContactUsController::class, 'updateview'])->name('contact.updateview');
     Route::post('/contact-us-update/{id}', [ContactUsController::class, 'update'])->name('contact.update');
-
 });
