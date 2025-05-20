@@ -14,4 +14,6 @@ class InsuranceType extends Model
     {
         return $this->hasMany(InsuranceSubType::class, 'incurance_type_id');
     }
+
+    
 }

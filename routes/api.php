@@ -71,10 +71,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/area-units', [LandController::class, 'getAreaUnits']);
 
     #crops insurance
-    Route::get('insurance/form-options', [CropInsuranceController::class, 'getFormOptions']);
-    Route::get('insurance/insurancetype', [CropInsuranceController::class, 'getinsurancetype']);
-    Route::get('insurance/companies/{insuranceTypeId}', [CropInsuranceController::class, 'getCompaniesByInsuranceType']);
-    Route::get('insurance/benchmarks/{insuranceTypeId}', [CropInsuranceController::class, 'getBenchmarksByInsuranceType']);
+    Route::get('/form-options', [CropInsuranceController::class, 'getFormOptions']);
+    Route::get('/insurancetype', [CropInsuranceController::class, 'getinsurancetype']);
+    Route::get('/companies/{insuranceTypeId}', [CropInsuranceController::class, 'getCompaniesByInsuranceType']);
+    Route::get('/benchmarks/{insuranceTypeId}', [CropInsuranceController::class, 'getBenchmarksByInsuranceType']);
     Route::get('/getinsurances', [CropInsuranceController::class, 'getinsurance']);
     Route::get('/claims', [CropInsuranceController::class, 'claim']);
     Route::get('/getclaims', [CropInsuranceController::class, 'getclaim']);

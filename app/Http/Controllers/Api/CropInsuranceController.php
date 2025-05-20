@@ -26,17 +26,42 @@ class CropInsuranceController extends Controller
         ]);
     }
 
-    public function getinsurancetype()
-    {
-        $user = Auth::user();
-        return response()->json([
+    // public function getinsurancetype()
+    // {
+    //     $user = Auth::user();
+    //     return response()->json([
             
-            'insurance_types' => InsuranceType::pluck('name')->toArray(),
+    //         // 'insurance_types' => InsuranceType::pluck('name')->toArray(),
+    //         'insurance_types' => InsuranceType::select('id', 'name')->get(),
             
-            // 'area_units' => AreaUnit::select('id', 'unit_name')->get(),
+    //         // 'area_units' => AreaUnit::select('id', 'unit_name')->get(),
             
-        ]);
+    //     ]);
+    // }
+
+    public function getinsurancetype(Request $request)
+{
+    $cropName = $request->input('crop');
+
+    if (!$cropName) {
+        return response()->json(['error' => 'crop is required'], 400);
     }
+
+    // Get unique insurance_type_ids for the crop
+    $insuranceTypeIds = CompanyInsuranceType::where('crop', $cropName)
+        ->pluck('insurance_type_id')
+        ->unique();
+
+    // Fetch insurance type names
+    $insuranceTypes = InsuranceType::whereIn('id', $insuranceTypeIds)
+        ->select('id', 'name')
+        ->get();
+
+    return response()->json([
+        'insurance_types' => $insuranceTypes
+    ], 200);
+}
+
 
     // Get companies based on selected insurance type
     public function getCompaniesByInsuranceType($insuranceTypeId)
@@ -126,7 +151,7 @@ class CropInsuranceController extends Controller
     $sumInsured = $crop->sum_insured_value * $request->area;
 
         $insurance = CropInsurance::create([
-            // 'user_id' => Auth::id(),
+            'user_id' => Auth::id(),
             'crop' => $request->crop,
             'area_unit' => $request->area_unit,
             'area' => $request->area,

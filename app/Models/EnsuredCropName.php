@@ -22,4 +22,5 @@ class EnsuredCropName extends Model
     return $this->hasMany(InsuranceSubType::class, 'name', 'id');
 }
 
+
 }
