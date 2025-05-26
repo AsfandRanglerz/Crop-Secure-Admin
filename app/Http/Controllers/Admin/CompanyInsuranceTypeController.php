@@ -61,7 +61,7 @@ class CompanyInsuranceTypeController extends Controller
 
             if (!$insuranceType) continue;
 
-            // ✅ Handle Weather Index separately
+            // Handle Weather Index separately
             if ($insuranceType->name === 'Weather Index') {
                 $request->validate([
                     'premium_price' => 'required|numeric',
@@ -79,7 +79,7 @@ class CompanyInsuranceTypeController extends Controller
                 ]);
             }
 
-            // ✅ Handle Satellite Index (NDVI) separately
+            // Handle Satellite Index (NDVI) separately
             elseif ($insuranceType->name === 'Satellite Index (NDVI)') {
                 $request->validate([
                     'premium_price' => 'required|numeric',
@@ -97,7 +97,7 @@ class CompanyInsuranceTypeController extends Controller
                 ]);
             }
 
-            // ✅ Handle other insurance types (Area Yield, Production Price, etc.)
+            // Handle other insurance types (Area Yield, Production Price, etc.)
             else {
                 $request->validate([
                     'crop' => 'required|array',
@@ -153,7 +153,7 @@ class CompanyInsuranceTypeController extends Controller
             $insuranceType = InsuranceType::find($company->insurance_type_id);
 
             if ($insuranceType) {
-                // ✅ Weather Index update
+                // Weather Index update
                 if ($insuranceType->name === 'Weather Index') {
                     $request->validate([
                         'premium_price' => 'required|numeric',
@@ -169,7 +169,7 @@ class CompanyInsuranceTypeController extends Controller
                     ]);
                 }
 
-                // ✅ Satellite Index (NDVI) update
+                // Satellite Index (NDVI) update
                 elseif ($insuranceType->name === 'Satellite Index (NDVI)') {
                     $request->validate([
                         'premium_price' => 'required|numeric',
@@ -185,7 +185,7 @@ class CompanyInsuranceTypeController extends Controller
                     ]);
                 }
 
-                // ✅ Other insurance types
+                // Other insurance types
                 else {
                     $request->validate([
                         'crop' => 'required|array',

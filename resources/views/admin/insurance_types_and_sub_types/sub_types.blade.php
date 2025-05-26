@@ -433,7 +433,7 @@
             loadTehsilsForEdit(districtId);
         });
     });
-    </script>
+</script>
     
     
 

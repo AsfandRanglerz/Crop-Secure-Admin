@@ -128,6 +128,16 @@
                 </li>
             @endif
 
+            @if (Auth::guard('admin')->check() || $sideMenuName->contains('faqs'))
+            <!-- Terms & Conditions Section -->
+                <li
+                    class="dropdown {{ request()->is(['admin/faqs', 'admin/contact-us-createview']) ? 'active' : '' }}">
+                    <a href="{{ url('admin/faqs') }}" class="nav-link">
+                        <i data-feather="mail"></i><span>FAQS</span>
+                    </a>
+                </li>
+            @endif
+
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('ContactUs'))
             <!-- Terms & Conditions Section -->
                 <li

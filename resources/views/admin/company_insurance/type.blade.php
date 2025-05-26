@@ -72,7 +72,7 @@
 
                                     <!-- The required sum insured note -->
                                     <small class="text-muted mt-2 d-block" id="sumInsuredNote" style="display: none;">
-                                        The premium price value against 1 acre
+                                            The premium price value applied against 1 acre
                                     </small>
                                 </div>
                             </div>
@@ -225,10 +225,12 @@
                                                     <span class="input-group-text">PKR</span>
                                                 </div>
                                             </div>
+                                             <small class="text-muted mt-1 d-block">
+                                                The premium price value applied against 1 acre
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
-
                             @elseif ($InsuranceType->insuranceType->name === 'Satellite Index (NDVI)')
                                 {{-- NDVI: Show Fixed Benchmark and Premium Price --}}
                                 <div class="row">
@@ -259,7 +261,7 @@
                                                 </div>
                                             </div>
                                             <small class="text-muted mt-1 d-block">
-                                                The premium price value applied to 100% benchmark against 1 acre
+                                                The premium price value applied against 1 acre
                                             </small>
                                         </div>
                                     </div>
@@ -782,85 +784,51 @@
     </script>
 
     <script>
-        // weather index 
-        $(document).ready(function() {
-            function toggleFieldsBasedOnType() {
-                let selectedOptions = $('#insurance_type_id option:selected').map(function() {
-                    return $(this).text().trim();
-                }).get();
+    $(document).ready(function () {
+        function toggleFieldsBasedOnType() {
+            let selectedOptions = $('#insurance_type_id option:selected').map(function () {
+                return $(this).text().trim();
+            }).get();
 
-                const isWeatherIndex = selectedOptions.includes('Weather Index');
-                const isNDVI = selectedOptions.includes('Satellite Index (NDVI)');
+            const isWeatherIndex = selectedOptions.includes('Weather Index');
+            const isNDVI = selectedOptions.includes('Satellite Index (NDVI)');
 
-                // Hide all initially
-                $('.modal-body .row').hide();
+            // Always hide everything initially
+            $('.modal-body .row').hide();
+            $('.benchmarkFieldsWrapper').hide();
+            $('#premiumPriceWrapper').hide();
+            $('#ndviBenchmarkRow').hide();
+            $('#sumInsuredNote').hide();
+            $('#addMore').hide();
+
+            if (isWeatherIndex) {
+                $('#type').show();
+                $('#premiumPriceWrapper').show();
+                $('#sumInsuredNote').show();
+            } else if (isNDVI) {
+                $('#type').show();
+                $('#premiumPriceWrapper').show();
+                $('#ndviBenchmarkRow').show();
+                $('#sumInsuredNote').show();
+            } else {
+                // Show everything for Area Yield Index or Production Price Index
+                $('.modal-body .row').show();
+                $('.benchmarkFieldsWrapper').show();
                 $('#premiumPriceWrapper').hide();
-                $('#premiumPriceNDVI').hide();
                 $('#ndviBenchmarkRow').hide();
-                $('#benchmarkFieldsWrapper').show(); // show by default unless matched below
                 $('#sumInsuredNote').hide();
-
-                if (isWeatherIndex) {
-                    $('#type').show();
-                    $('#premiumPriceWrapper').show();
-                    $('#sumInsuredNote').show();
-                    $('.benchmarkFieldsWrapper').hide();
-                    $('#addMore').hide();
-                } else if (isNDVI) {
-                    $('#type').show();
-                    $('#ndviBenchmarkRow').show();
-                    $('#premiumPriceWrapper').show();
-                    $('#sumInsuredNote').show();
-                    $('.benchmarkFieldsWrapper').hide();
-                    $('#addMore').hide();
-                } else {
-                    // For all other types (Area Yield, Production Price)
-                    $('.modal-body .row').show();
-                    $('#premiumPriceNDVI').hide();
-                    $('#ndviBenchmarkRow').hide();
-                    $('#premiumPriceWrapper').hide();
-                    $('#sumInsuredNote').hide();
-                    $('#benchmarkFieldsWrapper').show();
-                    $('#addMore').show();
-                }
+                $('#addMore').show();
             }
-
-            $('#insurance_type_id').on('change', toggleFieldsBasedOnType);
-            toggleFieldsBasedOnType(); // run on load
-        });
-
-
-        // edit weather index 
-        $(document).ready(function () {
-    @foreach ($CompanyInsurances as $InsuranceType)
-        let type = "{{ $InsuranceType->insuranceType->name }}";
-        let id = "{{ $InsuranceType->id }}";
-        let modal = $('#EditInsuranceTypesModal-' + id);
-        modal.find('.modal-body .row').hide();
-
-        if (type === 'Weather Index') {
-            modal.find('#editPremiumPriceRow-' + id).show();
-        } else if (type === 'Satellite Index (NDVI)') {
-            modal.find('#editPremiumPriceRow-' + id).show();
-            modal.find('#editNdviBenchmarkRow-' + id).closest('.row').show();
         }
-    @endforeach
-});
 
+        // On change
+        $('#insurance_type_id').on('change', toggleFieldsBasedOnType);
 
-        // edit NDVI
-        @foreach ($CompanyInsurances as $InsuranceType)
-            let insuranceTypeName_{{ $InsuranceType->id }} = "{{ $InsuranceType->insuranceType->name }}";
+        // On load
+        toggleFieldsBasedOnType();
+    });
+</script>
 
-            if (insuranceTypeName_{{ $InsuranceType->id }} === 'Satellite Index (NDVI)') {
-                let modal = $('#EditInsuranceTypesModal-{{ $InsuranceType->id }}');
-                modal.find('.modal-body .row').hide(); // hide all rows
-
-                modal.find('#editPremiumPriceWrapper-{{ $InsuranceType->id }}').show();
-                modal.find('#editNdviBenchmarkRow-{{ $InsuranceType->id }}').show();
-            }
-        @endforeach
-    </script>
 
 
 @endsection
