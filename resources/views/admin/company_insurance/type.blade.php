@@ -72,7 +72,7 @@
 
                                     <!-- The required sum insured note -->
                                     <small class="text-muted mt-2 d-block" id="sumInsuredNote" style="display: none;">
-                                            The premium price value applied against 1 acre
+                                        The premium price value applied against 1 acre
                                     </small>
                                 </div>
                             </div>
@@ -225,7 +225,7 @@
                                                     <span class="input-group-text">PKR</span>
                                                 </div>
                                             </div>
-                                             <small class="text-muted mt-1 d-block">
+                                            <small class="text-muted mt-1 d-block">
                                                 The premium price value applied against 1 acre
                                             </small>
                                         </div>
@@ -310,45 +310,52 @@
                                 </div>
 
                                 {{-- Initial Benchmark & Price Benchmark --}}
-                                @foreach ($existingBenchmarks as $index => $b)
-                                    <div class="row mb-2 benchmark-row-{{ $InsuranceType->id }}">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Benchmark</label>
-                                                <div class="input-group">
-                                                    <input type="number" name="benchmark[{{ $InsuranceType->id }}][]"
-                                                        class="form-control" value="{{ trim($b) }}">
-                                                    <div class="input-group-append">
-                                                        <span class="input-group-text">%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Price Benchmark</label>
-                                                <div class="d-flex">
+                                <div class="benchmarkContainer" data-index="{{ $InsuranceType->id }}">
+                                    @foreach ($existingBenchmarks as $index => $b)
+                                        <div class="row mb-2 benchmark-group">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label>Benchmark</label>
                                                     <div class="input-group">
                                                         <input type="number"
-                                                            name="price_benchmark[{{ $InsuranceType->id }}][]"
-                                                            class="form-control"
-                                                            value="{{ trim($existingPriceBenchmarks[$index] ?? '') }}">
+                                                            name="benchmark[{{ $InsuranceType->id }}][]"
+                                                            class="form-control" value="{{ trim($b) }}">
                                                         <div class="input-group-append">
-                                                            <span class="input-group-text">PKR</span>
+                                                            <span class="input-group-text">%</span>
                                                         </div>
                                                     </div>
-                                                    @if ($index === count($existingBenchmarks) - 1)
-                                                        <button type="button" class="btn btn-success ml-2 addBenchmark"
-                                                            data-insurance-id="{{ $InsuranceType->id }}">
-                                                            <i class="fa fa-plus"></i>
-                                                        </button>
-                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label>Price Benchmark</label>
+                                                    <div class="d-flex">
+                                                        <div class="input-group">
+                                                            <input type="number"
+                                                                name="price_benchmark[{{ $InsuranceType->id }}][]"
+                                                                class="form-control"
+                                                                value="{{ trim($existingPriceBenchmarks[$index] ?? '') }}">
+                                                            <div class="input-group-append">
+                                                                <span class="input-group-text">PKR</span>
+                                                            </div>
+                                                        </div>
+
+                                                        @if ($index === count($existingBenchmarks) - 1)
+                                                            <!-- ✅ ADD THIS LINE -->
+                                                            <button type="button"
+                                                                class="btn btn-success ml-2 addBenchmark"
+                                                                data-insurance-id="{{ $InsuranceType->id }}">
+                                                                <i class="fa fa-plus"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
+
 
                                 <div id="benchmarksContainer-{{ $InsuranceType->id }}"></div>
                             @endif
@@ -488,7 +495,6 @@
                                     </tbody>
                                 </table>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -784,50 +790,50 @@
     </script>
 
     <script>
-    $(document).ready(function () {
-        function toggleFieldsBasedOnType() {
-            let selectedOptions = $('#insurance_type_id option:selected').map(function () {
-                return $(this).text().trim();
-            }).get();
+        $(document).ready(function() {
+            function toggleFieldsBasedOnType() {
+                let selectedOptions = $('#insurance_type_id option:selected').map(function() {
+                    return $(this).text().trim();
+                }).get();
 
-            const isWeatherIndex = selectedOptions.includes('Weather Index');
-            const isNDVI = selectedOptions.includes('Satellite Index (NDVI)');
+                const isWeatherIndex = selectedOptions.includes('Weather Index');
+                const isNDVI = selectedOptions.includes('Satellite Index (NDVI)');
 
-            // Always hide everything initially
-            $('.modal-body .row').hide();
-            $('.benchmarkFieldsWrapper').hide();
-            $('#premiumPriceWrapper').hide();
-            $('#ndviBenchmarkRow').hide();
-            $('#sumInsuredNote').hide();
-            $('#addMore').hide();
-
-            if (isWeatherIndex) {
-                $('#type').show();
-                $('#premiumPriceWrapper').show();
-                $('#sumInsuredNote').show();
-            } else if (isNDVI) {
-                $('#type').show();
-                $('#premiumPriceWrapper').show();
-                $('#ndviBenchmarkRow').show();
-                $('#sumInsuredNote').show();
-            } else {
-                // Show everything for Area Yield Index or Production Price Index
-                $('.modal-body .row').show();
-                $('.benchmarkFieldsWrapper').show();
+                // Always hide everything initially
+                $('.modal-body .row').hide();
+                $('.benchmarkFieldsWrapper').hide();
                 $('#premiumPriceWrapper').hide();
                 $('#ndviBenchmarkRow').hide();
                 $('#sumInsuredNote').hide();
-                $('#addMore').show();
+                $('#addMore').hide();
+
+                if (isWeatherIndex) {
+                    $('#type').show();
+                    $('#premiumPriceWrapper').show();
+                    $('#sumInsuredNote').show();
+                } else if (isNDVI) {
+                    $('#type').show();
+                    $('#premiumPriceWrapper').show();
+                    $('#ndviBenchmarkRow').show();
+                    $('#sumInsuredNote').show();
+                } else {
+                    // Show everything for Area Yield Index or Production Price Index
+                    $('.modal-body .row').show();
+                    $('.benchmarkFieldsWrapper').show();
+                    $('#premiumPriceWrapper').hide();
+                    $('#ndviBenchmarkRow').hide();
+                    $('#sumInsuredNote').hide();
+                    $('#addMore').show();
+                }
             }
-        }
 
-        // On change
-        $('#insurance_type_id').on('change', toggleFieldsBasedOnType);
+            // On change
+            $('#insurance_type_id').on('change', toggleFieldsBasedOnType);
 
-        // On load
-        toggleFieldsBasedOnType();
-    });
-</script>
+            // On load
+            toggleFieldsBasedOnType();
+        });
+    </script>
 
 
 

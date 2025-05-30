@@ -245,6 +245,10 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::post('/insurance-sub-type-production-price-store',  'production_price_store')->name('insurance.sub.type.productionPrice.store')->middleware('check.subadmin.permission:Insurance Types,store');
         Route::post('/insurance-sub-type-production-price-update/{id}',  'production_price_update')->name('insurance.sub.type.productionPrice.update')->middleware('check.subadmin.permission:Insurance Types,edit');
         Route::delete('/insurance-sub-type-production-price-destroy/{id}',  'production_price_destroy')->name('insurance.sub.type.productionPrice.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
+        Route::get('/insurance-sub-type-satellite_ndvi/{id}',  'satellite_ndvi')->name('insurance.sub.type.satelliteNDVI')->middleware('check.subadmin.permission:Insurance Types,view');
+        Route::post('/insurance-sub-type-satellite_ndvi-store',  'satellite_ndvi_store')->name('insurance.sub.type.satelliteNDVI.store')->middleware('check.subadmin.permission:Insurance Types,store');
+        Route::post('/insurance-sub-type-satellite_ndvi-update/{id}',  'satellite_ndvi_update')->name('insurance.sub.type.satelliteNDVI.update')->middleware('check.subadmin.permission:Insurance Types,edit');
+        Route::delete('/insurance-sub-type-satellite_ndvi-destroy/{id}',  'satellite_ndvi_destroy')->name('insurance.sub.type.satelliteNDVI.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
     });
 
     // ############ Insurance Claim Requests #################

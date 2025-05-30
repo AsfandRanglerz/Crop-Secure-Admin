@@ -63,6 +63,17 @@ class CompanyInsuranceTypeController extends Controller
 
             // Handle Weather Index separately
             if ($insuranceType->name === 'Weather Index') {
+                // Check if already exists
+                $exists = CompanyInsuranceType::where([
+                    ['insurance_company_id', '=', $request->insurance_company_id],
+                    ['insurance_type_id', '=', $insuranceTypeId],
+                ])->exists();
+
+                if ($exists) {
+                    return redirect()->route('company.insurance.types.index', ['id' => $request->insurance_company_id])
+                        ->with(['error' => 'Weather Index insurance already exists for this company.']);
+                }
+
                 $request->validate([
                     'premium_price' => 'required|numeric',
                 ]);
@@ -81,6 +92,17 @@ class CompanyInsuranceTypeController extends Controller
 
             // Handle Satellite Index (NDVI) separately
             elseif ($insuranceType->name === 'Satellite Index (NDVI)') {
+                // Check if already exists
+                $exists = CompanyInsuranceType::where([
+                    ['insurance_company_id', '=', $request->insurance_company_id],
+                    ['insurance_type_id', '=', $insuranceTypeId],
+                ])->exists();
+
+                if ($exists) {
+                    return redirect()->route('company.insurance.types.index', ['id' => $request->insurance_company_id])
+                        ->with(['error' => 'Satellite Index (NDVI) insurance already exists for this company.']);
+                }
+
                 $request->validate([
                     'premium_price' => 'required|numeric',
                 ]);

@@ -28,28 +28,22 @@
                                 </div>
                             </div>
                             
-                            <div class="row" id="premiumPriceWrapper">
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="premium_price">Premium Price</label>
-            <div class="input-group">
-                <input type="number" name="premium_price" id="premium_price" class="form-control" placeholder="Enter Premium Price">
-                <div class="input-group-append">
-                    <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
-                </div>
-            </div>
-            @error('premium_price')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-
-            <!-- Add this line below the field -->
-            <small class="text-muted mt-2 d-block" id="sumInsuredNote" style="display: none;">
-                The sum insured value applied to 100% benchmark against 1 acre
-            </small>
-        </div>
-    </div>
-</div>
-
+                            <div class="col">
+                                <div class="form-group mb-0">
+                                    <label for="sum">Sum Insured</label>
+                                    <div class="input-group">
+                                        <input type="number" name="sum" class="form-control" value="{{ old('sum') }}">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text font-weight-bold" style="border: 2px solid #cbd2d8;">PKR</span>
+                                        </div>
+                                    </div>
+                                    @error('sum')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>                            
+                                <small class="text-muted ml-3">(Note:The sum insured value applied to 100% benchmark against 1 acre)</small>
+                            </div> 
                            
                     
                             <div class="form-group">
@@ -101,7 +95,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
             </div>

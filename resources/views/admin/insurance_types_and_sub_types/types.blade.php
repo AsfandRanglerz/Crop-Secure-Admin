@@ -158,6 +158,10 @@
                                             <td>
                                                 <a class="btn btn-primary" href="{{ route('insurance.sub.type.productionPrice', $InsuranceType->id) }}">Average Yield</a>
                                             </td>
+                                            @elseif( $InsuranceType->name == "Satellite Index (NDVI)")
+                                            <td>
+                                                <a class="btn btn-primary" href="{{ route('insurance.sub.type.satelliteNDVI', $InsuranceType->id) }}">NDVI Vegetation</a>
+                                            </td>
                                             @else
                                             <td>--</td>
                                             @endif

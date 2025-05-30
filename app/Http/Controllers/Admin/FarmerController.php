@@ -39,6 +39,7 @@ class FarmerController extends Controller
         }
         return view('admin.farmer.create', compact('sideMenuName'));
     }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -89,7 +90,7 @@ class FarmerController extends Controller
         else {
             return back()->withErrors([
                 'contact' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
-            ]);
+            ])->withInput();
         }
 
 
@@ -117,6 +118,7 @@ class FarmerController extends Controller
         // Return success message
         return redirect()->route('farmers.index')->with(['message' => 'Farmer Created Successfully']);
     }
+
     public function edit($id)
     {
         $farmer = Farmer::find($id);
