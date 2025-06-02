@@ -37,7 +37,7 @@ if ($request->hasFile('certificate')) {
     $file = $request->file('certificate');
     $filename = time() . '_certificate_' . $file->getClientOriginalName();
     $file->move(public_path('admin/assets/images/users'), $filename);
-    $certificate = 'public/admin/assets/images/users/' . $filename;
+    $certificate = 'admin/assets/images/users/' . $filename;
 }
 
     $land = Land::create([
@@ -55,11 +55,11 @@ if ($request->hasFile('certificate')) {
     return response()->json(['message' => 'Land added successfully', 'land' => $land], 200);
 }
 
-public function getAreaUnits()
-{
-    $user = Auth::user();
-    return response()->json(AreaUnit::all());
-}
+    public function getAreaUnits()
+    {
+        $user = Auth::user();
+        return response()->json(AreaUnit::all());
+    }
 
 public function showLands(Request $request)
 {

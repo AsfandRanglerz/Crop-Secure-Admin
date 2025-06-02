@@ -25,7 +25,7 @@ use App\Http\Controllers\Admin\CompanyInsuranceTypeController;
 use App\Http\Controllers\Admin\InsuranceClaimRequestController;
 use App\Http\Controllers\Admin\CompanyInsuranceSubTypeController;
 use App\Http\Controllers\Admin\ContactUsController;
-
+use App\Http\Controllers\Admin\FaqController;
 use App\Models\AboutUs;
 use App\Models\PrivacyPolicy;
 use App\Models\TermCondition;
@@ -245,6 +245,10 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::post('/insurance-sub-type-production-price-store',  'production_price_store')->name('insurance.sub.type.productionPrice.store')->middleware('check.subadmin.permission:Insurance Types,store');
         Route::post('/insurance-sub-type-production-price-update/{id}',  'production_price_update')->name('insurance.sub.type.productionPrice.update')->middleware('check.subadmin.permission:Insurance Types,edit');
         Route::delete('/insurance-sub-type-production-price-destroy/{id}',  'production_price_destroy')->name('insurance.sub.type.productionPrice.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
+        Route::get('/insurance-sub-type-satellite_ndvi/{id}',  'satellite_ndvi')->name('insurance.sub.type.satelliteNDVI')->middleware('check.subadmin.permission:Insurance Types,view');
+        Route::post('/insurance-sub-type-satellite_ndvi-store',  'satellite_ndvi_store')->name('insurance.sub.type.satelliteNDVI.store')->middleware('check.subadmin.permission:Insurance Types,store');
+        Route::post('/insurance-sub-type-satellite_ndvi-update/{id}',  'satellite_ndvi_update')->name('insurance.sub.type.satelliteNDVI.update')->middleware('check.subadmin.permission:Insurance Types,edit');
+        Route::delete('/insurance-sub-type-satellite_ndvi-destroy/{id}',  'satellite_ndvi_destroy')->name('insurance.sub.type.satelliteNDVI.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
     });
 
     // ############ Insurance Claim Requests #################
@@ -270,5 +274,15 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::post('/contact-us-store', [ContactUsController::class, 'store'])->name('contact.store');
     Route::get('/contact-us-edit/{id}', [ContactUsController::class, 'updateview'])->name('contact.updateview');
     Route::post('/contact-us-update/{id}', [ContactUsController::class, 'update'])->name('contact.update');
+
+      // ############ Faq #################
+    Route::get('faqs', [FaqController::class, 'Faq']);
+    Route::get('faq-edit/{id}', [FaqController::class, 'FaqsEdit'])->name('faq.edit');
+    Route::post('faq-update/{id}', [FaqController::class, 'FaqsUpdate']);
+    Route::get('faq-view', [FaqController::class, 'FaqView']);
+    Route::get('faq-create', [FaqController::class, 'Faqscreateview']);
+    Route::post('faq-store', [FaqController::class, 'Faqsstore']);
+    Route::delete('faq-destroy/{id}', [FaqController::class, 'faqdelete'])->name('faq.destroy');
+    Route::post('/faqs/reorder', [FaqController::class, 'reorder'])->name('faq.reorder');
 
 });

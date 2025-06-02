@@ -23,7 +23,6 @@ use App\Http\Controllers\Api\AuthorizedDealerController;
 */
 
 
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/dealer', [AuthorizedDealerController::class, 'authorizeDealerRegister']);
@@ -49,18 +48,14 @@ Route::post('/password-reset', [AuthController::class, 'passwordReset']);
 Route::get('/districts', [LandDataManagement::class, 'getDistricts']);  
 
 Route::middleware('auth:sanctum')->group(function () {
-
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('get-profile', [AuthController::class, 'getProfile']); 
     Route::post('/update-profiles', [AuthController::class, 'updateProfile']); 
-
    
     Route::prefix('land')->group(function () {
-
         Route::get('districts/{id}/tehsils', [LandDataManagement::class, 'getTehsils']);   
         Route::get('tehsils/{id}/ucs', [LandDataManagement::class, 'getUcs']);   
         Route::get('ucs/{id}/villages', [LandDataManagement::class, 'getVillages']);
-       
     });
 
     #lands
