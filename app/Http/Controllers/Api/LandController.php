@@ -47,6 +47,9 @@ if ($request->hasFile('certificate')) {
         'area_unit' => $request->area_unit, // Store as ID
         'image' => $image,
         'certificate' => $certificate,
+        'demarcation' => is_array($request->demarcation) 
+                          ? json_encode($request->demarcation) 
+                          : $request->demarcation,
     ]);
 
     return response()->json(['message' => 'Land added successfully', 'land' => $land], 200);
@@ -66,7 +69,7 @@ public function showLands(Request $request)
     $perPage = $request->input('limit', 10); // Default: 10 items per page
     $offSet = ($page - 1) * $perPage;
 
-    $lands = Land::select('id', 'location','area_unit', 'image', 'certificate')
+    $lands = Land::select('id', 'location','area_unit', 'image', 'certificate', 'demarcation')
         ->offset($offSet)
         ->limit($perPage)
         ->orderBy('id', 'desc')
@@ -78,6 +81,7 @@ public function showLands(Request $request)
                 'area_unit' => $land->area_unit,
                 'image' => $land->image,
                 'certificate' => $land->certificate,
+                'demarcation' => json_decode($land->demarcation, true),
             ];
         });
 

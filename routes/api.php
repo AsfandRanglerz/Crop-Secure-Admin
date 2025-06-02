@@ -67,7 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/land', [LandController::class, 'store']);
     Route::post('/land-record', [LandController::class, 'landrecord']);
     Route::get('/getlandrecord', [LandController::class, 'getLandRecord']);
-    Route::get('/getOwnershipLands', [LandController::class, 'showLands']);
+    Route::get('/getOwnershipLands', [LandController::class, 'showLands'])->middleware('auth:sanctum');
     Route::get('/area-units', [LandController::class, 'getAreaUnits']);
 
     #crops insurance
