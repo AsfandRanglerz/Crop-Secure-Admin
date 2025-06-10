@@ -19,10 +19,6 @@ class CropInsuranceController extends Controller
         $user = Auth::user();
         return response()->json([
             'crops' => EnsuredCropName::pluck('name')->toArray(),
-            
-            
-            
-            
         ]);
     }
 
