@@ -27,7 +27,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="insurance_type_id">Types</label>
-                                    <select name="insurance_type_id[]" id="insurance_type_id" class="form-control" multiple
+                                    <select name="insurance_type_id[]" id="insurance_type_id" class="form-control"
                                         required>
                                         @foreach ($Insurance_types->whereIn('name', ['Area Yield Index', 'Production Price Index', 'Weather Index', 'Satellite Index (NDVI)']) as $Insurance_type)
                                             <option value="{{ $Insurance_type->id }}">{{ $Insurance_type->name }}</option>
@@ -39,6 +39,23 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Crop Selection for Weather/NDVI -->
+                        <div class="row" id="weatherNdviCropRow" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="weather_ndvi_crops">Select Crops</label>
+                                    <select name="weather_ndvi_crops[]" id="weather_ndvi_crops_select2" class="form-control" multiple>
+                                        @foreach ($ensuredCrops as $crop)
+                                            <option value="{{ $crop->name }}">{{ $crop->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('weather_ndvi_crops')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row" id="ndviBenchmarkRow" style="display: none;">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -286,7 +303,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>District</label>
-                                            <select name="district_name[]" class="form-control">
+                                            <select name="district_name[]" class="form-control district-select">
                                                 <option value="">Select District</option>
                                                 @foreach ($districts as $district)
                                                     <option value="{{ $district->id }}"
@@ -512,14 +529,15 @@
         })
     </script>
 
-    <script>
+    {{-- <script>
         $(document).ready(function() {
             $('#insurance_type_id').select2({
                 placeholder: "Select Type",
                 allowClear: true
             });
         });
-    </script>
+    </script> --}}
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
     <script type="text/javascript">
         $('.show_confirm').click(function(event) {
@@ -540,6 +558,14 @@
                 });
         });
     </script>
+<script>
+    $(document).ready(function() {
+        $('#weather_ndvi_crops_select2').select2({
+            placeholder: "Select Crops",
+            width: '100%'
+        });
+    });
+</script>
 
     <script>
         $(document).ready(function() {
@@ -561,7 +587,7 @@
                             data.forEach(function(tehsil) {
                                 $tehsilSelect.append(
                                     `<option value="${tehsil.id}">${tehsil.name}</option>`
-                                );
+                                    );
                             });
                         },
                         error: function(xhr) {
@@ -589,7 +615,7 @@
                                 let isSelected = selectedTehsil == tehsil.id ? 'selected' : '';
                                 $tehsilSelect.append(
                                     `<option value="${tehsil.id}" ${isSelected}>${tehsil.name}</option>`
-                                );
+                                    );
                             });
                         },
                         error: function(xhr) {
@@ -806,16 +832,19 @@
                 $('#ndviBenchmarkRow').hide();
                 $('#sumInsuredNote').hide();
                 $('#addMore').hide();
+                $('#weatherNdviCropRow').hide();
 
                 if (isWeatherIndex) {
                     $('#type').show();
                     $('#premiumPriceWrapper').show();
                     $('#sumInsuredNote').show();
+                    $('#weatherNdviCropRow').show();
                 } else if (isNDVI) {
                     $('#type').show();
                     $('#premiumPriceWrapper').show();
                     $('#ndviBenchmarkRow').show();
                     $('#sumInsuredNote').show();
+                    $('#weatherNdviCropRow').show();
                 } else {
                     // Show everything for Area Yield Index or Production Price Index
                     $('.modal-body .row').show();
@@ -824,6 +853,8 @@
                     $('#ndviBenchmarkRow').hide();
                     $('#sumInsuredNote').hide();
                     $('#addMore').show();
+                    $('#weatherNdviCropRow').hide();
+
                 }
             }
 

@@ -61,59 +61,36 @@ class CompanyInsuranceTypeController extends Controller
 
             if (!$insuranceType) continue;
 
-            // Handle Weather Index separately
-            if ($insuranceType->name === 'Weather Index') {
-                // Check if already exists
-                $exists = CompanyInsuranceType::where([
-                    ['insurance_company_id', '=', $request->insurance_company_id],
-                    ['insurance_type_id', '=', $insuranceTypeId],
-                ])->exists();
-
-                if ($exists) {
-                    return redirect()->route('company.insurance.types.index', ['id' => $request->insurance_company_id])
-                        ->with(['error' => 'Weather Index insurance already exists for this company.']);
-                }
-
+            // Handle Weather Index and Satellite Index (NDVI) together
+            if (in_array($insuranceType->name, ['Weather Index', 'Satellite Index (NDVI)'])) {
                 $request->validate([
                     'premium_price' => 'required|numeric',
+                    'weather_ndvi_crops' => 'required|array',
                 ]);
+
+                $existing = CompanyInsuranceType::where([
+                    ['insurance_company_id', '=', $request->insurance_company_id],
+                    ['insurance_type_id', '=', $insuranceTypeId],
+                ])->where(function ($query) use ($request) {
+                    foreach ($request->weather_ndvi_crops as $crop) {
+                        $query->orWhere('crop', 'like', "%{$crop}%");
+                    }
+                })->exists();
+
+                if ($existing) {
+                    return redirect()->route('company.insurance.types.index', ['id' => $request->insurance_company_id])
+                        ->with(['error' => "{$insuranceType->name} for one or more crops already exists."]);
+                }
+
+                $cropList = implode(", ", array_map('trim', $request->weather_ndvi_crops));
 
                 CompanyInsuranceType::create([
                     'insurance_company_id' => $request->insurance_company_id,
                     'insurance_type_id' => $insuranceTypeId,
-                    'crop' => null,
+                    'crop' => $cropList,
                     'district_name' => null,
                     'tehsil_id' => null,
-                    'benchmark' => null,
-                    'price_benchmark' => null,
-                    'premium_price' => $request->premium_price,
-                ]);
-            }
-
-            // Handle Satellite Index (NDVI) separately
-            elseif ($insuranceType->name === 'Satellite Index (NDVI)') {
-                // Check if already exists
-                $exists = CompanyInsuranceType::where([
-                    ['insurance_company_id', '=', $request->insurance_company_id],
-                    ['insurance_type_id', '=', $insuranceTypeId],
-                ])->exists();
-
-                if ($exists) {
-                    return redirect()->route('company.insurance.types.index', ['id' => $request->insurance_company_id])
-                        ->with(['error' => 'Satellite Index (NDVI) insurance already exists for this company.']);
-                }
-
-                $request->validate([
-                    'premium_price' => 'required|numeric',
-                ]);
-
-                CompanyInsuranceType::create([
-                    'insurance_company_id' => $request->insurance_company_id,
-                    'insurance_type_id' => $insuranceTypeId,
-                    'crop' => null,
-                    'district_name' => null,
-                    'tehsil_id' => null,
-                    'benchmark' => 0.4,
+                    'benchmark' => $insuranceType->name === 'Satellite Index (NDVI)' ? 0.4 : null,
                     'price_benchmark' => null,
                     'premium_price' => $request->premium_price,
                 ]);
@@ -168,6 +145,7 @@ class CompanyInsuranceTypeController extends Controller
     }
 
 
+
     public function update(Request $request, $id)
     {
         try {
@@ -217,10 +195,14 @@ class CompanyInsuranceTypeController extends Controller
                         'price_benchmark' => 'required|array',
                     ]);
 
+                    $crop = $request->input('crop')[0] ?? null;
+                    $district = $request->input('district_name')[0] ?? null;
+                    $tehsil = $request->input('tehsil_id')[0] ?? null;
+
                     $company->update([
-                        'crop' => $request->crop[$id] ?? $company->crop,
-                        'district_name' => $request->district_name[$id] ?? $company->district_name,
-                        'tehsil_id' => $request->tehsil_id[$id] ?? $company->tehsil_id,
+                        'crop' => $crop,
+                        'district_name' => $district,
+                        'tehsil_id' => $tehsil,
                     ]);
 
                     $company->benchmark = implode("\n", array_filter($request->benchmark[$id] ?? []));
