@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\InsuranceSubTypeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\LandController;
@@ -8,6 +9,8 @@ use App\Http\Controllers\Api\LandDataManagement;
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\CropInsuranceController;
 use App\Http\Controllers\Api\AuthorizedDealerController;
+use App\Http\Controllers\Api\InsuranceController;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +22,18 @@ use App\Http\Controllers\Api\AuthorizedDealerController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Route::get('clear-cache', function () {
+	Artisan::call('cache:clear');
+	Artisan::call('view:clear');
+	Artisan::call('route:clear');
+	Artisan::call('config:clear');
+	return 'cache cleared';
+});
+
+// Route::get('debug-post', function () {
+//     return response()->json(['status' => 'get working']);
+// });
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -51,12 +66,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('tehsils/{id}/ucs', [LandDataManagement::class, 'getUcs']);   
         Route::get('ucs/{id}/villages', [LandDataManagement::class, 'getVillages']);
     });
+    
+    // ndvi api fetch b8 and b4 value
+    Route::get('/fetch-ndvi-data', [InsuranceSubTypeController::class, 'fetchNDVIData']);
 
     #lands
     Route::post('/land', [LandController::class, 'store']);
     Route::post('/land-record', [LandController::class, 'landrecord']);
-    Route::get('/showlands', [LandController::class, 'showlands']);
     Route::get('/area-units', [LandController::class, 'getAreaUnits']);
+    Route::get('/getOwnershipLands', [LandController::class, 'showLands'])->middleware('auth:sanctum');
 
     #crops insurance
     Route::get('insurance/form-options', [CropInsuranceController::class, 'getFormOptions']);
@@ -78,7 +96,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/add-list', [ProductController::class, 'addToList']);
     Route::get('/getlist', [ProductController::class, 'getAddedList']);
     Route::post('/deletelist/{id}', [ProductController::class, 'deleteFromList']);
-    
+
+    //delete account
+    Route::post('/delete-account', [AuthController::class, 'deleteAccount']);
+
+    // farmer insurances
+    Route::post('/submit-insurance', [InsuranceController::class, 'store']);
+    Route::get('/insurances', [InsuranceController::class, 'getInsurances']);
+
+    Route::get('user', function(){
+        return "hello";
+    });
+
 });
 
 

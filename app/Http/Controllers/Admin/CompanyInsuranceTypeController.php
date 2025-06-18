@@ -153,39 +153,26 @@ class CompanyInsuranceTypeController extends Controller
             $insuranceType = InsuranceType::find($company->insurance_type_id);
 
             if ($insuranceType) {
-                // Weather Index update
-                if ($insuranceType->name === 'Weather Index') {
+                // Weather Index or Satellite Index (NDVI)
+                if ($insuranceType->name === 'Weather Index' || $insuranceType->name === 'Satellite Index (NDVI)') {
                     $request->validate([
                         'premium_price' => 'required|numeric',
+                        'crop' => 'required|array',
                     ]);
+
+                    $cropList = implode(", ", array_map('trim', $request->crop));
 
                     $company->update([
                         'premium_price' => $request->premium_price,
-                        'crop' => null,
+                        'crop' => $cropList,
                         'district_name' => null,
                         'tehsil_id' => null,
-                        'benchmark' => null,
+                        'benchmark' => $insuranceType->name === 'Satellite Index (NDVI)' ? 0.4 : null,
                         'price_benchmark' => null,
                     ]);
                 }
 
-                // Satellite Index (NDVI) update
-                elseif ($insuranceType->name === 'Satellite Index (NDVI)') {
-                    $request->validate([
-                        'premium_price' => 'required|numeric',
-                    ]);
-
-                    $company->update([
-                        'premium_price' => $request->premium_price,
-                        'crop' => null,
-                        'district_name' => null,
-                        'tehsil_id' => null,
-                        'benchmark' => 0.4, // Fixed NDVI benchmark
-                        'price_benchmark' => null,
-                    ]);
-                }
-
-                // Other insurance types
+                // Other insurance types (area yield, etc.)
                 else {
                     $request->validate([
                         'crop' => 'required|array',
@@ -203,12 +190,10 @@ class CompanyInsuranceTypeController extends Controller
                         'crop' => $crop,
                         'district_name' => $district,
                         'tehsil_id' => $tehsil,
+                        'premium_price' => null,
+                        'benchmark' => implode("\n", array_filter($request->benchmark[$id] ?? [])),
+                        'price_benchmark' => implode("\n", array_filter($request->price_benchmark[$id] ?? [])),
                     ]);
-
-                    $company->benchmark = implode("\n", array_filter($request->benchmark[$id] ?? []));
-                    $company->price_benchmark = implode("\n", array_filter($request->price_benchmark[$id] ?? []));
-                    $company->premium_price = null;
-                    $company->save();
                 }
             }
 
@@ -219,6 +204,7 @@ class CompanyInsuranceTypeController extends Controller
             return redirect()->back()->withErrors(['error' => 'Something went wrong: ' . $e->getMessage()]);
         }
     }
+
 
 
 

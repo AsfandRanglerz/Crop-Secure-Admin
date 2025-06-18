@@ -1,9 +1,9 @@
 <div class="main-sidebar sidebar-style-2">
     <aside" id="sidebar-wrapper">
         <div class="sidebar-brand">
-            <a href="{{ url('/admin/dashboard') }}"> 
+            <a href="{{ url('/admin/dashboard') }}">
                 <img alt="image" src="{{ asset('public/admin/assets/img/logo.png') }}" class="header-logo" />
-                     {{-- <span class="logo-name">Crop Secure</span> --}}
+                {{-- <span class="logo-name">Crop Secure</span> --}}
             </a>
         </div>
         <ul class="sidebar-menu">
@@ -26,18 +26,20 @@
                 <li class="dropdown {{ request()->is('admin/dealer*') ? 'active' : '' }}">
                     <a href="
                         {{ route('dealer.index') }}
-                        " class="nav-link">
+                        "
+                        class="nav-link">
                         <i data-feather="shopping-bag"></i><span> Authorized Dealers</span>
                     </a>
                 </li>
             @endif
-            
+
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Dealer Items'))
                 {{-- Authorized Dealers --}}
                 <li class="dropdown {{ request()->is('admin/items*') ? 'active' : '' }}">
                     <a href="
                         {{ route('items.index') }}
-                        " class="nav-link">
+                        "
+                        class="nav-link">
                         <i data-feather="layers"></i><span> Dealer Items</span>
                     </a>
                 </li>
@@ -55,10 +57,12 @@
             @endif
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insured Crops'))
-                <li class="dropdown {{ request()->is('admin/ensured-crop-name*') || request()->is('admin/crop-type*') ? 'active' : '' }}">
+                <li
+                    class="dropdown {{ request()->is('admin/ensured-crop-name*') || request()->is('admin/crop-type*') ? 'active' : '' }}">
                     <a href="
                 {{ route('ensured.crop.name.index') }}
-                " class="nav-link  px-2">
+                "
+                        class="nav-link  px-2">
                         <i class="fas fa-leaf"></i><span> Insured Crops</span>
                     </a>
                 </li>
@@ -66,7 +70,8 @@
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Land Data Management'))
                 {{-- Company --}}
-                <li class="dropdown {{ request()->is('admin/land-data-management*') || request()->is('admin/village*') || request()->is('admin/union*') || request()->is('admin/tehsil*') || request()->is('admin/unit*') ? 'active' : '' }}">
+                <li
+                    class="dropdown {{ request()->is('admin/land-data-management*') || request()->is('admin/village*') || request()->is('admin/union*') || request()->is('admin/tehsil*') || request()->is('admin/unit*') ? 'active' : '' }}">
                     <a href="
                 {{ route('land.index') }}
                 " class="nav-link">
@@ -77,10 +82,12 @@
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Companies'))
                 {{-- Demands --}}
-                <li class="dropdown {{ request()->is('admin/insurance-company*') || request()->is('admin/company-insurance*') ? 'active' : '' }}">
+                <li
+                    class="dropdown {{ request()->is('admin/insurance-company*') || request()->is('admin/company-insurance*') ? 'active' : '' }}">
                     <a href="
                 {{ route('insurance.company.index') }}
-                " class="nav-link px-2">
+                "
+                        class="nav-link px-2">
                         <i class="fas fa-shield-alt"></i> <span>Insurance Companies</span>
                     </a>
                 </li>
@@ -88,16 +95,18 @@
 
             {{-- Insurance Types & Sub-types --}}
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Types & Sub-Types'))
-                <li class="dropdown {{ request()->is('admin/insurance-type*') || request()->is('admin/insurance-sub-type*') ? 'active' : '' }}">
+                <li
+                    class="dropdown {{ request()->is('admin/insurance-type*') || request()->is('admin/insurance-sub-type*') ? 'active' : '' }}">
                     <a href="
                 {{ route('insurance.type.index') }}
-                " class="nav-link px-2">
+                "
+                        class="nav-link px-2">
                         <i class="fas fa-cogs"></i> <span>Insurances</span>
                     </a>
                 </li>
             @endif
 
-            @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Claim Requests'))
+            {{-- @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Claim Requests'))
                 <li class="dropdown {{ request()->is('admin/insurance-claim*') ? 'active' : '' }}">
                     <a href="
                 {{ route('insurance.claim.index') }}
@@ -105,14 +114,18 @@
                         <i class="fas fa-file-alt"></i> <span>Insurance Claim Requests</span>
                     </a>
                 </li>
-            @endif
-            
+            @endif --}}
+
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance History '))
-                <li class="dropdown {{ request()->is('admin/ensured-crops*') ? 'active' : '' }}">
-                    <a href="
-                {{ route('ensured.crops.index') }}
-                " class="nav-link px-2">
-                <i class="fas fa-user-shield"></i> <span>Insurance History</span>
+                <li class="dropdown {{ request()->is('admin/insurance-history*') ? 'active' : '' }}">
+                    <a href="{{ route('insurance.history.index') }}" class="nav-link px-2">
+                        <i class="fas fa-user-shield"></i>
+                        <span>
+                            Insurance History
+                            @if (!empty($newInsuranceCount) && $newInsuranceCount > 0)
+                                <span class="badge badge-danger ml-2">{{ $newInsuranceCount }}</span>
+                            @endif
+                        </span>
                     </a>
                 </li>
             @endif
@@ -129,7 +142,7 @@
             @endif
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('faqs'))
-            <!-- Terms & Conditions Section -->
+                <!-- Terms & Conditions Section -->
                 <li
                     class="dropdown {{ request()->is(['admin/faqs', 'admin/contact-us-createview']) ? 'active' : '' }}">
                     <a href="{{ url('admin/faqs') }}" class="nav-link">
@@ -139,7 +152,7 @@
             @endif
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('ContactUs'))
-            <!-- Terms & Conditions Section -->
+                <!-- Terms & Conditions Section -->
                 <li
                     class="dropdown {{ request()->is(['admin/contact-us', 'admin/contact-us-createview']) ? 'active' : '' }}">
                     <a href="{{ url('admin/contact-us') }}" class="nav-link">
@@ -148,10 +161,10 @@
                 </li>
             @endif
 
-            
+
             <li class="dropdown {{ request()->is('admin/about-us*') ? 'active' : '' }}">
-                <a href="{{ url('/admin/about-us') }}" class="nav-link"><i
-                        data-feather="info"></i><span>About Us</span></a>
+                <a href="{{ url('/admin/about-us') }}" class="nav-link"><i data-feather="info"></i><span>About
+                        Us</span></a>
             </li>
             <li class="dropdown {{ request()->is('admin/privacy-policy*') ? 'active' : '' }}">
                 <a href="{{ url('/admin/privacy-policy') }}" class="nav-link"><i
@@ -162,5 +175,5 @@
                         data-feather="clipboard"></i><span>Terms & Conditions</span></a>
             </li>
         </ul>
-    </aside>
+        </aside>
 </div>

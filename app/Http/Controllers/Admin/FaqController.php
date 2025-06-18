@@ -35,27 +35,18 @@ class FaqController extends Controller
         return view('admin.faq.create');
     }
 
-
     public function Faqsstore(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'description' => 'required',
+        $request->validate([
+            'question' => 'required|string|max:255',
+            'answer' => 'required',
         ]);
 
-        // If validation fails
-        if ($validator->fails()) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
+        Faq::create([
+            'question' => $request->question,
+    'answer' => strip_tags($request->answer),
+        ]);
 
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // Save data
-        Faq::create($request->all());
         return redirect('/admin/faqs')->with('success', 'FAQs created successfully');
     }
 
@@ -76,17 +67,15 @@ class FaqController extends Controller
     public function FaqsUpdate(Request $request, $id)
     {
         $request->validate([
-            'description' => 'required'
+            'question' => 'required|string|max:255',
+            'answer' => 'required|string',
         ]);
 
-
-        $data = Faq::find($id);
-        // AboutUs::find($data->id)->update($request->all());
-        if (!$data) {
-            return ('data not found.');
-        } else {
-            $data->update($request->all());
-        }
+        $faq = Faq::findOrFail($id);
+        $faq->update([
+            'question' => $request->question,
+            'answer' => $request->answer,
+        ]);
         return redirect('/admin/faqs')->with('success', 'FAQs updated successfully');
     }
 

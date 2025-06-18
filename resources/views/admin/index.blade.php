@@ -66,7 +66,7 @@
                         (isset($sideMenuPermissions['Insurance History']) &&
                             $sideMenuPermissions['Insurance History']['permissions']->contains('view')))
                     <div class="col-xl-4 col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                        <a href="{{ route('ensured.crops.index') }}" style="text-decoration: none; color: inherit;">
+                        <a href="{{ route('insurance.history.index') }}" style="text-decoration: none; color: inherit;">
                             <div class="card">
                                 <div class="card-statistic-4">
                                     <div class="align-items-center justify-content-between">

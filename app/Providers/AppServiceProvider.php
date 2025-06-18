@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\InsuranceHistory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,10 +13,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
-    {
-
-    }
+    public function register() {}
 
     /**
      * Bootstrap any application services.
@@ -23,6 +22,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-       // view()->share('ASSET',asset('public'));
+    
     }
 }

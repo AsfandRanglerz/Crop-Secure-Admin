@@ -27,8 +27,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="insurance_type_id">Types</label>
-                                    <select name="insurance_type_id[]" id="insurance_type_id" class="form-control"
-                                        required>
+                                    <select name="insurance_type_id[]" id="insurance_type_id" class="form-control" required>
                                         @foreach ($Insurance_types->whereIn('name', ['Area Yield Index', 'Production Price Index', 'Weather Index', 'Satellite Index (NDVI)']) as $Insurance_type)
                                             <option value="{{ $Insurance_type->id }}">{{ $Insurance_type->name }}</option>
                                         @endforeach
@@ -44,7 +43,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="weather_ndvi_crops">Select Crops</label>
-                                    <select name="weather_ndvi_crops[]" id="weather_ndvi_crops_select2" class="form-control" multiple>
+                                    <select name="weather_ndvi_crops[]" id="weather_ndvi_crops_select2" class="form-control"
+                                        multiple>
                                         @foreach ($ensuredCrops as $crop)
                                             <option value="{{ $crop->name }}">{{ $crop->name }}</option>
                                         @endforeach
@@ -77,8 +77,7 @@
                                 <div class="form-group">
                                     <label for="premium_price">Premium Price</label>
                                     <div class="input-group">
-                                        <input type="number" name="premium_price" id="premium_price" class="form-control"
-                                            placeholder="Enter Premium Price">
+                                        <input type="number" name="premium_price" id="premium_price" class="form-control">
                                         <div class="input-group-append">
                                             <span class="input-group-text" style="border: 1px solid #cbd2d8;">PKR</span>
                                         </div>
@@ -248,6 +247,29 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Crop</label>
+                                            <select name="crop[]" class="form-control" multiple>
+                                                <option value="" disabled>Select Crop</option>
+                                                @php
+                                                    $selectedCrops = is_array($InsuranceType->crop)
+                                                        ? $InsuranceType->crop
+                                                        : explode(',', $InsuranceType->crop);
+                                                    $selectedCrops = array_map('trim', $selectedCrops); // remove whitespace
+                                                @endphp
+
+                                                @foreach ($ensuredCrops as $crop)
+                                                    <option value="{{ $crop->name }}"
+                                                        {{ in_array($crop->name, $selectedCrops) ? 'selected' : '' }}>
+                                                        {{ $crop->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                             @elseif ($InsuranceType->insuranceType->name === 'Satellite Index (NDVI)')
                                 {{-- NDVI: Show Fixed Benchmark and Premium Price --}}
                                 <div class="row">
@@ -280,6 +302,29 @@
                                             <small class="text-muted mt-1 d-block">
                                                 The premium price value applied against 1 acre
                                             </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Crop</label>
+                                            <select name="crop[]" class="form-control" multiple>
+                                                <option value="" disabled>Select Crop</option>
+                                                @php
+                                                    $selectedCrops = is_array($InsuranceType->crop)
+                                                        ? $InsuranceType->crop
+                                                        : explode(',', $InsuranceType->crop);
+                                                    $selectedCrops = array_map('trim', $selectedCrops); // remove whitespace
+                                                @endphp
+
+                                                @foreach ($ensuredCrops as $crop)
+                                                    <option value="{{ $crop->name }}"
+                                                        {{ in_array($crop->name, $selectedCrops) ? 'selected' : '' }}>
+                                                        {{ $crop->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -393,7 +438,6 @@
             var existingPriceBenchmarks_{{ $InsuranceType->id }} = @json(array_slice($existingPriceBenchmarks, 1));
         </script>
     @endforeach
-
 
 
     <div class="main-content" style="min-height: 562px;">
@@ -522,22 +566,12 @@
 @endsection
 
 @section('js')
-
     <script>
         $(document).ready(function() {
             $('#table_id_events').DataTable()
         })
     </script>
 
-    {{-- <script>
-        $(document).ready(function() {
-            $('#insurance_type_id').select2({
-                placeholder: "Select Type",
-                allowClear: true
-            });
-        });
-    </script> --}}
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
     <script type="text/javascript">
         $('.show_confirm').click(function(event) {
@@ -558,14 +592,21 @@
                 });
         });
     </script>
-<script>
-    $(document).ready(function() {
-        $('#weather_ndvi_crops_select2').select2({
-            placeholder: "Select Crops",
-            width: '100%'
+    <script>
+        $(document).ready(function() {
+            $('#weather_ndvi_crops_select2').select2({
+                placeholder: "Select Crops",
+                width: '100%'
+            });
         });
-    });
-</script>
+
+        $(document).ready(function() {
+            $('select[name="crop[]"]').select2({
+                placeholder: 'Select Crop(s)',
+                width: '100%'
+            });
+        });
+    </script>
 
     <script>
         $(document).ready(function() {
@@ -587,7 +628,7 @@
                             data.forEach(function(tehsil) {
                                 $tehsilSelect.append(
                                     `<option value="${tehsil.id}">${tehsil.name}</option>`
-                                    );
+                                );
                             });
                         },
                         error: function(xhr) {
@@ -615,7 +656,7 @@
                                 let isSelected = selectedTehsil == tehsil.id ? 'selected' : '';
                                 $tehsilSelect.append(
                                     `<option value="${tehsil.id}" ${isSelected}>${tehsil.name}</option>`
-                                    );
+                                );
                             });
                         },
                         error: function(xhr) {

@@ -18,31 +18,90 @@ class CropInsuranceController extends Controller
     {
         $user = Auth::user();
         return response()->json([
-            'crops' => EnsuredCropName::pluck('name')->toArray(),
+            'crops' => EnsuredCropName::select('name', 'sum_insured_value', 'insurance_start_time', 'insurance_end_time')->get(),
+            
+            
+            
+            
         ]);
     }
 
-    public function getinsurancetype()
-    {
-        $user = Auth::user();
-        return response()->json([
+    // public function getinsurancetype()
+    // {
+    //     $user = Auth::user();
+    //     return response()->json([
             
-            'insurance_types' => InsuranceType::pluck('name')->toArray(),
+    //         // 'insurance_types' => InsuranceType::pluck('name')->toArray(),
+    //         'insurance_types' => InsuranceType::select('id', 'name')->get(),
+    //         // 'area_units' => AreaUnit::select('id', 'unit_name')->get(),
             
-            // 'area_units' => AreaUnit::select('id', 'unit_name')->get(),
-            
-        ]);
+    //     ]);
+    // }
+
+    public function getinsurancetype(Request $request)
+{
+    $cropName = $request->input('crop');
+
+    if (!$cropName) {
+        return response()->json(['error' => 'crop is required'], 400);
     }
+
+    // Get unique insurance_type_ids for the crop
+     $companyTypes = CompanyInsuranceType::where('crop', $cropName)
+        ->with('insuranceType:id,name') // eager load insurance type
+        ->get();
+
+    // Fetch insurance type names
+   $result = $companyTypes->map(function ($item) {
+        $insuranceTypeName = $item->insuranceType->name ?? null;
+
+        return [
+            'id' => $item->insurance_type_id,
+            'name' => $insuranceTypeName,
+            // 'premium_price' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index']) ? $item->premium_price : null,
+        ];
+    })->unique('id')->values(); // remove duplicates by insurance_type_id
+
+    return response()->json([
+        'insurance_types' => $result
+    ], 200);
+}
 
     // Get companies based on selected insurance type
     public function getCompaniesByInsuranceType($insuranceTypeId)
     {
         $companies = CompanyInsuranceType::where('insurance_type_id', $insuranceTypeId)
-        ->with('insuranceCompany:id,name') // eager load only required fields
+        ->with(['insuranceCompany:id,name', 'tehsil:id,name', 'district:id,name',  'insuranceType:id,name']) // eager load only required fields
         ->get()
-        ->pluck('insuranceCompany')
-        ->values();
+        ->map(function ($item) {
+             $insuranceTypeName = $item->insuranceType->name ?? null;
 
+            $benchmarks = preg_split('/\r\n|\r|\n/', $item->benchmark);
+            $prices = preg_split('/\r\n|\r|\n/', $item->price_benchmark);
+
+            // Clean up extra whitespace and match lengths
+            $benchmarks = array_map('trim', $benchmarks);
+            $prices = array_map('trim', $prices);
+
+            $combined = [];
+            foreach ($benchmarks as $index => $value) {
+                $combined[] = [
+                    'benchmark' => $value,
+                    'price_benchmark' => $prices[$index] ?? null,
+                ];
+
+            }
+
+            return [
+                'company_name' => $item->insuranceCompany->name,
+                'tehsil_name' => $item->tehsil->name ?? null,
+                'district_name' => $item->district->name ?? null,
+                'premium_price' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index']) 
+                    ? $item->premium_price 
+                    : null,
+                'benchmark_data' => $combined,
+            ];
+        });
        
         return response()->json(['message' => 'Companies retrieved successfully', 'data' => $companies], 200);
     }
@@ -135,25 +194,8 @@ class CropInsuranceController extends Controller
 
         return response()->json(['message' => 'Crop insurance submitted successfully', 'data' => $insurance], 200);
     }
-public function getinsurance()
-    {
-        $user = Auth::user();
-        
-        $insurances = CropInsurance::with(['companys', 'insuranceType'])
-            ->get()
-            ->map(function ($insurance) {
-                return [
-                    'company' => $insurance->companys->name ?? 'N/A',
-                    'insurance_type' => $insurance->insuranceType->name ?? 'N/A',
-                    'premium_price' => $insurance->premium_price,
-                    'sum_insured' => $insurance->sum_insured,
-                ];
-            });
 
-        return response()->json(['data' => $insurances], 200);
-    }
-
-public function claim()
+    public function claim()
 {
     $user = Auth::user();
 

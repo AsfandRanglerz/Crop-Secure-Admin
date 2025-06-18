@@ -11,7 +11,7 @@ class NotificationHelper
     {
         try {
             $client = new Client();
-            $client->setAuthConfig(storage_path('app/firebase-adminsdk.json')); // Update to your actual file name
+            $client->setAuthConfig(storage_path('app/crop-1a4a6-firebase-adminsdk-fbsvc-2659e4d872.json')); // Update to your actual file name
             $client->addScope('https://www.googleapis.com/auth/cloud-platform');
             $accessToken = $client->fetchAccessTokenWithAssertion();
 
@@ -49,7 +49,7 @@ class NotificationHelper
 
             $curl = curl_init();
             curl_setopt_array($curl, [
-                CURLOPT_URL => 'https://fcm.googleapis.com/v1/projects/YOUR_PROJECT_ID/messages:send', // Replace
+                CURLOPT_URL => 'https://fcm.googleapis.com/v1/projects/crop-1a4a6/messages:send',
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => json_encode($message),

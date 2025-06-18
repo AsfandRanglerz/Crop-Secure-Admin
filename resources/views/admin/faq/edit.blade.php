@@ -1,48 +1,47 @@
 @extends('admin.layout.app')
-@section('title', 'FAQS')
+@section('title', 'Edit FAQ')
 @section('content')
-    <!-- Main Content -->
-    <div class="main-content">
-        <section class="section">
-            <div class="section-body">
-                <form action="{{ url('admin/faq-update', $data->id) }}" method="POST">
-                    @csrf
+<!-- Main Content -->
+<div class="main-content">
+    <section class="section">
+        <div class="section-body">
+            <form action="{{ url('admin/faq-update', $data->id) }}" method="POST">
+                @csrf
 
-                    <a href="{{ url('/admin/faqs') }}" class="btn mb-3" style="background: #009245;">Back</a>
-                    <div class="row">
-
-                        <div class="col-12 col-md-12 col-lg-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h4>FAQS</h4>
+                <a href="{{ url('/admin/faqs') }}" class="btn mb-3" style="background: #009245;">Back</a>
+                <div class="row">
+                    <div class="col-12 col-md-12 col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4>Edit FAQ</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="question">Question</label>
+                                    <input type="text" name="question" id="question" class="form-control" value="{{ $data->question ?? '' }}">
                                 </div>
-
-                                <div class="card-body">
-                                    <div class="form-group">
-                                        <label>Description</label>
-                                        <textarea name="description" class="form-control">
-                                            @if ($data)
-{{ $data->description }}
-@endif
-                                            
-                                        </textarea>
-                                    </div>
+                                <div class="form-group">
+                                    <label for="answer">Answer</label>
+                                    <textarea name="answer" id="answer" class="form-control">
+                                        {{ $data->answer ?? '' }}
+                                    </textarea>
                                 </div>
-                                <div class="card-footer text-right">
-                                    <button type="submit" class="btn btn-primary mr-1" type="submit">Save Changes</button>
-                                </div>
+                            </div>
+                            <div class="card-footer text-right">
+                                <button type="submit" class="btn btn-primary mr-1">Save Changes</button>
                             </div>
                         </div>
                     </div>
-                </form>
-            </div>
-        </section>
-    </div>
-
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
 @endsection
+
 @section('js')
     <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
     <script>
-        CKEDITOR.replace('description');
+        CKEDITOR.replace('answer');
     </script>
 @endsection

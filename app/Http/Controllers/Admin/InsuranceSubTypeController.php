@@ -16,6 +16,7 @@ use App\Notifications\InsuranceYieldUpdated;
 use App\Helpers\NotificationHelper;
 use App\Models\InsuranceSubTypeSatelliteNDVI;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class InsuranceSubTypeController extends Controller
 {
@@ -273,36 +274,90 @@ class InsuranceSubTypeController extends Controller
         ));
     }
 
-    public function fetchAndStoreNDVIData()
-    {
-        $apiUrl = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da'; // Update with real URL
-        $response = Http::get($apiUrl);
 
-        if ($response->failed()) {
-            return back()->with('error', 'Failed to fetch data from NDVI API');
-        }
+   public function fetchNDVIData(Request $request)
+{
+    // Log initial request input
+    Log::info('NDVI fetch request received', $request->all());
 
-        $data = $response->json();
+    // Validate input
+    $request->validate([
+        'date' => 'required|date',
+    ]);
 
-        foreach ($data as $record) {
-            $b8 = floatval($record['B8']);
-            $b4 = floatval($record['B4']);
-            $date = $record['date'];
-            $insuranceTypeId = $record['insurance_type_id'] ?? null;
+    try {
+        $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
+        $apiUrl = 'https://api-connect.eos.com/user-dashboard/statistics';
 
-            if (($b8 + $b4) == 0) continue;
+        // Send API request
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $apiKey,
+            'Accept' => 'application/json',
+        ])->get($apiUrl, [
+            'date' => $request->date,
+        ]);
+
+        // Log raw response body
+        Log::info('EOS NDVI raw response', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
+        // If successful, process data
+        if ($response->successful()) {
+            $data = $response->json();
+
+            $b8 = isset($data['B8']) ? floatval($data['B8']) : 0.0;
+            $b4 = isset($data['B4']) ? floatval($data['B4']) : 0.0;
+
+            // Log band values
+            Log::info('NDVI band values', [
+                'B8' => $b8,
+                'B4' => $b4,
+                'B8 + B4' => $b8 + $b4,
+            ]);
+
+            // Prevent division by zero
+            if (($b8 + $b4) == 0.0) {
+                Log::warning('NDVI calculation skipped due to division by zero', [
+                    'B8' => $b8,
+                    'B4' => $b4
+                ]);
+
+                return response()->json([
+                    'error' => 'Invalid B8/B4 values (division by zero)',
+                    'b8' => $b8,
+                    'b4' => $b4,
+                    'ndvi' => null
+                ], 422);
+            }
 
             $ndvi = ($b8 - $b4) / ($b8 + $b4);
 
-            InsuranceSubTypeSatelliteNDVI::updateOrCreate(
-                ['date' => $date, 'insurance_type_id' => $insuranceTypeId],
-                ['b8' => $b8, 'b4' => $b4, 'ndvi' => round($ndvi, 4)]
-            );
+            return response()->json([
+                'b8' => $b8,
+                'b4' => $b4,
+                'ndvi' => round($ndvi, 4)
+            ]);
         }
 
-        return back()->with('success', 'NDVI data fetched and stored successfully.');
-    }
+        // Handle unsuccessful EOS API response
+        Log::error('EOS API request failed', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
+        return response()->json(['error' => 'Data not found or EOS request failed'], $response->status());
+    } catch (\Exception $e) {
+        // Log internal error
+        Log::error('NDVI API Exception', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json(['error' => 'Internal server error'], 500);
+    }
+}
     // Manually store a record from the modal
     public function satellite_ndvi_store(Request $request)
     {

@@ -16,41 +16,44 @@ use Illuminate\Support\Facades\Auth;
 class LandController extends Controller
 {
     public function store(Request $request)
-{
-    $userid = Auth::user();
-    // $request->validate([
-    //     'location' => 'required|string',
-    //     'area' => 'required|numeric',
-    //     'area_unit' => 'required|exists:area_units,id',
-    //     'license_file' => 'required|file|mimes:pdf,jpg,jpeg,png',
-    //     'ownership_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png',
-    // ]);
+    {
+        $userid = Auth::user();
+        // $request->validate([
+        //     'location' => 'required|string',
+        //     'area' => 'required|numeric',
+        //     'area_unit' => 'required|exists:area_units,id',
+        //     'license_file' => 'required|file|mimes:pdf,jpg,jpeg,png',
+        //     'ownership_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png',
+        // ]);
 
-    if ($request->hasFile('image')) {
-    $file = $request->file('image');
-    $filename = time() . '_image_' . $file->getClientOriginalName();
-    $file->move(public_path('admin/assets/images/users'), $filename);
-    $image = 'public/admin/assets/images/users/' . $filename;
-}
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_image_' . $file->getClientOriginalName();
+            $file->move(public_path('admin/assets/images/users'), $filename);
+            $image = 'public/admin/assets/images/users/' . $filename;
+        }
 
-if ($request->hasFile('certificate')) {
-    $file = $request->file('certificate');
-    $filename = time() . '_certificate_' . $file->getClientOriginalName();
-    $file->move(public_path('admin/assets/images/users'), $filename);
-    $certificate = 'admin/assets/images/users/' . $filename;
-}
+        if ($request->hasFile('certificate')) {
+            $file = $request->file('certificate');
+            $filename = time() . '_certificate_' . $file->getClientOriginalName();
+            $file->move(public_path('admin/assets/images/users'), $filename);
+            $certificate = 'public/admin/assets/images/users/' . $filename;
+        }
 
-    $land = Land::create([
-        // 'user_id' => auth()->id(),
-        'location' => $request->location,
-        'area' => $request->area,
-        'area_unit' => $request->area_unit, // Store as ID
-        'image' => $image,
-        'certificate' => $certificate,
-    ]);
+        $land = Land::create([
+            'user_id' => auth()->id(),
+            'location' => $request->location,
+            'area' => $request->area,
+            'area_unit' => $request->area_unit, // Store as ID
+            'image' => $image,
+            'certificate' => $certificate,
+            'demarcation' => is_array($request->demarcation)
+                ? json_encode($request->demarcation)
+                : $request->demarcation,
+        ]);
 
-    return response()->json(['message' => 'Land added successfully', 'land' => $land], 200);
-}
+        return response()->json(['message' => 'Land added successfully', 'land' => $land], 200);
+    }
 
     public function getAreaUnits()
     {
@@ -58,12 +61,19 @@ if ($request->hasFile('certificate')) {
         return response()->json(AreaUnit::all());
     }
 
-    public function showlands()
+    public function showLands(Request $request)
     {
         $user = Auth::user();
 
-        $lands = Land::
-            select('id', 'location','area_unit', 'image', 'certificate')
+        $page = $request->input('page', 1);
+        $perPage = $request->input('limit', 10); // Default: 10 items per page
+        $offSet = ($page - 1) * $perPage;
+
+        $lands = Land::where('user_id', $user->id)
+            ->select('id', 'location', 'area_unit', 'image', 'area', 'certificate', 'demarcation')
+            ->offset($offSet)
+            ->limit($perPage)
+            ->orderBy('id', 'desc')
             ->get()
             ->map(function ($land) {
                 return [
@@ -71,20 +81,28 @@ if ($request->hasFile('certificate')) {
                     'location' => $land->location,
                     'area_unit' => $land->area_unit,
                     'image' => $land->image,
+                    'area' => $land->area,
                     'certificate' => $land->certificate,
+                    'demarcation' => json_decode($land->demarcation, true),
                 ];
             });
 
-        return response()->json(['message' => 'Land retrieved successfully', 'lands' => $lands], 200);
+        return response()->json([
+            'data' => $lands,
+        ], 200);
     }
 
-    public function landrecord(Request $request){
+    public function landrecord(Request $request)
+    {
         $user = Auth::user();
         $land = CropInsurance::create([
+            'user_id' => Auth::id(),
             'district_id' => $request->district_id,
             'tehsil_id' => $request->tehsil_id,
             'uc' => $request->uc,
             'village' => $request->village,
+            'village_latitude' => $request->village_latitude,
+            'village_longitude' => $request->village_longitude,
             'other' => $request->other,
         ]);
 
@@ -94,6 +112,41 @@ if ($request->hasFile('certificate')) {
         ], 200);
     }
 
+    public function getLandRecord()
+    {
+        $user = Auth::user();
+
+        // If you're saving user_id in CropInsurance, filter by user
+        $records = CropInsurance::with([
+            'district:id,name',
+            'tehsil:id,name'
+        ])
+            ->select('district_id', 'tehsil_id', 'uc', 'village', 'village_latitude', 'village_longitude', 'other')
+            ->where('user_id', $user->id) // Optional: only if related to user
+            ->get();
+
+        if ($records->isEmpty()) {
+            return response()->json([
+                'message' => 'No land records found',
+            ], 404);
+        }
+        $formatted = $records->map(function ($record) {
+            return [
+                'district_name' => $record->district->name ?? null,
+                'tehsil_name' => $record->tehsil->name ?? null,
+                'uc' => $record->uc,
+                'village' => $record->village,
+                'village_latitude' => $record->village_latitude,
+                'village_longitude' => $record->village_longitude,
+                'other' => $record->other,
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Land records retrieved successfully',
+            'data' => $formatted,
+        ], 200);
+    }
     public function getDistricts()
     {
         $districts = District::select('id', 'name')->get();
@@ -103,18 +156,36 @@ if ($request->hasFile('certificate')) {
     public function getTehsils($district_id)
     {
         $tehsils = Tehsil::where('district_id', $district_id)->select('id', 'name')->get();
+        if ($tehsils->isEmpty()) {
+            return response()->json([
+                'message' => 'No tehsil found.',
+            ], 404);
+        }
         return response()->json($tehsils);
     }
 
     public function getUCs($tehsil_id)
     {
         $ucs = Uc::where('tehsil_id', $tehsil_id)->select('id', 'name')->get();
+
+        if ($ucs->isEmpty()) {
+            return response()->json([
+                'message' => 'No UC found.',
+            ], 404);
+        }
         return response()->json($ucs);
     }
 
     public function getVillages($uc_id)
     {
-        $villages = Village::where('uc_id', $uc_id)->select('id', 'name')->get();
+        $villages = Village::where('uc_id', $uc_id)->select('id', 'name', 'latitude', 'longitude')->get();
+
+        if ($villages->isEmpty()) {
+            return response()->json([
+                'message' => 'No village found.',
+            ], 404);
+        }
+
         return response()->json($villages);
     }
 }

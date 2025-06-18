@@ -26,7 +26,9 @@ use App\Http\Controllers\Admin\InsuranceClaimRequestController;
 use App\Http\Controllers\Admin\CompanyInsuranceSubTypeController;
 use App\Http\Controllers\Admin\ContactUsController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\InsuranceHistoryController;
 use App\Models\AboutUs;
+use App\Models\Faq;
 use App\Models\PrivacyPolicy;
 use App\Models\TermCondition;
 
@@ -63,9 +65,12 @@ Route::post('/admin-reset-password', [AdminController::class, 'ResetPassword']);
         $data = TermCondition::first();
         return view('terms_and_condition.termsConditions', compact('data'));
     });
+    Route::get('/faqs', function () {
+        $data = Faq::first();
+        return view('faqs.faq', compact('data'));
+    });
 
 Route::prefix('admin')->middleware('admin')->group(function () {
-
     Route::get('dashboard', [AdminController::class, 'getdashboard']);
     Route::get('profile', [AdminController::class, 'getProfile']);
     Route::post('update-profile', [AdminController::class, 'update_profile']);
@@ -95,9 +100,7 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::get('/subadmin-edit/{id}',  'edit')->name('subadmin.edit')->middleware('check.subadmin.permission:SubAdmin,edit');
         Route::post('/subadmin-update/{id}',  'update')->name('subadmin.update')->middleware('check.subadmin.permission:SubAdmin,edit');
         Route::delete('/subadmin-destroy/{id}',  'destroy')->name('subadmin.destroy')->middleware('check.subadmin.permission:SubAdmin,delete');
-
         Route::post('/update-permissions/{id}', 'updatePermissions')->name('update.permissions');
-
         Route::post('/subadmin-StatusChange', 'StatusChange')->name('subadmin.StatusChange');
     });
 
@@ -139,12 +142,10 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::delete('/farmer-destroy/{id}',  'destroy')->name('farmer.destroy')->middleware('check.subadmin.permission:Farmers,delete');
     });
 
-    // ############ Ensured Crops For Farmer #################
-    Route::controller(EnsuredCropController::class)->group(function () {
-        Route::get('/ensured-crops',  'index')->name('ensured.crops.index')->middleware('check.subadmin.permission:Ensured Crops,view');
-        Route::post('/ensured-crops-store',  'store')->name('ensured.crops.store')->middleware('check.subadmin.permission:Ensured Crops,create');
-        Route::post('/ensured-crops-update/{id}',  'update')->name('ensured.crops.update')->middleware('check.subadmin.permission:Ensured Crops,edit');
-        Route::delete('/ensured-crops-destroy/{id}',  'destroy')->name('ensured.crops.destroy')->middleware('check.subadmin.permission:Ensured Crops,delete');
+    // ############ Insurance History #################
+    Route::controller(InsuranceHistoryController::class)->group(function () {
+        Route::get('/insurance-history',  'index')->name('insurance.history.index')->middleware('check.subadmin.permission:Ensured Crops,view');
+        Route::delete('/ensured-crops-destroy/{id}',  'destroy')->name('insurance-history.destroy')->middleware('check.subadmin.permission:Ensured Crops,delete');
     });
 
     // ############ Ensured Crops Name #################
@@ -250,7 +251,11 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::post('/insurance-sub-type-satellite_ndvi-update/{id}',  'satellite_ndvi_update')->name('insurance.sub.type.satelliteNDVI.update')->middleware('check.subadmin.permission:Insurance Types,edit');
         Route::delete('/insurance-sub-type-satellite_ndvi-destroy/{id}',  'satellite_ndvi_destroy')->name('insurance.sub.type.satelliteNDVI.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
     });
+    Route::get('/insurance-sub-type/{id}/calculate', [InsuranceSubTypeController::class, 'calculateResult'])
+    ->name('insurance.sub.type.calculate');
 
+
+    Route::get('/get-ndvi-data', [InsuranceSubTypeController::class, 'fetchNDVIData'])->name('ndvi.fetch');
     // ############ Insurance Claim Requests #################
     Route::controller(InsuranceClaimRequestController::class)->group(function () {
         Route::get('/insurance-claim',  'index')->name('insurance.claim.index')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
@@ -284,5 +289,4 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::post('faq-store', [FaqController::class, 'Faqsstore']);
     Route::delete('faq-destroy/{id}', [FaqController::class, 'faqdelete'])->name('faq.destroy');
     Route::post('/faqs/reorder', [FaqController::class, 'reorder'])->name('faq.reorder');
-
 });
