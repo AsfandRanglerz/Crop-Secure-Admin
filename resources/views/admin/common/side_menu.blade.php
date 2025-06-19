@@ -146,7 +146,7 @@
                 <li
                     class="dropdown {{ request()->is(['admin/faqs', 'admin/contact-us-createview']) ? 'active' : '' }}">
                     <a href="{{ url('admin/faqs') }}" class="nav-link">
-                        <i data-feather="mail"></i><span>FAQS</span>
+                        <i data-feather="mail"></i><span>FAQ's</span>
                     </a>
                 </li>
             @endif

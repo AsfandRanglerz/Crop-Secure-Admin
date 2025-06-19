@@ -167,22 +167,8 @@ class InsuranceSubTypeController extends Controller
 
     public function production_price_store(Request $request)
     {
-        $request->validate([
-            // 'incurance_type_id' => 'required|string|max:255',
-            // 'district_name' => 'required',
-            // 'tehsil_id' => 'required',
-            // 'year' => 'required|numeric',
-            'crops' => 'required|array|min:1',
-            // 'crops.*.name' => 'required|string',
-            // 'crops.*.cost_of_production' => 'nullable|numeric',
-            // 'crops.*.average_yield' => 'nullable|numeric',
-            // 'crops.*.historical_average_market_price' => 'nullable|numeric',
-            // 'crops.*.real_time_market_price' => 'nullable|numeric',
-            // 'crops.*.ensured_yield' => 'nullable|numeric',
-        ]);
-
         foreach ($request->crops as $crop) {
-            InsuranceSubType::create([
+            $subType = InsuranceSubType::create([
                 'crop_name_id' => $request->crop_name_id,
                 'incurance_type_id' => $request->incurance_type_id,
                 'district_name' => $crop['district_name'] ?? null,
@@ -194,9 +180,35 @@ class InsuranceSubTypeController extends Controller
                 'ensured_yield' => $crop['ensured_yield'] ?? null,
                 'year' => $request->year,
             ]);
-        }
 
-        // dd($request->toArray());
+            // 🔔 Notify relevant farmers
+            $farmers = CropInsurance::with('user')
+                ->where('crop', $subType->name)
+                ->where('district_id', $subType->district_name)
+                ->where('tehsil_id', $subType->tehsil_id)
+                ->where('year', $subType->year)
+                ->get();
+
+            foreach ($farmers as $record) {
+                $user = $record->user;
+                if ($user && $user->fcm_token) {
+                    NotificationHelper::sendFcmNotification(
+                        $user->fcm_token,
+                        'Production Price Insurance Update',
+                        'New insured yield and price details are available for your crop.',
+                        [
+                            'crop' => $record->crop,
+                            'year' => $record->year,
+                            'district' => $subType->district_name,
+                            'tehsil' => $subType->tehsil_id,
+                            'ensured_yield' => $subType->ensured_yield,
+                            'real_time_price' => $subType->real_time_market_price,
+                            'avg_price' => $subType->historical_average_market_price,
+                        ]
+                    );
+                }
+            }
+        }
 
         return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])
             ->with(['message' => 'Insurance Sub-Types Created Successfully']);
@@ -275,89 +287,90 @@ class InsuranceSubTypeController extends Controller
     }
 
 
-   public function fetchNDVIData(Request $request)
-{
-    // Log initial request input
-    Log::info('NDVI fetch request received', $request->all());
+    public function fetchNDVIData(Request $request)
+    {
+        // Log initial request input
+        Log::info('NDVI fetch request received', $request->all());
 
-    // Validate input
-    $request->validate([
-        'date' => 'required|date',
-    ]);
-
-    try {
-        $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
-        $apiUrl = 'https://api-connect.eos.com/user-dashboard/statistics';
-
-        // Send API request
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $apiKey,
-            'Accept' => 'application/json',
-        ])->get($apiUrl, [
-            'date' => $request->date,
+        // Validate input
+        $request->validate([
+            'date' => 'required|date',
         ]);
 
-        // Log raw response body
-        Log::info('EOS NDVI raw response', [
-            'status' => $response->status(),
-            'body' => $response->body(),
-        ]);
+        try {
+            $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
+            $apiUrl = 'https://api-connect.eos.com/user-dashboard/statistics';
 
-        // If successful, process data
-        if ($response->successful()) {
-            $data = $response->json();
-
-            $b8 = isset($data['B8']) ? floatval($data['B8']) : 0.0;
-            $b4 = isset($data['B4']) ? floatval($data['B4']) : 0.0;
-
-            // Log band values
-            Log::info('NDVI band values', [
-                'B8' => $b8,
-                'B4' => $b4,
-                'B8 + B4' => $b8 + $b4,
+            // Send API request
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Accept' => 'application/json',
+            ])->get($apiUrl, [
+                'date' => $request->date,
             ]);
 
-            // Prevent division by zero
-            if (($b8 + $b4) == 0.0) {
-                Log::warning('NDVI calculation skipped due to division by zero', [
+            // Log raw response body
+            Log::info('EOS NDVI raw response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            // If successful, process data
+            if ($response->successful()) {
+                $data = $response->json();
+
+                $b8 = isset($data['B8']) ? floatval($data['B8']) : 0.0;
+                $b4 = isset($data['B4']) ? floatval($data['B4']) : 0.0;
+
+                // Log band values
+                Log::info('NDVI band values', [
                     'B8' => $b8,
-                    'B4' => $b4
+                    'B4' => $b4,
+                    'B8 + B4' => $b8 + $b4,
                 ]);
 
+                // Prevent division by zero
+                if (($b8 + $b4) == 0.0) {
+                    Log::warning('NDVI calculation skipped due to division by zero', [
+                        'B8' => $b8,
+                        'B4' => $b4
+                    ]);
+
+                    return response()->json([
+                        'error' => 'Invalid B8/B4 values (division by zero)',
+                        'b8' => $b8,
+                        'b4' => $b4,
+                        'ndvi' => null
+                    ], 422);
+                }
+
+                $ndvi = ($b8 - $b4) / ($b8 + $b4);
+
                 return response()->json([
-                    'error' => 'Invalid B8/B4 values (division by zero)',
                     'b8' => $b8,
                     'b4' => $b4,
-                    'ndvi' => null
-                ], 422);
+                    'ndvi' => round($ndvi, 4)
+                ]);
             }
 
-            $ndvi = ($b8 - $b4) / ($b8 + $b4);
-
-            return response()->json([
-                'b8' => $b8,
-                'b4' => $b4,
-                'ndvi' => round($ndvi, 4)
+            // Handle unsuccessful EOS API response
+            Log::error('EOS API request failed', [
+                'status' => $response->status(),
+                'body' => $response->body()
             ]);
+
+            return response()->json(['error' => 'Data not found or EOS request failed'], $response->status());
+        } catch (\Exception $e) {
+            // Log internal error
+            Log::error('NDVI API Exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json(['error' => 'Internal server error'], 500);
         }
-
-        // Handle unsuccessful EOS API response
-        Log::error('EOS API request failed', [
-            'status' => $response->status(),
-            'body' => $response->body()
-        ]);
-
-        return response()->json(['error' => 'Data not found or EOS request failed'], $response->status());
-    } catch (\Exception $e) {
-        // Log internal error
-        Log::error('NDVI API Exception', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json(['error' => 'Internal server error'], 500);
     }
-}
+
     // Manually store a record from the modal
     public function satellite_ndvi_store(Request $request)
     {
@@ -369,7 +382,8 @@ class InsuranceSubTypeController extends Controller
             'incurance_type_id' => 'nullable|exists:insurance_types,id',
         ]);
 
-        InsuranceSubTypeSatelliteNDVI::create([
+        // Step 1: Save the NDVI record
+        $ndviRecord = InsuranceSubTypeSatelliteNDVI::create([
             'date' => $request->date,
             'b8' => $request->b8,
             'b4' => $request->b4,
@@ -377,8 +391,31 @@ class InsuranceSubTypeController extends Controller
             'insurance_type_id' => $request->incurance_type_id,
         ]);
 
-        return back()->with('success', 'NDVI entry added successfully.');
+        // Step 2: Notify all farmers who purchased Satellite NDVI insurance
+        $farmers = CropInsurance::with('user')
+            ->where('insurance_type', 'Satellite Index')
+            ->get();
+
+        foreach ($farmers as $record) {
+            $user = $record->user;
+            if ($user && $user->fcm_token) {
+                \App\Helpers\NotificationHelper::sendFcmNotification(
+                    $user->fcm_token,
+                    'Satellite NDVI Update',
+                    'New NDVI data is available for your insured crop.',
+                    [
+                        'date' => $ndviRecord->date,
+                        'b8' => $ndviRecord->b8,
+                        'b4' => $ndviRecord->b4,
+                        'ndvi' => $ndviRecord->ndvi,
+                    ]
+                );
+            }
+        }
+
+        return back()->with('success', 'NDVI entry saved and farmers notified.');
     }
+
 
     // Delete an entry
     public function satellite_ndvi_destroy($id)

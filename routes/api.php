@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\CropInsuranceController;
 use App\Http\Controllers\Api\AuthorizedDealerController;
 use App\Http\Controllers\Api\InsuranceController;
+use App\Http\Controllers\Api\InsuranceResultController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -67,6 +68,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('ucs/{id}/villages', [LandDataManagement::class, 'getVillages']);
     });
     
+    Route::get('user', [InsuranceResultController::class, 'user']);
+
+    // insurance types result 
+    Route::get('/area-yield', [InsuranceResultController::class, 'latestAreaYieldCompensation']);
+    Route::get('/production-price', [InsuranceResultController::class, 'latestProductionPriceCompensation']);
+
+    Route::get('/ndvi', [InsuranceResultController::class, 'latestNDVICompensation']);
+
     // ndvi api fetch b8 and b4 value
     Route::get('/fetch-ndvi-data', [InsuranceSubTypeController::class, 'fetchNDVIData']);
 
@@ -104,9 +113,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/submit-insurance', [InsuranceController::class, 'store']);
     Route::get('/insurances', [InsuranceController::class, 'getInsurances']);
 
-    Route::get('user', function(){
-        return "hello";
-    });
 
 });
 

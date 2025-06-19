@@ -12,7 +12,7 @@ class CropInsurance extends Model
 {
     use HasFactory;
     protected $guarded = [];
- 
+
     public function user()
     {
         return $this->belongsTo(Farmer::class, 'user_id');
@@ -38,9 +38,15 @@ class CropInsurance extends Model
         return $this->belongsTo(InsuranceType::class, 'insurance_type');
     }
 
-    public function insuranceSubType()
-{
-    return $this->belongsTo(InsuranceSubType::class, 'sub_type_id'); // adjust if needed
-}
+    //     public function insuranceSubType()
+    // {
+    //     return $this->belongsTo(InsuranceSubType::class, 'sub_type_id'); // adjust if needed
+    // }
 
+    public function insuranceSubType()
+    {
+        return $this->hasOne(InsuranceSubType::class, 'name', 'crop')
+            ->whereColumn('district_name', 'district_id')
+            ->whereColumn('tehsil_id', 'tehsil_id');
+    }
 }

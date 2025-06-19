@@ -102,6 +102,7 @@ class CropInsuranceController extends Controller
                 'benchmark_data' => $combined,
             ];
         });
+
        
         return response()->json(['message' => 'Companies retrieved successfully', 'data' => $companies], 200);
     }

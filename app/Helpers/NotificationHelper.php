@@ -11,7 +11,7 @@ class NotificationHelper
     {
         try {
             $client = new Client();
-            $client->setAuthConfig(storage_path('app/crop-1a4a6-firebase-adminsdk-fbsvc-2659e4d872.json')); // Update to your actual file name
+            $client->setAuthConfig(storage_path('app/crop-1a4a6-firebase-adminsdk-fbsvc-2659e4d872.json'));
             $client->addScope('https://www.googleapis.com/auth/cloud-platform');
             $accessToken = $client->fetchAccessTokenWithAssertion();
 
