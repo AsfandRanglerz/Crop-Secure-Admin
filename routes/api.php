@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/fetch-ndvi-data', [InsuranceSubTypeController::class, 'fetchNDVIData']);
 
     #lands
+    Route::get('/getlandrecord', [LandController::class, 'getLandRecord']);
     Route::post('/land', [LandController::class, 'store']);
     Route::post('/land-record', [LandController::class, 'landrecord']);
     Route::get('/area-units', [LandController::class, 'getAreaUnits']);

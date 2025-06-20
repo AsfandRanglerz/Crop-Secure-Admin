@@ -268,10 +268,16 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Notifications #################
     Route::controller(NotificationController::class)->group(function () {
-        Route::get('/notification',  'index')->name('notification.index')->middleware('check.subadmin.permission:Notifications,view');
-        Route::post('/notification-store',  'store')->name('notification.store')->middleware('check.subadmin.permission:Notifications,create');
-        Route::delete('/notification-destroy/{id}',  'destroy')->name('notification.destroy')->middleware('check.subadmin.permission:Notifications,delete');
+        // Route::get('/notification',  'index')->name('notification.index')->middleware('check.subadmin.permission:Notifications,view');
+        // Route::post('/notification-store',  'store')->name('notification.store')->middleware('check.subadmin.permission:Notifications,create');
+        // Route::delete('/notification-destroy/{id}',  'destroy')->name('notification.destroy')->middleware('check.subadmin.permission:Notifications,delete');
+        Route::get('/notification',  'index')->name('notification.index');
+        Route::post('/notification-store',  'store')->name('notification.store');
+        Route::get('/notification-edit/{id}',  'edit')->name('notification.edit');
+        Route::post('/notification-update/{id}',  'update')->name('notification.update');
+        Route::delete('/notification-destroy/{id}',  'destroy')->name('notification.destroy');
     });
+
 
     //contact controller
     Route::get('/contact-us', [ContactUsController::class, 'index'])->name('contact.index');
