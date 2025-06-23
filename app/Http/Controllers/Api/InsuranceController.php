@@ -9,48 +9,52 @@ use Illuminate\Support\Facades\Log;
 
 class InsuranceController extends Controller
 {
+    public function user()
+    {
+        return response()->json([
+            'name' => 'ijaz hussain'
+
+        ]);
+    }
 
     public function store(Request $request)
     {
-        // Retrieve the currently authenticated user
+
         $user = auth()->user();
 
-        // Validate the incoming request data
+        // Validate incoming data (all foreign keys should be IDs now)
         $validatedData = $request->validate([
-            'crop' => 'required|string',
+            'crop' => 'nullable',
+            'crop_id' => 'required|integer',
             'area_unit' => 'required|string',
             'area' => 'required|numeric',
-            'insurance_type' => 'required|string',
-            'district' => 'required|string',
-            'tehsil' => 'required|string',
+            'insurance_type' => 'nullable',
+            'insurance_type_id' => 'required|integer',
+            'district_id' => 'required|integer',
+            'tehsil_id' => 'required|integer',
             'company' => 'required|string',
             'farmer_name' => 'required|string',
             'premium_price' => 'required|numeric',
             'sum_insured' => 'required|numeric',
             'payable_amount' => 'required|numeric',
-            'land' => 'required',
-            'benchmark' => 'required',
-            'benchmark_price' => 'required'
+            'land' => 'required|string',
+            'benchmark' => 'required|numeric',
+            'benchmark_price' => 'required|numeric'
         ]);
 
-        // Get the current year and format it
-        $currentYear = date('y'); // Get the last two digits of the current year
-
-        // Find the last receipt number for the current year
+        // Generate receipt number
+        $currentYear = date('y');
         $lastReceipt = InsuranceHistory::whereYear('created_at', date('Y'))
             ->orderBy('receipt_number', 'desc')
             ->first();
 
-        // Generate the next receipt number
         $nextReceiptNumber = $lastReceipt ? intval(substr($lastReceipt->receipt_number, -2)) + 1 : 1;
+        $receiptNumber = sprintf('%s-%02d', $currentYear, $nextReceiptNumber);
 
-        // Prepare the complete receipt number
-        $receiptNumber = sprintf('%s-%02d', $currentYear, $nextReceiptNumber); // Format to YY-MM
-
-        // Create a new insurance history entry
+        // Store the insurance history
         $insurance = InsuranceHistory::create(array_merge($validatedData, [
-            'user_id' => $user->id, // Add the user_id to the insurance data 
-            'receipt_number' => $receiptNumber // Add the newly generated receipt number
+            'user_id' => $user->id,
+            'receipt_number' => $receiptNumber
         ]));
 
         return response()->json([
@@ -75,46 +79,34 @@ class InsuranceController extends Controller
         $perPage = (int) $request->input('limit', 10);
         $offset = ($page - 1) * $perPage;
 
-        $query = \App\Models\InsuranceHistory::where('user_id', $user->id);
+        $query = \App\Models\InsuranceHistory::where('user_id', $user->id)->orderByDesc('created_at');;
         $total = $query->count();
         $records = $query->offset($offset)->limit($perPage)->get();
-
-        // 🐞 DEBUG: check records before looping
-        // if ($records->isEmpty()) {
-        //     return response()->json([
-        //         'status' => true,
-        //         'message' => 'No insurance history found for this user.',
-        //         'total' => 0,
-        //         'page' => $page,
-        //         'data' => [],
-        //     ]);
-        // }
 
         $results = [];
 
         foreach ($records as $insurance) {
-            $type = $insurance->insurance_type;
             $base = $insurance->toArray();
             $compInfo = [
                 'status' => 'not calculated',
                 'compensation' => 0,
             ];
 
-            // dd($insurance);
+            // 🔹 Add insurance time period from EnsuredCropName
+            $ensuredCrop = \App\Models\EnsuredCropName::find($insurance->crop_id);
+            $base['insurance_start_time'] = $ensuredCrop?->insurance_start_time;
+            $base['insurance_end_time']   = $ensuredCrop?->insurance_end_time;
 
-            if ($type === 'Area Yield Index') {
+            // ✅ Area Yield Index
+            if ((int) $insurance->insurance_type_id === 11) {
                 $sub = \App\Models\InsuranceSubType::where('incurance_type_id', $insurance->insurance_type_id)
-                    ->where('district_name', $insurance->district_id)
-                    ->where('tehsil_id', $insurance->tehsil_id)
-                    ->where('name', $insurance->crop)
-                    ->where('year', $insurance->year)
                     ->latest()
                     ->first();
 
                 if ($sub && $sub->current_yield !== null) {
-                    $benchmark = $insurance->benchmark_percent;
+                    $benchmark = $insurance->benchmark;
                     $area = $insurance->area;
-                    $sumInsured = ($benchmark / 100) * ($insurance->sum_insured_100_percent * $area);
+                    $sumInsured = $insurance->sum_insured;
                     $loss = $benchmark - $sub->current_yield;
 
                     $comp = $loss > 0 ? ($loss / 100) * $sumInsured : 0;
@@ -125,33 +117,60 @@ class InsuranceController extends Controller
                         'benchmark' => $benchmark,
                         'sum_insured' => $sumInsured,
                         'compensation' => round($comp, 2),
+                        'remaining_amount' => round($comp, 2),
                         'status' => $comp > 0 ? 'loss' : 'no loss',
                     ];
                 }
-            } elseif ($type === 'Production Price Based') {
+            }
+
+            // ✅ Production Price Based
+            elseif ((int) $insurance->insurance_type_id === 12) {
                 $sub = \App\Models\InsuranceSubType::where('incurance_type_id', $insurance->insurance_type_id)
-                    ->where('district_name', $insurance->district_id)
-                    ->where('tehsil_id', $insurance->tehsil_id)
-                    ->where('crop_name_id', $insurance->crop_id)
-                    ->where('year', $insurance->year)
                     ->latest()
                     ->first();
 
-                if ($sub && $sub->real_time_market_price !== null) {
-                    $diff = $sub->historical_average_market_price - $sub->real_time_market_price;
-                    $comp = $diff > 0 ? $diff * $sub->ensured_yield * $insurance->area : 0;
+                if (
+                    $sub &&
+                    $sub->cost_of_production !== null &&
+                    $sub->average_yield !== null &&
+                    $sub->real_time_market_price !== null &&
+                    $sub->ensured_yield !== null &&
+                    $insurance->benchmark !== null // ← benchmark/trigger price from insurance history
+                ) {
+                    // Step 1: Calculate Break-even Price (BEP)
+                    $bep = $sub->cost_of_production / $sub->average_yield;
+
+                    // Step 2: Use farmer-selected trigger price (benchmark)
+                    $triggerPrice = $insurance->benchmark;
+
+                    // Step 3: Calculate PPI
+                    $ppi = ($sub->real_time_market_price / $bep) * 100;
+
+                    // Step 4: Check for trigger event
+                    $comp = 0;
+                    if ($sub->real_time_market_price < $triggerPrice) {
+                        $comp = $sub->ensured_yield * ($triggerPrice - $sub->real_time_market_price) * $insurance->area;
+                    }
 
                     $compInfo = [
-                        'type' => 'Production Price Based',
-                        'historical_price' => $sub->historical_average_market_price,
+                        'type' => 'Production Price Index',
+                        'cost_of_production' => $sub->cost_of_production,
+                        'average_yield' => $sub->average_yield,
+                        'break_even_price' => round($bep, 2),
+                        'trigger_price' => round($triggerPrice, 2),
                         'real_time_price' => $sub->real_time_market_price,
+                        'ppi' => round($ppi, 2) . '%',
                         'ensured_yield' => $sub->ensured_yield,
-                        'price_difference' => $diff,
                         'compensation' => round($comp, 2),
-                        'status' => $comp > 0 ? 'loss' : 'no loss',
+                        'remaining_amount' => round($comp, 2),
+                        'status' => $sub->real_time_market_price < $triggerPrice ? 'loss' : 'no loss',
                     ];
                 }
-            } elseif ($type === 'Satellite Index') {
+            }
+
+
+            // ✅ Satellite Index
+            elseif ((int) $insurance->insurance_type_id === 13) {
                 $ndvi = \App\Models\InsuranceSubTypeSatelliteNDVI::where('insurance_type_id', $insurance->insurance_type_id)
                     ->latest('date')
                     ->first();
@@ -159,7 +178,7 @@ class InsuranceController extends Controller
                 if ($ndvi) {
                     $threshold = 0.4;
                     $comp = $ndvi->ndvi < $threshold
-                        ? $insurance->sum_insured_100_percent * $insurance->area
+                        ? $insurance->sum_insured * $insurance->area
                         : 0;
 
                     $compInfo = [
@@ -168,6 +187,7 @@ class InsuranceController extends Controller
                         'ndvi_date' => $ndvi->date,
                         'threshold' => $threshold,
                         'compensation' => round($comp, 2),
+                        'remaining_amount' => round($comp, 2),
                         'status' => $comp > 0 ? 'loss' : 'no loss',
                     ];
                 }
@@ -178,8 +198,6 @@ class InsuranceController extends Controller
         }
 
         return response()->json([
-            'total' => $total,
-            'page' => $page,
             'data' => $results,
         ]);
     }

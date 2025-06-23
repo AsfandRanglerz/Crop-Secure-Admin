@@ -116,19 +116,31 @@
                 </li>
             @endif --}}
 
-            @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance History '))
-                <li class="dropdown {{ request()->is('admin/insurance-history*') ? 'active' : '' }}">
-                    <a href="{{ route('insurance.history.index') }}" class="nav-link px-2">
-                        <i class="fas fa-user-shield"></i>
-                        <span>
-                            Insurance History
-                            @if (!empty($newInsuranceCount) && $newInsuranceCount > 0)
-                                <span class="badge badge-danger ml-2">{{ $newInsuranceCount }}</span>
-                            @endif
-                        </span>
-                    </a>
-                </li>
-            @endif
+            {{-- Insurance History --}}
+            <li class="dropdown {{ request()->is('admin/insurance-history*') ? 'active' : '' }}">
+                <a href="{{ route('insurance.history.index') }}" class="nav-link">
+                    <span><i data-feather="shield"></i> Insurance History</span>
+
+                    @php
+                        use App\Models\InsuranceHistory;
+
+                        $newInsuranceCount = 0;
+                        if (Auth::guard('admin')->check()) {
+                            $newInsuranceCount = InsuranceHistory::where(function ($query) {
+                                $query->where('is_seen', 0)->orWhereNull('is_seen');
+                            })->count();
+                        }
+                    @endphp
+
+                    @if ($newInsuranceCount > 0)
+                        <div class="badge rounded-circle 
+                {{ request()->is('admin/insurance-history*') ? 'bg-white text-danger' : 'bg-danger text-white' }}"
+                            style="margin-left: 8px; font-size: 12px; padding: 4px 7px;">
+                            {{ $newInsuranceCount }}
+                        </div>
+                    @endif
+                </a>
+            </li>
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Notifications'))
                 {{-- Notifications --}}

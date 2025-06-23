@@ -113,40 +113,42 @@ class LandController extends Controller
     }
 
     public function getLandRecord()
-{
-    $user = Auth::user();
- 
-    // If you're saving user_id in CropInsurance, filter by user
-    $records = CropInsurance::with([
-        'district:id,name',
-        'tehsil:id,name'
-    ])
-    ->select('district_id', 'tehsil_id', 'uc', 'village', 'village_latitude','village_longitude','other')
-    ->where('user_id', $user->id) // Optional: only if related to user
-    ->get();
- 
-    if ($records->isEmpty()) {
+    {
+        $user = Auth::user();
+
+        // If you're saving user_id in CropInsurance, filter by user
+        $records = CropInsurance::with([
+            'district:id,name',
+            'tehsil:id,name'
+        ])
+            ->select('district_id', 'tehsil_id', 'uc', 'village', 'village_latitude', 'village_longitude', 'other')
+            ->where('user_id', $user->id) // Optional: only if related to user
+            ->get();
+
+        if ($records->isEmpty()) {
+            return response()->json([
+                'message' => 'No land records found',
+            ], 404);
+        }
+        $formatted = $records->map(function ($record) {
+            return [
+                'district_id' => $record->district_id,
+                'tehsil_id' => $record->tehsil_id,
+                'district_name' => $record->district->name ?? null,
+                'tehsil_name' => $record->tehsil->name ?? null,
+                'uc' => $record->uc,
+                'village' => $record->village,
+                'village_latitude' => $record->village_latitude,
+                'village_longitude' => $record->village_longitude,
+                'other' => $record->other,
+            ];
+        });
+
         return response()->json([
-            'message' => 'No land records found',
-        ], 404);
+            'message' => 'Land records retrieved successfully',
+            'data' => $formatted,
+        ], 200);
     }
-$formatted = $records->map(function ($record) {
-        return [
-            'district_name' => $record->district->name ?? null,
-            'tehsil_name' => $record->tehsil->name ?? null,
-            'uc' => $record->uc,
-            'village' => $record->village,
-            'village_latitude' => $record->village_latitude,
-            'village_longitude' => $record->village_longitude,
-            'other' => $record->other,
-        ];
-    });
- 
-    return response()->json([
-        'message' => 'Land records retrieved successfully',
-        'data' => $formatted,
-    ], 200);
-}
     public function getDistricts()
     {
         $districts = District::select('id', 'name')->get();

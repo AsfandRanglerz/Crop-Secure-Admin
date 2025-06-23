@@ -10,7 +10,7 @@ class SimpleNotificationHelper
     private static function getGoogleAccessToken()
     {
         try {
-            $credentialsPath = storage_path(env('FIREBASE_CREDENTIALS', 'app/crop-secure-firebase-adminsdk.json'));
+            $credentialsPath = storage_path(env('FIREBASE_CREDENTIALS', 'app/crop-1a4a6-firebase-adminsdk-fbsvc-2659e4d872.json'));
 
             $client = new Client();
             $client->setAuthConfig($credentialsPath);
@@ -44,7 +44,7 @@ class SimpleNotificationHelper
                 ],
             ];
 
-            $url = 'https://fcm.googleapis.com/v1/projects/' . env('FIREBASE_PROJECT_ID', 'crop-secure') . '/messages:send';
+            $url = 'https://fcm.googleapis.com/v1/projects/' . env('FIREBASE_PROJECT_ID', 'crop-1a4a6') . '/messages:send';
 
             $headers = [
                 'Authorization: Bearer ' . $accessToken,

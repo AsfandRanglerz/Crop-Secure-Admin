@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\SimpleNotificationHelper;
 use App\Models\Farmer;
 use App\Models\Notification;
 use App\Models\NotificationTarget;
@@ -35,41 +36,41 @@ class NotificationController extends Controller
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'user_type' => 'required|array',
-        'message' => 'required|string',
-    ]);
-
-    try {
-        $notification = Notification::create([
-            'user_type' => implode(',', $request->user_type),
-            'message' => $request->message,
-            'is_sent' => 0,
+    {
+        $request->validate([
+            'user_type' => 'required|array',
+            'message' => 'required|string',
         ]);
 
-        foreach ($request->input('farmers', []) as $farmerId) {
-            $notification->targets()->create([
-                'targetable_id' => $farmerId,
-                'targetable_type' => Farmer::class,
+        try {
+            $notification = Notification::create([
+                'user_type' => implode(',', $request->user_type),
+                'message' => $request->message,
+                'is_sent' => 0,
             ]);
 
-            $farmer = Farmer::find($farmerId);
-            if ($farmer && $farmer->device_token) {
-                NotificationHelper::sendFcmNotification(
-                    $farmer->device_token,
-                    'Crop Secure Alert',
-                    $request->message,
-                    ['notification_id' => (string)$notification->id]
-                );
-            }
-        }
+            foreach ($request->input('farmers', []) as $farmerId) {
+                $notification->targets()->create([
+                    'targetable_id' => $farmerId,
+                    'targetable_type' => Farmer::class,
+                ]);
 
-        return redirect()->route('notification.index')->with('success', 'Notification saved and FCM sent.');
-    } catch (\Exception $e) {
-        return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+                $farmer = Farmer::find($farmerId);
+                if ($farmer && $farmer->device_token) {
+                    SimpleNotificationHelper::sendFcmNotification(
+                        $farmer->device_token,
+                        'Crop Secure Alert',
+                        $request->message,
+                        ['notification_id' => (string)$notification->id]
+                    );
+                }
+            }
+
+            return redirect()->route('notification.index')->with('success', 'Notification saved and FCM sent.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+        }
     }
-}
 
     public function edit($id)
     {
