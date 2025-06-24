@@ -70,14 +70,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('ucs/{id}/villages', [LandDataManagement::class, 'getVillages']);
     });
 
-    Route::get('user', [InsuranceResultController::class, 'user']);
-
-    // insurance types result 
-    Route::get('/area-yield', [InsuranceResultController::class, 'latestAreaYieldCompensation']);
-    Route::get('/production-price', [InsuranceResultController::class, 'latestProductionPriceCompensation']);
-
-    Route::get('/ndvi', [InsuranceResultController::class, 'latestNDVICompensation']);
-
     // ndvi api fetch b8 and b4 value
     Route::get('/fetch-ndvi-data', [InsuranceSubTypeController::class, 'fetchNDVIData']);
 
@@ -120,6 +112,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // clain request
     Route::post('/claim/submit', [InsuranceClaimController::class, 'submitClaim']);
     Route::post('/claim/select-product', [InsuranceClaimController::class, 'selectProductForClaim']);
+    Route::get('/claims', [InsuranceClaimController::class, 'myClaims']);
+    Route::get('/bank-details', [InsuranceClaimController::class, 'getBankDetails']);
+    Route::get('/products', [InsuranceClaimController::class, 'getAvailableDealerProductsForClaim']);
 
     //notifications
     Route::get('/farmer/notifications', [NotificationController::class, 'farmerNotifications']);

@@ -57,4 +57,10 @@ class Farmer extends Authenticatable
     {
         return $this->morphMany(\App\Models\NotificationTarget::class, 'targetable');
     }
+
+    public function bankDetail()
+{
+    return $this->hasOne(\App\Models\UserBankDetail::class, 'user_id');
+}
+
 }

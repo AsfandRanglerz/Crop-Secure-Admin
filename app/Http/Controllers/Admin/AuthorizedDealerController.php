@@ -119,7 +119,7 @@ class AuthorizedDealerController extends Controller
             'password' => bcrypt($password),
             'cnic' => $formattedCnic,
             'dob' => $request->dob,
-            'district' => $district->name,
+            'district' => $district->id, // ✅ Save ID, not name
             'contact' => $formattedContact,
             // 'status' => $request->status,
             'image' => $image
@@ -211,7 +211,7 @@ class AuthorizedDealerController extends Controller
             'name' => $request->name,
             'father_name' => $request->father_name,
             'dob' => $request->dob,
-            'district' => $district->name,
+            'district' => $district->id,
             'email' => $request->email,
             'cnic' => $formattedCnic,
             'contact' => $formattedContact,

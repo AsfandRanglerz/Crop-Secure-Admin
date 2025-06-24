@@ -4,8 +4,7 @@
 
 
     {{-- Add Items Modal --}}
-    <div class="modal fade" id="ItemsModal" tabindex="-1" role="dialog"
-        aria-labelledby="ItemsModalLabel" aria-hidden="true">
+    <div class="modal fade" id="ItemsModal" tabindex="-1" role="dialog" aria-labelledby="ItemsModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -27,8 +26,30 @@
                                     @enderror
                                 </div>
                             </div>
-                            
                         </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="image">Image (optional)</label>
+                                    <input type="file" name="image" class="form-control" accept="image/*">
+                                    @error('image')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+    <div class="col">
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+            @error('description')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </div>
+    </div>
+</div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -53,23 +74,49 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form action="{{ route('item.update', $Item->id) }}" method="POST">
+                    <form action="{{ route('item.update', $Item->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('POST')
                         <div class="modal-body">
                             <div class="row">
-
                                 <div class="col">
                                     <div class="form-group">
                                         <label for="name">Name</label>
-                                        <input type="text" name="name" id="" value="{{ ucfirst($Item->name) }}" class="form-control">
+                                        <input type="text" name="name" id=""
+                                            value="{{ ucfirst($Item->name) }}" class="form-control">
                                         @error('name')
                                             <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 </div>
                             </div>
-                            
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="image">Image</label>
+                                        <input type="file" name="image" class="form-control" accept="image/*">
+                                        @if ($Item->image)
+                                            <img src="{{ asset($Item->image) }}" width="60" height="60"
+                                                class="mt-2" style="object-fit:cover;">
+                                        @endif
+                                        @error('image')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+    <div class="col">
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea name="description" class="form-control" rows="3">{{ $Item->description }}</textarea>
+            @error('description')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </div>
+    </div>
+</div>
+
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -102,7 +149,7 @@
                                         $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
                                                 $permission['permissions']->contains('create')))
                                     <a class="btn btn-primary mb-3 text-white" href="#" data-toggle="modal"
-                                    data-target="#ItemsModal">Add Item</a>
+                                        data-target="#ItemsModal">Add Item</a>
                                 @endif
 
                                 <table class="table responsive" id="table_id_events">
@@ -110,46 +157,60 @@
                                         <tr>
                                             <th>Sr.</th>
                                             <th>Name</th>
+                                            <th>Image</th>
+                                            <th>Description</th>
                                             <th scope="col">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($Items as $Item)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>
-                                                {{ ucfirst($Item->name) }}
-                                            </td>
-                                            
-                                            <td>
-                                                <div class="d-flex gap-4">
-                                                    @if (Auth::guard('admin')->check() ||
-                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
-                                                                    $permission['permissions']->contains('edit')))
-                                                        <a class="btn btn-primary text-white"
-                                                            href="#" data-toggle="modal" data-target="#EditItemsModal-{{ $Item->id }}">Edit</a>
-                                                    @endif
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ ucfirst($Item->name) }}</td>
 
-                                                    <!-- Delete Button -->
-                                                    @if (Auth::guard('admin')->check() ||
-                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
-                                                                    $permission['permissions']->contains('delete')))
-                                                        <form action="
-                                                        {{ route('item.destroy', $Item->id) }}
-                                                            " method="POST" 
-                                                            style="display:inline-block; margin-left: 10px">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit"
-                                                                class="btn btn-danger btn-flat show_confirm"
-                                                                data-toggle="tooltip">Delete</button>
-                                                        </form>
+                                                <!-- ✅ New Image Column -->
+                                                <td>
+                                                    @if ($Item->image)
+                                                        <img src="{{ asset('public/' . $Item->image) }}" alt="Item Image"
+                                                            width="60" height="60"
+                                                            style="border-radius: 5px; object-fit: cover;">
+                                                    @else
+                                                        <span>No Image</span>
                                                     @endif
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                                <td>{{ \Illuminate\Support\Str::limit($Item->description, 100) }}</td>
+
+
+                                                <!-- Existing Actions Column -->
+                                                <td>
+                                                    <div class="d-flex gap-4">
+                                                        @if (Auth::guard('admin')->check() ||
+                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                                                        $permission['permissions']->contains('edit')))
+                                                            <a class="btn btn-primary text-white" href="#"
+                                                                data-toggle="modal"
+                                                                data-target="#EditItemsModal-{{ $Item->id }}">Edit</a>
+                                                        @endif
+
+                                                        @if (Auth::guard('admin')->check() ||
+                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                                                        $permission['permissions']->contains('delete')))
+                                                            <form action="{{ route('item.destroy', $Item->id) }}"
+                                                                method="POST"
+                                                                style="display:inline-block; margin-left: 10px">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit"
+                                                                    class="btn btn-danger btn-flat show_confirm"
+                                                                    data-toggle="tooltip">Delete</button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
+
                                 </table>
                             </div>
 
