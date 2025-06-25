@@ -106,41 +106,75 @@
                 </li>
             @endif
 
-            {{-- @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Claim Requests'))
-                <li class="dropdown {{ request()->is('admin/insurance-claim*') ? 'active' : '' }}">
-                    <a href="
-                {{ route('insurance.claim.index') }}
-                " class="nav-link px-2">
-                        <i class="fas fa-file-alt"></i> <span>Insurance Claim Requests</span>
+            @php
+                $showInsuranceClaimRequests =
+                    Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Claim Requests');
+                $onClaimPage = request()->is('admin/insurance-claim*');
+                $newClaimCount = 0;
+
+                if ($showInsuranceClaimRequests && !$onClaimPage) {
+                    $newClaimCount = \App\Models\InsuranceHistory::whereNotNull('claimed_at')
+                        ->where(function ($q) {
+                            $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
+                        })
+                        ->where('status', 'pending')
+                        ->count();
+                }
+            @endphp
+
+            @if ($showInsuranceClaimRequests)
+                <li class="dropdown {{ $onClaimPage ? 'active' : '' }}">
+                    <a href="{{ route('insurance.claim.index') }}"
+                        class="nav-link px-2 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-alt me-2"></i>
+                            <span>Insurance Claim Requests</span>
+                        </div>
+                        @if ($newClaimCount > 0)
+                            <span
+                                class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+                                style="width: 22px; height: 22px; font-size: 12px;" title="{{ $newClaimCount }} new">
+                                {{ $newClaimCount }}
+                            </span>
+                        @endif
                     </a>
                 </li>
-            @endif --}}
+            @endif
+
 
             {{-- Insurance History --}}
-            <li class="dropdown {{ request()->is('admin/insurance-history*') ? 'active' : '' }}">
-                <a href="{{ route('insurance.history.index') }}" class="nav-link">
-                    <span><i data-feather="shield"></i> Insurance History</span>
+            @php
+                $showInsuranceHistory = Auth::guard('admin')->check() || $sideMenuName->contains('Insurance History');
+                $onInsurancePage = request()->is('admin/insurance-history*');
+                $newInsuranceCount = 0;
 
-                    @php
-                        use App\Models\InsuranceHistory;
+                if ($showInsuranceHistory && !$onInsurancePage) {
+                    $newInsuranceCount = \App\Models\InsuranceHistory::where(function ($query) {
+                        $query->where('is_seen', 0)->orWhereNull('is_seen');
+                    })->count();
+                }
+            @endphp
 
-                        $newInsuranceCount = 0;
-                        if (Auth::guard('admin')->check()) {
-                            $newInsuranceCount = InsuranceHistory::where(function ($query) {
-                                $query->where('is_seen', 0)->orWhereNull('is_seen');
-                            })->count();
-                        }
-                    @endphp
-
-                    @if ($newInsuranceCount > 0)
-                        <div class="badge rounded-circle 
-                {{ request()->is('admin/insurance-history*') ? 'bg-white text-danger' : 'bg-danger text-white' }}"
-                            style="margin-left: 8px; font-size: 12px; padding: 4px 7px;">
-                            {{ $newInsuranceCount }}
+            @if ($showInsuranceHistory)
+                <li class="dropdown {{ $onInsurancePage ? 'active' : '' }}">
+                    <a href="{{ route('insurance.history.index') }}"
+                        class="nav-link px-2 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-shield me-2"></i>
+                            <span>Insurance History</span>
                         </div>
-                    @endif
-                </a>
-            </li>
+                        @if ($newInsuranceCount > 0)
+                            <span
+                                class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+                                style="width: 22px; height: 22px; font-size: 12px;"
+                                title="{{ $newInsuranceCount }} new">
+                                {{ $newInsuranceCount }}
+                            </span>
+                        @endif
+                    </a>
+                </li>
+            @endif
+
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Notifications'))
                 {{-- Notifications --}}

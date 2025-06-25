@@ -57,32 +57,32 @@ class ItemController extends Controller
 
 
     public function update(Request $request, $id)
-{
-    $request->validate([
-        'name' => 'required|string|max:255|unique:items,name,' . $id,
-        'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        'description' => 'nullable|string|max:1000',
-    ]);
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:items,name,' . $id,
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'description' => 'nullable|string|max:1000',
+        ]);
 
-    $item = Item::findOrFail($id);
+        $item = Item::findOrFail($id);
 
-    $imagePath = $item->image; // keep existing image by default
+        $imagePath = $item->image; // keep existing image by default
 
-    if ($request->hasFile('image')) {
-        $file = $request->file('image');
-        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $file->move(public_path('uploads/items/'), $filename);
-        $imagePath = 'uploads/items/' . $filename;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/items/'), $filename);
+            $imagePath = 'uploads/items/' . $filename;
+        }
+
+        $item->update([
+            'name' => $request->name,
+            'image' => $imagePath,
+            'description' => $request->description,
+        ]);
+
+        return redirect()->route('items.index')->with(['message' => 'Item Updated Successfully']);
     }
-
-    $item->update([
-        'name' => $request->name,
-        'image' => $imagePath,
-        'description' => $request->description,
-    ]);
-
-    return redirect()->route('items.index')->with(['message' => 'Item Updated Successfully']);
-}
 
 
 

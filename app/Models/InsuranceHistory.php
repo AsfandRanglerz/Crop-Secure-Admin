@@ -34,4 +34,14 @@ class InsuranceHistory extends Model
     {
         return $this->belongsTo(\App\Models\EnsuredCropName::class, 'crop_id'); // or the correct FK
     }
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\Farmer::class, 'user_id');
+    }
+
+    public function farmer()
+    {
+        return $this->belongsTo(Farmer::class, 'user_id');
+    }
 }

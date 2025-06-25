@@ -30,7 +30,7 @@
                         <div class="row">
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="image">Image (optional)</label>
+                                    <label for="image">Image</label>
                                     <input type="file" name="image" class="form-control" accept="image/*">
                                     @error('image')
                                         <span class="text-danger">{{ $message }}</span>
@@ -39,16 +39,16 @@
                             </div>
                         </div>
                         <div class="row">
-    <div class="col">
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea name="description" class="form-control" rows="3"></textarea>
-            @error('description')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </div>
-    </div>
-</div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea name="description" class="form-control" rows="3"></textarea>
+                                    @error('description')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
                     <div class="modal-footer">
@@ -96,7 +96,7 @@
                                         <label for="image">Image</label>
                                         <input type="file" name="image" class="form-control" accept="image/*">
                                         @if ($Item->image)
-                                            <img src="{{ asset($Item->image) }}" width="60" height="60"
+                                            <img src="{{ asset('public/' . $Item->image) }}" width="60" height="60"
                                                 class="mt-2" style="object-fit:cover;">
                                         @endif
                                         @error('image')
@@ -106,16 +106,16 @@
                                 </div>
                             </div>
                             <div class="row">
-    <div class="col">
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea name="description" class="form-control" rows="3">{{ $Item->description }}</textarea>
-            @error('description')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </div>
-    </div>
-</div>
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="description">Description</label>
+                                        <textarea name="description" class="form-control" rows="3">{{ $Item->description }}</textarea>
+                                        @error('description')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
                         <div class="modal-footer">

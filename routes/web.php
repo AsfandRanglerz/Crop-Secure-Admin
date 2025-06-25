@@ -259,12 +259,10 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     // ############ Insurance Claim Requests #################
     Route::controller(InsuranceClaimRequestController::class)->group(function () {
         Route::get('/insurance-claim',  'index')->name('insurance.claim.index')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
-        Route::get('/insurance-claim-create',  'create')->name('insurance.claim.create')->middleware('check.subadmin.permission:Insurance Claim Requests,create');
-        Route::post('/insurance-claim-store',  'store')->name('insurance.claim.store')->middleware('check.subadmin.permission:Insurance Claim Requests,create');
-        Route::get('/insurance-claim-edit/{id}',  'edit')->name('insurance.claim.edit')->middleware('check.subadmin.permission:Insurance Claim Requests,edit');
-        Route::post('/insurance-claim-update/{id}',  'update')->name('insurance.claim.update')->middleware('check.subadmin.permission:Insurance Claim Requests,edit');
         Route::delete('/insurance-claim-destroy/{id}',  'destroy')->name('insurance.claim.destroy')->middleware('check.subadmin.permission:Insurance Claim Requests,delete');
     });
+    Route::post('admin/insurance-claim/approve/{id}', [InsuranceClaimRequestController::class, 'approve'])->name('insurance.claim.approve');
+    Route::post('admin/insurance-claim/reject/{id}', [InsuranceClaimRequestController::class, 'reject'])->name('insurance.claim.reject');
 
     // ############ Notifications #################
     Route::controller(NotificationController::class)->group(function () {

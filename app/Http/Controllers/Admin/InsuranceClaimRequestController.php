@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\InsuranceHistory;
 use Illuminate\Support\Facades\Auth;
 
 class InsuranceClaimRequestController extends Controller
@@ -19,33 +20,48 @@ class InsuranceClaimRequestController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
-        return view('admin.insurance_claim_request.index', compact('sideMenuPermissions', 'sideMenuName'));
+
+        InsuranceHistory::whereNotNull('claimed_at')
+            ->where(function ($q) {
+                $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
+            })
+            ->where('status', 'pending')
+            ->update(['is_claim_seen' => 1]);
+
+        $insuranceClaims = InsuranceHistory::with(['farmer.bankDetail', 'insuranceType'])
+            ->whereNotNull('claimed_at')
+            ->orderByDesc('claimed_at')
+            ->get();
+
+        return view('admin.insurance_claim_request.index', compact('sideMenuPermissions', 'sideMenuName', 'insuranceClaims'));
     }
-    public function create()
+
+    public function approve(Request $request, $id)
     {
-        $sideMenuName = [];
+        $request->validate([
+            'bill_image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
 
-        if (Auth::guard('subadmin')->check()) {
-            $getSubAdminPermissions = new AdminController();
-            $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();
-            $sideMenuName = $subAdminData['sideMenuName'];
-        }
+        $claim = InsuranceHistory::findOrFail($id);
 
-        return view('admin.insurance_claim_request.create', compact('sideMenuName'));
+        $imagePath = $request->file('bill_image')->store('bill_screenshots', 'public');
+
+        $claim->status = 'approved';
+        $claim->bill_image = $imagePath; // Assuming you added this column in your DB
+        $claim->save();
+
+        return redirect()->back()->with('success', 'Claim approved with bill image uploaded.');
     }
-    public function store() {}
-    public function edit()
+
+    public function reject($id)
     {
-        $sideMenuName = [];
+        $claim = InsuranceHistory::findOrFail($id);
+        $claim->status = 'rejected';
+        $claim->save();
 
-        if (Auth::guard('subadmin')->check()) {
-            $getSubAdminPermissions = new AdminController();
-            $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();
-            $sideMenuName = $subAdminData['sideMenuName'];
-        }
-
-        return view('admin.insurance_claim_request.edit', compact('sideMenuName'));
+        return redirect()->back()->with('success', 'Claim rejected.');
     }
-    public function update() {}
+
+
     public function destroy() {}
 }

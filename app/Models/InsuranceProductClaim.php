@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class InsuranceProductClaim extends Model
+{
+    use HasFactory;
+
+     protected $fillable = [
+    'insurance_id',
+    'dealer_id',
+    'item_id',
+    'price',
+    'receiver_name',
+    'state',
+    'address',
+    'city',
+    'delivery_status',
+];
+
+
+    public function insurance()
+    {
+        return $this->belongsTo(InsuranceHistory::class, 'insurance_id');
+    }
+
+    public function item()
+    {
+        return $this->belongsTo(Item::class);
+    }
+
+    public function dealer()
+    {
+        return $this->belongsTo(AuthorizedDealer::class, 'dealer_id');
+    }
+
+}

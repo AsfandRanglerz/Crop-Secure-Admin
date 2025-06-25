@@ -63,4 +63,5 @@ class Farmer extends Authenticatable
     return $this->hasOne(\App\Models\UserBankDetail::class, 'user_id');
 }
 
+
 }
