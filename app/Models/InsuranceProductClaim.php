@@ -9,17 +9,18 @@ class InsuranceProductClaim extends Model
 {
     use HasFactory;
 
-     protected $fillable = [
-    'insurance_id',
-    'dealer_id',
-    'item_id',
-    'price',
-    'receiver_name',
-    'state',
-    'address',
-    'city',
-    'delivery_status',
-];
+    protected $guarded = [];
+//      protected $fillable = [
+//     'insurance_id',
+//     'dealer_id',
+//     'item_id',
+//     'price',
+//     'products',
+//     'state',
+//     'address',
+//     'city',
+//     'delivery_status',
+// ];
 
 
     public function insurance()

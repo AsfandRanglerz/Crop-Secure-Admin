@@ -59,9 +59,7 @@ class Farmer extends Authenticatable
     }
 
     public function bankDetail()
-{
-    return $this->hasOne(\App\Models\UserBankDetail::class, 'user_id');
-}
-
-
+    {
+        return $this->hasOne(\App\Models\UserBankDetail::class, 'user_id');
+    }
 }

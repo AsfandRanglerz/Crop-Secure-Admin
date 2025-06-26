@@ -250,17 +250,23 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::post('/insurance-sub-type-satellite_ndvi-store',  'satellite_ndvi_store')->name('insurance.sub.type.satelliteNDVI.store')->middleware('check.subadmin.permission:Insurance Types,store');
         Route::post('/insurance-sub-type-satellite_ndvi-update/{id}',  'satellite_ndvi_update')->name('insurance.sub.type.satelliteNDVI.update')->middleware('check.subadmin.permission:Insurance Types,edit');
         Route::delete('/insurance-sub-type-satellite_ndvi-destroy/{id}',  'satellite_ndvi_destroy')->name('insurance.sub.type.satelliteNDVI.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
+        Route::get('/insurance-sub-type-weather/{id}',  'weather_index')->name('insurance.sub.type.weatherIndex')->middleware('check.subadmin.permission:Insurance Types,view');
     });
+    Route::get('admin/insurance/result/{id}', [InsuranceSubTypeController::class, 'showVillageResult'])->name('admin.insurance.result');
+
     Route::get('/insurance-sub-type/{id}/calculate', [InsuranceSubTypeController::class, 'calculateResult'])
     ->name('insurance.sub.type.calculate');
-
-
     Route::get('/get-ndvi-data', [InsuranceSubTypeController::class, 'fetchNDVIData'])->name('ndvi.fetch');
+    
     // ############ Insurance Claim Requests #################
     Route::controller(InsuranceClaimRequestController::class)->group(function () {
         Route::get('/insurance-claim',  'index')->name('insurance.claim.index')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
         Route::delete('/insurance-claim-destroy/{id}',  'destroy')->name('insurance.claim.destroy')->middleware('check.subadmin.permission:Insurance Claim Requests,delete');
+        // buy products
+        Route::get('/insurance-product-claims', 'buyProduct')->name('insurance.product.claims.index');
+
     });
+
     Route::post('admin/insurance-claim/approve/{id}', [InsuranceClaimRequestController::class, 'approve'])->name('insurance.claim.approve');
     Route::post('admin/insurance-claim/reject/{id}', [InsuranceClaimRequestController::class, 'reject'])->name('insurance.claim.reject');
 

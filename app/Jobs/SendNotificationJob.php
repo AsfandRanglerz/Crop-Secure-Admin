@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\SimpleNotificationHelper;
 use App\Models\Notification;
 use App\Models\Farmer;
 use App\Models\AuthorizedDealer;
@@ -16,42 +17,36 @@ class SendNotificationJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $notification;
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
+
     public function __construct(Notification $notification)
     {
         $this->notification = $notification;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
     public function handle()
     {
         $notification = $this->notification;
+        $userTypes = explode(',', $notification->user_type);
 
-        // Get recipients based on recipient type
-        if ($notification->recipient_type === 'all') {
-            $farmers = Farmer::all();
-            $dealers = AuthorizedDealer::all();
-            $recipients = $farmers->merge($dealers);
-        } elseif ($notification->recipient_type === 'farmers') {
-            $recipients = Farmer::all();
-        } elseif ($notification->recipient_type === 'authorized_dealers') {
-            $recipients = AuthorizedDealer::all();
+        foreach ($userTypes as $type) {
+            if ($type === 'farmer') {
+                $recipients = Farmer::whereNotNull('device_token')->get();
+            } elseif ($type === 'dealer') {
+                $recipients = AuthorizedDealer::whereNotNull('device_token')->get();
+            } else {
+                continue;
+            }
+
+            foreach ($recipients as $recipient) {
+                SimpleNotificationHelper::sendFcmNotification(
+                    $recipient->device_token,
+                    'Crop Secure Alert',
+                    $notification->message,
+                    ['notification_id' => (string)$notification->id]
+                );
+            }
         }
 
-        foreach ($recipients as $recipient) {
-            // Example logic for sending email or SMS
-            // Mail::to($recipient->email)->send(new NotificationMail($notification->message));
-        }
-
-        // Mark the notification as sent
-        $notification->update(['is_sent' => true]);
+        $notification->update(['is_sent' => 1]);
     }
 }

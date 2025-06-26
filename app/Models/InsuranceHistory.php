@@ -44,4 +44,15 @@ class InsuranceHistory extends Model
     {
         return $this->belongsTo(Farmer::class, 'user_id');
     }
+
+    public function userBankDetail()
+{
+    return $this->belongsTo(UserBankDetail::class, 'user_id', 'user_id');
+}
+
+public function productClaims()
+{
+    return $this->hasMany(\App\Models\InsuranceProductClaim::class, 'insurance_id');
+}
+
 }

@@ -1,8 +1,7 @@
 @extends('admin.layout.app')
 @section('title', 'Insurance Claim Requests')
+
 @section('content')
-
-
     <div class="main-content" style="min-height: 562px;">
         <section class="section">
             <div class="section-body">
@@ -15,7 +14,6 @@
                                 </div>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
-
                                 <table class="table responsive" id="table_id_events">
                                     <thead>
                                         <tr>
@@ -29,14 +27,14 @@
                                             <th>Claim Date</th>
                                             <th>Bank Details</th>
                                             <th>Status</th>
-                                            <th>Actions</th>
+                                            {{-- <th>Actions</th> --}}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($insuranceClaims as $key => $claim)
                                             <tr>
                                                 <td>{{ $key + 1 }}</td>
-                                                <td>{{ $claim->user->name ?? '-' }}</td>
+                                                <td>{{ $claim->farmer_name ?? '-' }}</td>
                                                 <td>Rs. {{ number_format($claim->claimed_amount, 2) }}</td>
                                                 <td>Rs. {{ number_format($claim->compensation_amount, 2) }}</td>
                                                 <td>Rs. {{ number_format($claim->remaining_amount, 2) }}</td>
@@ -44,29 +42,39 @@
                                                 <td>{{ $claim->company ?? '-' }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($claim->claimed_at)->format('d M Y') }}</td>
                                                 <td>
-                                                    <button class="btn btn-info view-bank-btn"
-                                                        data-holder="{{ $claim->farmer->bankDetail->bank_holder_name ?? '' }}"
-                                                        data-name="{{ $claim->user->bankDetail->bank_name ?? '' }}"
-                                                        data-account="{{ $claim->user->bankDetail->account_number ?? '' }}"
-                                                        data-toggle="modal" data-target="#bankModalUniversal">
-                                                        View Bank
-                                                    </button>
+                                                    @php
+                                                        $bankDetail = $claim->userBankDetail;
+                                                    @endphp
+
+                                                    @if ($bankDetail)
+                                                        <button class="btn btn-info btn-sm view-bank-btn"
+                                                            data-toggle="modal" data-target="#bankModalUniversal"
+                                                            data-holder="{{ $bankDetail->bank_holder_name ?? 'N/A' }}"
+                                                            data-bank="{{ $bankDetail->bank_name ?? 'N/A' }}"
+                                                            data-account="{{ $bankDetail->account_number ?? 'N/A' }}">
+                                                            View Bank
+                                                        </button>
+                                                    @else
+                                                        <span class="text-muted">No Bank Info</span>
+                                                    @endif
                                                 </td>
+
                                                 <td>
                                                     <div class="dropdown">
                                                         <button
                                                             class="btn btn-sm 
-                                                            @if ($claim->status === 'approved') btn-success 
-                                                            @elseif($claim->status === 'rejected') btn-danger 
-                                                            @else btn-warning @endif 
-                                                            dropdown-toggle"
+                                                        @if ($claim->status === 'approved') btn-success 
+                                                        @elseif($claim->status === 'rejected') btn-danger 
+                                                        @else btn-warning @endif dropdown-toggle"
                                                             type="button" data-toggle="dropdown">
                                                             {{ ucfirst($claim->status) }}
                                                         </button>
                                                         <div class="dropdown-menu">
                                                             <a class="dropdown-item approve-btn" href="#"
                                                                 data-id="{{ $claim->id }}" data-toggle="modal"
-                                                                data-target="#uploadModal{{ $claim->id }}">Approve</a>
+                                                                data-target="#uploadModal{{ $claim->id }}">
+                                                                Approve
+                                                            </a>
                                                             <form method="POST"
                                                                 action="{{ route('insurance.claim.reject', $claim->id) }}">
                                                                 @csrf
@@ -77,22 +85,18 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="d-flex gap-4">
-                                                        @if (Auth::guard('admin')->check() ||
-                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
-                                                                        $permission['permissions']->contains('delete')))
-                                                            <form
-                                                                action="{{ route('insurance.claim.destroy', $claim->id) }}"
-                                                                method="POST"
-                                                                style="display:inline-block; margin-left: 10px">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit"
-                                                                    class="btn btn-danger btn-flat show_confirm"
-                                                                    data-toggle="tooltip">Delete</button>
-                                                            </form>
-                                                        @endif
-                                                    </div>
+                                                    {{-- @if (Auth::guard('admin')->check() ||
+                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                                                    $permission['permissions']->contains('delete')))
+                                                        <form action="{{ route('insurance.claim.destroy', $claim->id) }}"
+                                                            method="POST" style="display:inline-block; margin-left: 10px">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit"
+                                                                class="btn btn-danger btn-flat show_confirm"
+                                                                data-toggle="tooltip">Delete</button>
+                                                        </form>
+                                                    @endif --}}
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -105,6 +109,8 @@
             </div>
         </section>
     </div>
+
+    {{-- Upload Bill Modal --}}
     @foreach ($insuranceClaims as $claim)
         <div class="modal fade" id="uploadModal{{ $claim->id }}" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -121,8 +127,7 @@
                             <input type="file" name="bill_image" accept="image/*" class="form-control" required>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-success">Submit &
-                                Approve</button>
+                            <button type="submit" class="btn btn-success">Submit & Approve</button>
                         </div>
                     </div>
                 </form>
@@ -130,7 +135,7 @@
         </div>
     @endforeach
 
-    {{-- Universal Bank Modal --}}
+    {{-- Bank Details Modal --}}
     <div class="modal fade" id="bankModalUniversal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -146,35 +151,34 @@
             </div>
         </div>
     </div>
-
 @endsection
 
 @section('js')
-
     <script>
         $(document).ready(function() {
-            $('#table_id_events').DataTable()
-        })
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
-    <script type="text/javascript">
+            $('#table_id_events').DataTable();
+        });
+
+        $('#bankModalUniversal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            $('#bankHolder').text(button.data('holder'));
+            $('#bankName').text(button.data('bank'));
+            $('#bankAccount').text(button.data('account'));
+        });
+
         $('.show_confirm').click(function(event) {
-            var form = $(this).closest("form");
-            var name = $(this).data("name");
             event.preventDefault();
+            var form = $(this).closest("form");
+
             swal({
-                    title: `Are you sure you want to delete this record?`,
-                    text: "If you delete this, it will be gone forever.",
-                    icon: "warning",
-                    buttons: true,
-                    dangerMode: true,
-                })
-                .then((willDelete) => {
-                    if (willDelete) {
-                        form.submit();
-                    }
-                });
+                title: `Are you sure you want to delete this record?`,
+                text: "If you delete this, it will be gone forever.",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) form.submit();
+            });
         });
     </script>
-
 @endsection

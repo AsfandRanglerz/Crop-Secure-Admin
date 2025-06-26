@@ -177,9 +177,9 @@ class InsuranceController extends Controller
 
                 if ($ndvi) {
                     $threshold = 0.4;
-                    $comp = $ndvi->ndvi < $threshold
-                        ? $insurance->sum_insured * $insurance->area
-                        : 0;
+                    $isLoss = $ndvi->ndvi < $threshold;
+
+                    $comp = $isLoss ? $insurance->sum_insured : 0;
 
                     $compInfo = [
                         'type' => 'Satellite Index',
@@ -188,7 +188,7 @@ class InsuranceController extends Controller
                         'threshold' => $threshold,
                         'compensation' => round($comp, 2),
                         'remaining_amount' => $insurance->claimed_at ? 0 : round($comp, 2),
-                        'status' => $comp > 0 ? 'loss' : 'no loss',
+                        'status' => $isLoss ? 'loss' : 'no loss',
                     ];
                 }
             }

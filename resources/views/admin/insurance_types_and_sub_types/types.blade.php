@@ -2,8 +2,6 @@
 @section('title', 'Insurance Types')
 @section('content')
 
-
-
     {{-- Add Insurance Types Modal --}}
     <div class="modal fade" id="InsuranceTypesModal" tabindex="-1" role="dialog"
         aria-labelledby="InsuranceTypesModalLabel" aria-hidden="true">
@@ -161,6 +159,10 @@
                                             @elseif( $InsuranceType->name == "Satellite Index (NDVI)")
                                             <td>
                                                 <a class="btn btn-primary" href="{{ route('insurance.sub.type.satelliteNDVI', $InsuranceType->id) }}">NDVI Vegetation</a>
+                                            </td>
+                                             @elseif( $InsuranceType->name == "Weather Index")
+                                            <td>
+                                                <a class="btn btn-primary" href="{{ route('insurance.sub.type.weatherIndex', $InsuranceType->id) }}">Results</a>
                                             </td>
                                             @else
                                             <td>--</td>

@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class InsuranceSubType extends Model
 {
     use HasFactory;
-    protected $guarded=[];
+    protected $guarded = [];
 
     public function district()
     {
-        return $this->belongsTo(District::class, 'district_name', 'id'); 
+        return $this->belongsTo(District::class, 'district_name', 'id');
     }
 
     public function tehsil()
@@ -25,5 +25,8 @@ class InsuranceSubType extends Model
         return $this->belongsTo(EnsuredCropName::class, 'crop_name_id', 'id');
     }
 
-
+    public function villages()
+    {
+        return $this->hasMany(Village::class, 'sub_type_id'); 
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\InsuranceHistory;
+use App\Models\InsuranceProductClaim;
 use Illuminate\Support\Facades\Auth;
 
 class InsuranceClaimRequestController extends Controller
@@ -14,6 +15,7 @@ class InsuranceClaimRequestController extends Controller
         $sideMenuName = [];
         $sideMenuPermissions = [];
 
+        // Check for SubAdmin and fetch permissions
         if (Auth::guard('subadmin')->check()) {
             $getSubAdminPermissions = new AdminController();
             $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();
@@ -21,6 +23,7 @@ class InsuranceClaimRequestController extends Controller
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
 
+        // Mark unseen insurance claims as seen
         InsuranceHistory::whereNotNull('claimed_at')
             ->where(function ($q) {
                 $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
@@ -28,7 +31,12 @@ class InsuranceClaimRequestController extends Controller
             ->where('status', 'pending')
             ->update(['is_claim_seen' => 1]);
 
-        $insuranceClaims = InsuranceHistory::with(['farmer.bankDetail', 'insuranceType'])
+        // Fetch insurance claims with related models including user bank details
+        $insuranceClaims = InsuranceHistory::with([
+            'farmer.bankDetail',
+            'insuranceType',
+            'userBankDetail' // ← include bank details relationship
+        ])
             ->whereNotNull('claimed_at')
             ->orderByDesc('claimed_at')
             ->get();
@@ -47,7 +55,7 @@ class InsuranceClaimRequestController extends Controller
         $imagePath = $request->file('bill_image')->store('bill_screenshots', 'public');
 
         $claim->status = 'approved';
-        $claim->bill_image = $imagePath; // Assuming you added this column in your DB
+        $claim->bill_image = $imagePath;
         $claim->save();
 
         return redirect()->back()->with('success', 'Claim approved with bill image uploaded.');
@@ -60,6 +68,16 @@ class InsuranceClaimRequestController extends Controller
         $claim->save();
 
         return redirect()->back()->with('success', 'Claim rejected.');
+    }
+
+    public function buyProduct()
+    {
+        InsuranceProductClaim::where('is_seen', false)
+            ->update(['is_seen' => true]);
+
+        $claims = InsuranceProductClaim::with(['insurance.user', 'dealer', 'item'])->latest()->paginate(20);
+
+        return view('admin.product_claims.index', compact('claims'));
     }
 
 

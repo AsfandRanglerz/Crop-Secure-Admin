@@ -15,6 +15,7 @@ use Illuminate\Database\QueryException;
 use App\Notifications\InsuranceYieldUpdated;
 use App\Helpers\NotificationHelper;
 use App\Models\InsuranceSubTypeSatelliteNDVI;
+use App\Models\Village;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -423,4 +424,31 @@ class InsuranceSubTypeController extends Controller
         InsuranceSubTypeSatelliteNDVI::findOrFail($id)->delete();
         return back()->with('success', 'NDVI record deleted successfully.');
     }
+
+    public function weather_index($id)
+    {
+        $sideMenuName = [];
+        $sideMenuPermissions = [];
+
+        if (Auth::guard('subadmin')->check()) {
+            $getSubAdminPermissions = new AdminController();
+            $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();
+            $sideMenuName = $subAdminData['sideMenuName'];
+            $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
+        }
+        $InsuranceType = InsuranceType::find($id);
+        $InsuranceSubTypes = Village::get();
+
+
+        return view('admin.insurance_types_and_sub_types.sub_types_weather_index', compact('sideMenuPermissions', 'sideMenuName', 'InsuranceSubTypes', 'InsuranceType'));
+    }
+
+    public function showVillageResult($id)
+    {
+        $villageCrops = \App\Models\VillageCrop::with('village')
+            ->get();
+            $village = Village::findOrFail($id);
+        return view('admin.insurance_types_and_sub_types.weather_index_result', compact('villageCrops','village'));
+    }
+    
 }

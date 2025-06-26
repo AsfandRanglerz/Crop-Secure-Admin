@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\NotificationTarget;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
@@ -35,6 +36,7 @@ class NotificationController extends Controller
         ));
     }
 
+
     public function store(Request $request)
     {
         $request->validate([
@@ -52,25 +54,19 @@ class NotificationController extends Controller
             foreach ($request->input('farmers', []) as $farmerId) {
                 $notification->targets()->create([
                     'targetable_id' => $farmerId,
-                    'targetable_type' => Farmer::class,
+                    'targetable_type' => \App\Models\Farmer::class,
                 ]);
-
-                $farmer = Farmer::find($farmerId);
-                if ($farmer && $farmer->device_token) {
-                    SimpleNotificationHelper::sendFcmNotification(
-                        $farmer->device_token,
-                        'Crop Secure Alert',
-                        $request->message,
-                        ['notification_id' => (string)$notification->id]
-                    );
-                }
             }
 
-            return redirect()->route('notification.index')->with('success', 'Notification saved and FCM sent.');
+            // ✅ Queue Job once here (not in the loop)
+            dispatch(new SendNotificationJob($notification));
+
+            return redirect()->route('notification.index')->with('success', 'Notification queued successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
     }
+
 
     public function edit($id)
     {

@@ -112,11 +112,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // clain request
     Route::post('/claim/submit', [InsuranceClaimController::class, 'submitClaim']);
     Route::post('/claim-products', [InsuranceClaimController::class, 'claimProducts']);
-    Route::post('/claim/select-product', [InsuranceClaimController::class, 'selectProductForClaim']);
     Route::get('/claims', [InsuranceClaimController::class, 'myClaims']);
     Route::get('/bank-details', [InsuranceClaimController::class, 'getBankDetails']);
     Route::get('/products', [InsuranceClaimController::class, 'getAvailableDealerProductsForClaim']);
     Route::get('/claim/addresses', [InsuranceClaimController::class, 'getClaimedProductAddresses']);
+    Route::get('/my-orders', [InsuranceClaimController::class, 'myOrders']);
 
     //notifications
     Route::get('/farmer/notifications', [NotificationController::class, 'farmerNotifications']);

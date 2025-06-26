@@ -107,6 +107,28 @@
             @endif
 
             @php
+                $newProductClaimCount = \App\Models\InsuranceProductClaim::where('is_seen', false)->count();
+            @endphp
+
+            <li class="dropdown {{ request()->is('admin/insurance-product-claims*') ? 'active' : '' }}">
+                <a href="{{ route('insurance.product.claims.index') }}"
+                    class="nav-link px-2 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-box-open me-2"></i>
+                        <span>Claim Product Purchases</span>
+                    </div>
+                    @if ($newProductClaimCount > 0)
+                        <span
+                            class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 22px; height: 22px; font-size: 12px;"
+                            title="{{ $newProductClaimCount }} pending">
+                            {{ $newProductClaimCount }}
+                        </span>
+                    @endif
+                </a>
+            </li>
+
+            @php
                 $showInsuranceClaimRequests =
                     Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Claim Requests');
                 $onClaimPage = request()->is('admin/insurance-claim*');
