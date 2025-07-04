@@ -19,16 +19,22 @@
                                 <div class="form-group">
                                     <label for="question">Question</label>
                                     <input type="text" name="question" id="question" class="form-control" value="{{ $data->question ?? '' }}">
+                                     @error('question')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="answer">Answer</label>
                                     <textarea name="answer" id="answer" class="form-control">
                                         {{ $data->answer ?? '' }}
                                     </textarea>
+                                     @error('answer')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                 </div>
                             </div>
                             <div class="card-footer text-right">
-                                <button type="submit" class="btn btn-primary mr-1">Save Changes</button>
+                                <button type="submit" class="btn btn-primary mr-1">Update</button>
                             </div>
                         </div>
                     </div>

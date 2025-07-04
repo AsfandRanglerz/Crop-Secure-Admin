@@ -49,4 +49,9 @@ class CropInsurance extends Model
             ->whereColumn('district_name', 'district_id')
             ->whereColumn('tehsil_id', 'tehsil_id');
     }
+
+    public function farmer()
+    {
+        return $this->belongsTo(\App\Models\Farmer::class, 'user_id');
+    }
 }

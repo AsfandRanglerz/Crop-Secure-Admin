@@ -9,10 +9,12 @@ use App\Http\Controllers\Api\LandDataManagement;
 use App\Http\Controllers\Api\ContactUsController;
 use App\Http\Controllers\Api\CropInsuranceController;
 use App\Http\Controllers\Api\AuthorizedDealerController;
+use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\InsuranceClaimController;
 use App\Http\Controllers\Api\InsuranceController;
 use App\Http\Controllers\Api\InsuranceResultController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\WeatherController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -120,6 +122,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //notifications
     Route::get('/farmer/notifications', [NotificationController::class, 'farmerNotifications']);
-    Route::post('/notifications-seen', [NotificationController::class, 'markAsSeen']);
+    Route::post('/farmer-notifications/{id}/seen', [NotificationController::class, 'markAsSeen']);
+    Route::delete('/farmer-notifications/clear', [NotificationController::class, 'clearFarmerNotifications']);
+    Route::get('/farmer-notifications/unseen', [NotificationController::class, 'unseenFarmerNotifications']);
 
+    //weather api
+    Route::get('/weather', [WeatherController::class, 'getCurrentWeather']);
+    Route::get('/onecall/timemachine', [WeatherController::class, 'fetchLastFiveDaysWeather']);
+
+    Route::get('/faqs', [FaqController::class, 'getfaq']);
 });

@@ -4,17 +4,16 @@
 
 
     {{-- Add uc Modal --}}
-    <div class="modal fade" id="ucModal" tabindex="-1" role="dialog" aria-labelledby="ucModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="ucModal" tabindex="-1" role="dialog" aria-labelledby="ucModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="ucModalLabel">Add Union Council</h5>
+                    <h5 class="modal-title" id="ucModalLabel">Create Union Council</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('union.store') }}" method="POST">
+                <form id="CreateUcForm" action="{{ route('union.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <input type="hidden" name="tehsil_id" value="{{ $tehsil->id }}">
@@ -26,7 +25,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" id="CreateBtn" class="btn btn-primary">Save</button>
                     </div>
                 </form>
             </div>
@@ -36,35 +35,35 @@
 
     {{-- Edit uc Modal --}}
     @foreach ($ucs as $uc)
-    <div class="modal fade" id="editucModal-{{$uc->id}}" tabindex="-1" role="dialog" aria-labelledby="editucModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editucModalLabel">Edit Union Council</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form action="{{ route('union.update', $uc->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="modal-body">
-                        <input type="hidden" name="tehsil_id" value="{{ $tehsil->id }}">
-                        <!-- Message Textbox -->
-                        <div class="form-group">
-                            <label for="message">Union Council Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ $uc->name }}">
+        <div class="modal fade" id="editucModal-{{ $uc->id }}" tabindex="-1" role="dialog"
+            aria-labelledby="editucModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editucModalLabel">Edit Union Council</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form class="EditUcForm" action="{{ route('union.update', $uc->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body">
+                            <input type="hidden" name="tehsil_id" value="{{ $tehsil->id }}">
+                            <!-- Message Textbox -->
+                            <div class="form-group">
+                                <label for="message">Union Council Name</label>
+                                <input type="text" name="name" class="form-control" value="{{ $uc->name }}">
+                            </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update</button>
-                    </div>
-                </form>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
     @endforeach
 
 
@@ -77,12 +76,12 @@
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">
-                                    <h4>{{$tehsil->name}} - Union Councils</h4>
+                                    <h4>{{ $tehsil->name }} - Union Councils</h4>
                                 </div>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
                                 <a class="btn btn-primary mb-3" href="#" data-toggle="modal"
-                                    data-target="#ucModal">Add Union Council</a>
+                                    data-target="#ucModal">Create Union Council</a>
                                 <table class="table responsive" id="table_id_events">
                                     <thead>
                                         <tr>
@@ -98,22 +97,23 @@
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $uc->name }}</td>
                                                 <td>
-                                                    <a class="btn btn-primary" href="{{ route('village.index', $uc->id) }}">Villages</a>
+                                                    <a class="btn btn-primary"
+                                                        href="{{ route('village.index', $uc->id) }}">Villages</a>
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-4">
-                                                        <a href="#"
-                                                        data-toggle="modal" data-target="#editucModal-{{$uc->id}}"
+                                                        <a href="#" data-toggle="modal"
+                                                            data-target="#editucModal-{{ $uc->id }}"
                                                             class="btn btn-primary" style="margin-left: 10px">Edit</a>
                                                         <form
                                                             action="
                                                     {{ route('union.destroy', $uc->id) }}
                                                      "
-                                                            method="POST"
-                                                            style="display:inline-block; margin-left: 10px">
+                                                            method="POST" style="display:inline-block; margin-left: 10px">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <input type="hidden" name="tehsil_id" value="{{ $tehsil->id }}">
+                                                            <input type="hidden" name="tehsil_id"
+                                                                value="{{ $tehsil->id }}">
                                                             <button type="submit"
                                                                 class="btn btn-danger btn-flat show_confirm"
                                                                 data-toggle="tooltip">Delete</button>
@@ -160,6 +160,71 @@
                         form.submit();
                     }
                 });
+        });
+    </script>
+
+    @if ($errors->has('name'))
+        <script>
+            toastr.error("{{ $errors->first('name') }}", 'Validation Error', {
+                timeOut: 5000
+            });
+        </script>
+    @endif
+
+    <script>
+        $(document).ready(function() {
+            // ✅ Form validation for Create District
+            $('#CreateUcForm').on('submit', function(e) {
+                let form = $(this);
+                let isValid = true;
+
+                const nameField = form.find('input[name="name"]');
+                const name = nameField.val().trim();
+
+                // Clear old error
+                form.find('.text-danger').remove();
+
+                if (name === '') {
+                    nameField.after('<span class="text-danger">The Union Council name is required.</span>');
+                    isValid = false;
+                }
+
+                if (!isValid) e.preventDefault();
+            });
+
+            // ✅ Remove error on input
+            $('#CreateDistrictForm input[name="name"]').on('input', function() {
+                $(this).next('.text-danger').remove();
+            });
+        });
+
+        $(document).ready(function() {
+            $('.EditUcForm').each(function() {
+                const form = $(this);
+
+                form.on('submit', function(e) {
+                    let isValid = true;
+
+                    const nameField = form.find('input[name="name"]');
+                    const name = nameField.val().trim();
+
+                    // Clear old errors
+                    form.find('.text-danger').remove();
+
+                    if (name === '') {
+                        nameField.after(
+                            '<span class="text-danger">The Union Council name is required.</span>'
+                            );
+                        isValid = false;
+                    }
+
+                    if (!isValid) e.preventDefault();
+                });
+
+                form.find('input[name="name"]').on('input', function() {
+                    $(this).next('.text-danger').remove();
+                });
+            });
         });
     </script>
 

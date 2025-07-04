@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Insurance Sub-Types')
+@section('title', 'Weather Index')
 
 @section('content')
 

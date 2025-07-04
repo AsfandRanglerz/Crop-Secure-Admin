@@ -15,16 +15,26 @@ class SubAdmin extends Authenticatable implements AuthenticatableContract
     protected $guard = 'subadmin';
     protected $guarded = [];
     // protected $hidden = ['password', 'remember_token'];
+
     public function permissions()
     {
         return $this->hasMany(SubAdminPermission::class);
     }
-    public function setPasswordAttribute($password)
-    {
-        $this->attributes['password'] = bcrypt($password);
-    }
+
     public function side_menu()
     {
         return $this->belongsTo(SideMenu::class, 'side_menu_id');
+    }
+
+    public function setEmailAttribute($value)
+    {
+        $this->attributes['email'] = strtolower($value);
+    }
+
+    public function setNameAttribute($value)
+    {
+        $this->attributes['name'] = collect(explode(' ', strtolower($value)))
+            ->map(fn($word) => ucfirst($word))
+            ->implode(' ');
     }
 }

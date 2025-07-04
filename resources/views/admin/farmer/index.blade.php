@@ -30,7 +30,7 @@
                                             <th>Email</th>
                                             <th>Image</th>
                                             <th>CNIC</th>
-                                            <th>Contact</th>
+                                            <th>Phone</th>
                                             <th>DOB</th>
                                             <th>Status</th>
                                             <th scope="col">Actions</th>
@@ -42,7 +42,7 @@
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $farmer->name }}</td>
                                                 <td>{{ $farmer->fname }}</td>
-                                                <td>{{ $farmer->email }}</td>
+                                                <td><a href="mailto:{{ $farmer->email }}">{{ $farmer->email }}</a></td>
                                                 <td>
                                                     <img src="{{ asset($farmer->image) }}" alt=""
                                                         height="50"width="50" class="image">

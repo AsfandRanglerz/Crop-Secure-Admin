@@ -4,7 +4,7 @@
     <div class="main-content">
         <section class="section">
             <div class="section-body">
-                <a class="btn btn-primary mb-3" href="{{ url()->previous() }}">Back</a>
+                <a class="btn btn-primary mb-3" href="{{ route('dealer.item.index', $dealer_id) }}">Back</a>
                 <form id="edit_dealer" action="{{ route('dealer.item.update', $dealerItem->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('POST') <!-- Use PUT method for editing -->
@@ -12,7 +12,7 @@
                         <input type="hidden" name="dealer_id" value="{{ $dealer_id }}">
                         <div class="col-12 col-md-12 col-lg-12">
                             <div class="card">
-                                <h4 class="text-center my-4">Edit Dealer</h4>
+                                <h4 class="text-center my-4">Edit Dealer Item</h4>
                                 <div class="row mx-0 px-4">
                                     <!-- Name Field -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">
@@ -31,7 +31,7 @@
                                         <div class="form-group">
                                             <label for="quantity">Quantity</label>
                                             <input type="text" class="form-control" id="quantity" name="quantity" value="{{ $dealerItem->quantity }}"
-                                                required>
+                                                >
                                             <div class="invalid-feedback"></div>
                                             @error('quantity')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -44,7 +44,7 @@
                                         <div class="form-group">
                                             <label for="price">Price</label>
                                             <input type="number" class="form-control" id="price" name="price" value="{{ $dealerItem->price }}"
-                                                required>
+                                                >
                                             <div class="invalid-feedback"></div>
                                             @error('price')
                                                 <span class="text-danger">{{ $message }}</span>

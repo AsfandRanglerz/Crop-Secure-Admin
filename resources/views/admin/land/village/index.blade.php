@@ -1,27 +1,28 @@
 @extends('admin.layout.app')
 @section('title', 'Villages')
 @section('content')
-<style>
-    .pac-container {
-    z-index: 1051 !important; 
-}
-</style>
+    <style>
+        .pac-container {
+            z-index: 1051 !important;
+        }
+    </style>
 
     {{-- Add village Modal --}}
-    <div class="modal fade" id="villageModal" tabindex="-1" role="dialog" aria-labelledby="villageModalLabel" aria-hidden="true">
+    <div class="modal fade" id="villageModal" tabindex="-1" role="dialog" aria-labelledby="villageModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="villageModalLabel">Add Village</h5>
+                    <h5 class="modal-title" id="villageModalLabel">Create Village</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('village.store') }}" method="POST">
+                <form id="CreateForm" action="{{ route('village.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <input type="hidden" name="uc_id" value="{{ $uc->id }}">
-    
+
                         <!-- Village Name -->
                         <div class="form-group">
                             <label for="name">Village Name</label>
@@ -30,14 +31,14 @@
                             <input type="hidden" id="longitude" name="longitude">
 
                         </div>
-    
+
                         <!-- Crop Select -->
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="crop_name_0">Select Crop</label>
-                                <select name="crops[0][crop_name_id]" id="crop_name_0" class="form-control" required>
+                                <select name="crops[0][crop_name_id]" id="crop_name_0" class="form-control">
                                     <option value="">Select Crop</option>
-                                    @foreach($crops as $crop)
+                                    @foreach ($crops as $crop)
                                         <option value="{{ $crop->id }}">{{ $crop->name }}</option>
                                     @endforeach
                                 </select>
@@ -45,22 +46,26 @@
                             <div class="col-md-4">
                                 <label for="avg_temp_0">Average Temperature</label>
                                 <div class="input-group">
-                                    <input type="number" step="0.1" name="crops[0][avg_temp]" id="avg_temp_0" class="form-control" required>
+                                    <input type="number" step="0.1" name="crops[0][avg_temp]" id="avg_temp_0"
+                                        class="form-control">
                                     <div class="input-group-append">
-                                        <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">°C</span>
+                                        <span class="input-group-text font-weight-bold"
+                                            style="border: 1px solid #cbd2d8;">°C</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <label for="avg_rainfall_0">Average Rainfall</label>
                                 <div class="input-group">
-                                    <input type="number" step="0.1" name="crops[0][avg_rainfall]" id="avg_rainfall_0" class="form-control" required>
+                                    <input type="number" step="0.1" name="crops[0][avg_rainfall]" id="avg_rainfall_0"
+                                        class="form-control">
                                     <div class="input-group-append">
-                                        <span class="input-group-text font-weight-bold" style="border: 1px solid #cbd2d8;">mm</span>
+                                        <span class="input-group-text font-weight-bold"
+                                            style="border: 1px solid #cbd2d8;">mm</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>                        
+                        </div>
 
                         <div id="cropFieldsWrapper"></div>
                         <button type="button" id="addCropRow" class="btn btn-sm btn-info">Add More</button>
@@ -69,99 +74,111 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    
-
 
     {{-- Edit village Modal --}}
     @foreach ($villages as $village)
-    <div class="modal fade" id="editvillageModal-{{$village->id}}" tabindex="-1" role="dialog" aria-labelledby="editvillageModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editvillageModalLabel">Edit Village</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form action="{{ route('village.update', $village->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="modal-body">
-                        <input type="hidden" name="uc_id" value="{{ $uc->id }}">
+        <div class="modal fade" id="editvillageModal-{{ $village->id }}" tabindex="-1" role="dialog"
+            aria-labelledby="editvillageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editvillageModalLabel">Edit Village</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="{{ route('village.update', $village->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body">
+                            <input type="hidden" name="uc_id" value="{{ $uc->id }}">
 
-                        <!-- Village Name -->
-                        <div class="form-group">
-                            <label for="message">Village Name</label>
-                            <input type="text" id="village_name_edit_{{ $village->id }}" name="name" class="form-control" value="{{ $village->name }}">
-                            <input type="hidden" id="latitude_edit_{{ $village->id }}" name="latitude" value="{{ $village->latitude }}">
-                            <input type="hidden" id="longitude_edit_{{ $village->id }}" name="longitude" value="{{ $village->longitude }}">
-                        </div>
-
-                        <!-- Existing Crops -->
-                        @php $editIndex = 0; @endphp
-                        @foreach ($village->crops as $crop)
-                            <div class="row mb-4">
-                                <!-- Crop Name -->
-                                <div class="col-md-4">
-                                    <label for="crop_name_{{ $editIndex }}" class="form-label">Select Crop</label>
-                                    <select name="crops[{{ $editIndex }}][crop_name_id]" id="crop_name_{{ $editIndex }}" class="form-control" required>
-                                        <option value="">Select Crop</option>
-                                        @foreach($crops as $c)
-                                            <option value="{{ $c->id }}" {{ $c->id == $crop->crop_name_id ? 'selected' : '' }}>
-                                                {{ $c->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <!-- Average Temperature -->
-                                <div class="col-md-4">
-                                    <label for="avg_temp_{{ $editIndex }}" class="form-label">Average Temperature</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_temp]" id="avg_temp_{{ $editIndex }}"
-                                            class="form-control" value="{{ $crop->avg_temp }}" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">°C</span>
-                                            </div>
-                                    </div>
-                                </div>
-
-                                <!-- Average Rainfall -->
-                                <div class="col-md-4">
-                                    <label for="avg_rainfall_{{ $editIndex }}" class="form-label">Average Rainfall</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.1" name="crops[{{ $editIndex }}][avg_rainfall]" id="avg_rainfall_{{ $editIndex }}"
-                                            class="form-control" value="{{ $crop->avg_rainfall }}" required>
-                                            <div class="input-group-append">
-                                                <span class="input-group-text" style="border: 1px solid #cbd2d8;">mm</span>
-                                            </div>
-                                    </div>
-                                </div>
+                            <!-- Village Name -->
+                            <div class="form-group">
+                                <label for="message">Village Name</label>
+                                <input type="text" id="village_name_edit_{{ $village->id }}" name="name"
+                                    class="form-control" value="{{ $village->name }}">
+                                <input type="hidden" id="latitude_edit_{{ $village->id }}" name="latitude"
+                                    value="{{ $village->latitude }}">
+                                <input type="hidden" id="longitude_edit_{{ $village->id }}" name="longitude"
+                                    value="{{ $village->longitude }}">
                             </div>
-                            @php $editIndex++; @endphp
-                        @endforeach
+
+                            <!-- Existing Crops -->
+                            @php $editIndex = 0; @endphp
+                            @foreach ($village->crops as $crop)
+                                <div class="row mb-4">
+                                    <!-- Crop Name -->
+                                    <div class="col-md-4">
+                                        <label for="crop_name_{{ $editIndex }}" class="form-label">Select Crop</label>
+                                        <select name="crops[{{ $editIndex }}][crop_name_id]"
+                                            id="crop_name_{{ $editIndex }}" class="form-control" required>
+                                            <option value="">Select Crop</option>
+                                            @foreach ($crops as $c)
+                                                <option value="{{ $c->id }}"
+                                                    {{ $c->id == $crop->crop_name_id ? 'selected' : '' }}>
+                                                    {{ $c->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- Average Temperature -->
+                                    <div class="col-md-4">
+                                        <label for="avg_temp_{{ $editIndex }}" class="form-label">Average
+                                            Temperature</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.1"
+                                                name="crops[{{ $editIndex }}][avg_temp]"
+                                                id="avg_temp_{{ $editIndex }}" class="form-control"
+                                                value="{{ $crop->avg_temp }}" required>
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"
+                                                    style="border: 1px solid #cbd2d8;">°C</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Average Rainfall -->
+                                    <div class="col-md-4">
+                                        <label for="avg_rainfall_{{ $editIndex }}" class="form-label">Average
+                                            Rainfall</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.1"
+                                                name="crops[{{ $editIndex }}][avg_rainfall]"
+                                                id="avg_rainfall_{{ $editIndex }}" class="form-control"
+                                                value="{{ $crop->avg_rainfall }}" required>
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"
+                                                    style="border: 1px solid #cbd2d8;">mm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @php $editIndex++; @endphp
+                            @endforeach
 
 
-                        <!-- Optional: Button to add more crops in edit modal -->
-                        <div id="editCropFieldsWrapper-{{$village->id}}"></div>
-                        <button type="button" class="btn btn-sm btn-info addMoreCropsEdit" data-village-id="{{ $village->id }}" data-index="{{ $editIndex }}">Add More</button>
+                            <!-- Optional: Button to add more crops in edit modal -->
+                            <div id="editCropFieldsWrapper-{{ $village->id }}"></div>
+                            <button type="button" class="btn btn-sm btn-info addMoreCropsEdit"
+                                data-village-id="{{ $village->id }}" data-index="{{ $editIndex }}">Add More</button>
 
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update</button>
-                    </div>
-                </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
     @endforeach
 
 
@@ -174,17 +191,19 @@
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">
-                                    <h4>{{$uc->name}} - Villages</h4>
+                                    <h4>{{ $uc->name }} - Villages</h4>
                                 </div>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
                                 <a class="btn btn-primary mb-3" href="#" data-toggle="modal"
-                                                    data-target="#villageModal">Add Village</a>
+                                    data-target="#villageModal">Create Village</a>
                                 <table class="table responsive" id="table_id_events">
                                     <thead>
                                         <tr>
                                             <th>Sr.</th>
                                             <th>village</th>
+                                            <th>Average Temerature</th>
+                                            <th>Average Rainfall</th>
                                             <th scope="col">Actions</th>
                                         </tr>
                                     </thead>
@@ -193,11 +212,12 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $village->name }}</td>
+                                                <td>{{ optional($village->crops->first())->avg_temp ?? 'N/A' }} °C</td>
+                                                <td>{{ optional($village->crops->first())->avg_rainfall ?? 'N/A' }} mm</td>
                                                 <td>
                                                     <div class="d-flex gap-4">
-                                                        <a href="#"
-                                                        data-toggle="modal"
-                                                        data-target="#editvillageModal-{{$village->id}}"
+                                                        <a href="#" data-toggle="modal"
+                                                            data-target="#editvillageModal-{{ $village->id }}"
                                                             class="btn btn-primary" style="margin-left: 10px">Edit</a>
                                                         <form
                                                             action="
@@ -207,7 +227,8 @@
                                                             style="display:inline-block; margin-left: 10px">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <input type="hidden" name="uc_id" value="{{ $uc->id }}">
+                                                            <input type="hidden" name="uc_id"
+                                                                value="{{ $uc->id }}">
                                                             <button type="submit"
                                                                 class="btn btn-danger btn-flat show_confirm"
                                                                 data-toggle="tooltip">Delete</button>
@@ -230,11 +251,11 @@
 
 @section('js')
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeS_6C9oYYmoRemrYTCgureWbaJ3IN-7c&libraries=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeS_6C9oYYmoRemrYTCgureWbaJ3IN-7c&libraries=places">
+    </script>
 
-<script>
+    <script>
     let placeSelected = false;
-    const placeSelectedEdit = {}; // Store flags for each edit modal
 
     function initAutocomplete() {
         const input = document.getElementById('village_name');
@@ -245,7 +266,7 @@
 
         autocomplete.addListener('place_changed', function () {
             const place = autocomplete.getPlace();
-            if (place && place.geometry && place.place_id) {
+            if (place && place.geometry) {
                 placeSelected = true;
                 document.getElementById('latitude').value = place.geometry.location.lat();
                 document.getElementById('longitude').value = place.geometry.location.lng();
@@ -259,56 +280,41 @@
         });
     }
 
-    function initEditAutocomplete(villageId) {
-        const input = document.getElementById(`village_name_edit_${villageId}`);
-        const latInput = document.getElementById(`latitude_edit_${villageId}`);
-        const lngInput = document.getElementById(`longitude_edit_${villageId}`);
-
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-            types: ['(regions)'],
-            componentRestrictions: { country: 'pk' }
-        });
-
-        autocomplete.addListener('place_changed', function () {
-            const place = autocomplete.getPlace();
-            if (place && place.geometry && place.place_id) {
-                placeSelectedEdit[villageId] = true;
-                latInput.value = place.geometry.location.lat();
-                lngInput.value = place.geometry.location.lng();
-            } else {
-                placeSelectedEdit[villageId] = false;
-            }
-        });
-
-        input.addEventListener('keydown', function () {
-            placeSelectedEdit[villageId] = false;
-        });
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
         initAutocomplete();
 
-        // Validation for Add modal
-        document.getElementById('villageModal').addEventListener('submit', function (e) {
+        document.getElementById('CreateForm').addEventListener('submit', function (e) {
+            let isValid = true;
+
             if (!placeSelected) {
-                e.preventDefault();
-                alert('⚠️ Please select a valid village from Google suggestions.');
+                alert("⚠️ Please select a valid village from Google suggestions.");
+                isValid = false;
+            }
+
+            const crop = document.getElementById('crop_name_0');
+            const temp = document.getElementById('avg_temp_0');
+            const rain = document.getElementById('avg_rainfall_0');
+
+            if (!crop.value) {
+                alert("⚠️ Please select a crop.");
+                isValid = false;
+            }
+
+            // if (!temp.value) {
+            //     alert("⚠️ Please enter average temperature.");
+            //     isValid = false;
+            // }
+
+            // if (!rain.value) {
+            //     alert("⚠️ Please enter average rainfall.");
+            //     isValid = false;
+            // }
+
+            if (!isValid) {
+                e.preventDefault(); // stop form submit
                 return false;
             }
         });
-
-        // Initialize edit autocomplete and validation
-        @foreach($villages as $village)
-            initEditAutocomplete({{ $village->id }});
-
-            document.getElementById('editvillageModal-{{ $village->id }}').addEventListener('submit', function (e) {
-                if (typeof placeSelectedEdit[{{ $village->id }}] !== 'undefined' && !placeSelectedEdit[{{ $village->id }}]) {
-                    e.preventDefault();
-                    alert('⚠️ Please select a valid village from Google suggestions.');
-                    return false;
-                }
-            });
-        @endforeach
     });
 </script>
 
@@ -342,15 +348,15 @@
 
     {{-- for add crops againt village  --}}
     <script>
-    let cropIndex = 1;
+        let cropIndex = 1;
 
-    $('#addCropRow').click(function () {
-        const newFields = `
+        $('#addCropRow').click(function() {
+            const newFields = `
             <div class="crop-field-group row mb-3">
                 <div class="col-md-4">
                     <select name="crops[${cropIndex}][crop_name_id]" class="form-control" required>
                         <option value="">Select Crop</option>
-                        @foreach($crops as $crop)
+                        @foreach ($crops as $crop)
                             <option value="{{ $crop->id }}">{{ $crop->name }}</option>
                         @endforeach
                     </select>
@@ -373,22 +379,22 @@
                 </div>
             </div>
         `;
-        $('#cropFieldsWrapper').append(newFields);
-        cropIndex++;
-    });
+            $('#cropFieldsWrapper').append(newFields);
+            cropIndex++;
+        });
 
 
-    // edit crops against village 
-    $('.addMoreCropsEdit').on('click', function () {
-        const villageId = $(this).data('village-id');
-        let index = $(this).data('index');
+        // edit crops against village 
+        $('.addMoreCropsEdit').on('click', function() {
+            const villageId = $(this).data('village-id');
+            let index = $(this).data('index');
 
-        const newFields = `
+            const newFields = `
             <div class="crop-field-group row mb-3">
                 <div class="col-md-4">
                     <select name="crops[${index}][crop_name_id]" class="form-control" required>
                         <option value="">Select Crop</option>
-                        @foreach($crops as $crop)
+                        @foreach ($crops as $crop)
                             <option value="{{ $crop->id }}">{{ $crop->name }}</option>
                         @endforeach
                     </select>
@@ -412,10 +418,9 @@
             </div>
         `;
 
-        $(`#editCropFieldsWrapper-${villageId}`).append(newFields);
-        $(this).data('index', index + 1);
-    });
-</script>
-
+            $(`#editCropFieldsWrapper-${villageId}`).append(newFields);
+            $(this).data('index', index + 1);
+        });
+    </script>
 
 @endsection

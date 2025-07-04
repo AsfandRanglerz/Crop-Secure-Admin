@@ -12,7 +12,7 @@ class InsuranceSubType extends Model
 
     public function district()
     {
-        return $this->belongsTo(District::class, 'district_name', 'id');
+        return $this->belongsTo(District::class, 'district_id', 'id');
     }
 
     public function tehsil()

@@ -1,4 +1,8 @@
-﻿.m-l--125 {
+﻿input[name="password"], input[name="confirmed"] {
+    padding-right: 2rem !important;
+}
+
+.m-l--125 {
     margin-left: -125px
 }
 

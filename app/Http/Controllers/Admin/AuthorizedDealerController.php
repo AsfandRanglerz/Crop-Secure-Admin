@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\Admin\AdminController;
 use App\Models\District;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use App\Mail\WelcomeDealerMail;
+use Illuminate\Support\Facades\Mail;
 
 class AuthorizedDealerController extends Controller
 {
@@ -29,7 +33,7 @@ class AuthorizedDealerController extends Controller
 
     public function index()
     {
-        $dealers = AuthorizedDealer::orderBy('status', 'desc')->latest()->get();
+        $dealers = AuthorizedDealer::with('district')->orderBy('status', 'desc')->latest()->get();
 
         $sideMenuName = [];
         $sideMenuPermissions = [];
@@ -40,8 +44,9 @@ class AuthorizedDealerController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
+        $districts = District::all();
 
-        return view('admin.authorized_dealer.index', compact('dealers', 'sideMenuName', 'sideMenuPermissions'));
+        return view('admin.authorized_dealer.index', compact('dealers', 'sideMenuName', 'sideMenuPermissions', 'districts'));
     }
 
     public function create()
@@ -51,7 +56,7 @@ class AuthorizedDealerController extends Controller
 
         if (Auth::guard('subadmin')->check()) {
             $getSubAdminPermissions = new AdminController();
-            $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();  
+            $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();
             $sideMenuName = $subAdminData['sideMenuName'];
         }
 
@@ -60,16 +65,31 @@ class AuthorizedDealerController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:authorized_dealers,email',
-            'cnic' => 'nullable|string|unique:authorized_dealers,cnic',
-            'contact' => 'required|string|unique:authorized_dealers,contact',
-            'status' => 'nullable',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+        $request->validate(
+            [
+                'name' => 'required|string|max:255',
+                'email' => [
+                    'required',
+                    'string',
+                    'email',
+                    'max:255',
+                    'unique:authorized_dealers,email',
+
+                    'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'
+                ],
+                'password' => 'required|string|min:8',
+                'cnic' => 'required|string|unique:authorized_dealers,cnic',
+                'contact' => 'required|string|unique:authorized_dealers,contact',
+                'district_id' => 'required|exists:districts,id',
+                'status' => 'nullable',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            ],
+            [
+                'email.regex' => 'Kindly use the correct email format(e.g., abc123@gmail.com or ABC123@Gmail.com).',
+            ]
+        );
         // dd($request);
-        $district = District::find($request->district);
+        $district = District::find($request->district_id);
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -97,14 +117,11 @@ class AuthorizedDealerController extends Controller
 
         if (preg_match('/^03\d{9}$/', $rawContact)) {
             $formattedContact = '+92' . substr($rawContact, 1);
-        }
-        elseif (preg_match('/^923\d{9}$/', $rawContact)) {
+        } elseif (preg_match('/^923\d{9}$/', $rawContact)) {
             $formattedContact = '+' . $rawContact;
-        }
-        elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
+        } elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
             $formattedContact = $request->contact;
-        }
-        else {
+        } else {
             return back()->withErrors([
                 'contact' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
             ]);
@@ -116,22 +133,22 @@ class AuthorizedDealerController extends Controller
             'name' => $request->name,
             'father_name' => $request->father_name,
             'email' => $request->email,
-            'password' => bcrypt($password),
+            'password' => Hash::make($request->password),
             'cnic' => $formattedCnic,
             'dob' => $request->dob,
-            'district' => $district->id, // ✅ Save ID, not name
+            'district_id' => $district->id,
             'contact' => $formattedContact,
             // 'status' => $request->status,
             'image' => $image
         ]);
 
 
-        // $message['name'] = $request->name;
-        // $message['contact'] = $request->contact;
-        // $message['email'] = $request->email;
-        // $message['password'] = $password;
+        $message['name'] = $request->name;
+        $message['contact'] = $request->contact;
+        $message['email'] = $request->email;
+        $message['password'] = $request->password;
 
-        // Mail::to($request->email)->send(new dealerLoginPassword($message));
+        Mail::to($request->email)->send(new WelcomeDealerMail($message));
 
         // Return success message
         return redirect()->route('dealer.index')->with(['message' => 'Dealer Created Successfully']);
@@ -155,16 +172,27 @@ class AuthorizedDealerController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'nullable|string|max:255',
-            'cnic' => 'nullable|string',
-            'email' => 'nullable|email',
-            'contact' => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'cnic' => 'required|string',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('authorized_dealers', 'email')->ignore($id),
+                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'
+            ],
+            // 'password' => 'nullable|string|min:8',
+            'contact' => 'required|string',
             'status' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'email.regex' => 'Kindly use the correct email format(e.g., abc123@gmail.com or ABC123@Gmail.com).',
+
         ]);
 
         $dealer = AuthorizedDealer::findOrFail($id);
-        $district = District::find($request->district);
+        $district = District::find($request->district_id);
         $image = $dealer->image;
 
         if ($request->hasFile('image')) {
@@ -194,29 +222,33 @@ class AuthorizedDealerController extends Controller
 
         if (preg_match('/^03\d{9}$/', $rawContact)) {
             $formattedContact = '+92' . substr($rawContact, 1);
-        }
-        elseif (preg_match('/^923\d{9}$/', $rawContact)) {
+        } elseif (preg_match('/^923\d{9}$/', $rawContact)) {
             $formattedContact = '+' . $rawContact;
-        }
-        elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
+        } elseif (preg_match('/^\+923\d{9}$/', $request->contact)) {
             $formattedContact = $request->contact;
-        }
-        else {
+        } else {
             return back()->withErrors([
                 'contact' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
             ]);
         }
 
-        $dealer->update([
+        $updateData = [
             'name' => $request->name,
             'father_name' => $request->father_name,
             'dob' => $request->dob,
-            'district' => $district->id,
+            'district_id' => $district->id,
             'email' => $request->email,
             'cnic' => $formattedCnic,
             'contact' => $formattedContact,
-            'image' => $image
-        ]);
+            'image' => $image,
+        ];
+
+        // if ($request->filled('password')) {
+        //     $updateData['password'] = Hash::make($request->password);
+        // }
+
+        $dealer->update($updateData);
+
 
         return redirect()->route('dealer.index')->with(['message' => 'Dealer Updated Successfully']);
     }

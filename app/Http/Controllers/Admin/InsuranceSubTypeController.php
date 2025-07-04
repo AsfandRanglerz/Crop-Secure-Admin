@@ -16,11 +16,32 @@ use App\Notifications\InsuranceYieldUpdated;
 use App\Helpers\NotificationHelper;
 use App\Models\InsuranceSubTypeSatelliteNDVI;
 use App\Models\Village;
+use App\Models\VillageWeatherHistory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class InsuranceSubTypeController extends Controller
 {
+    // public function index($id)
+    // {
+    //     $sideMenuName = [];
+    //     $sideMenuPermissions = [];
+
+    //     if (Auth::guard('subadmin')->check()) {
+    //         $getSubAdminPermissions = new AdminController();
+    //         $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();
+    //         $sideMenuName = $subAdminData['sideMenuName'];
+    //         $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
+    //     }
+    //     $ensuredCrops = EnsuredCropName::all();  // Fetch all crops
+    //     $districts = District::all();         // Fetch all districts
+    //     $tehsils = Tehsil::all();             // Fetch all tehsils
+    //     $InsuranceType = InsuranceType::find($id);
+    //     $InsuranceSubTypes = InsuranceSubType::with(['district', 'tehsil'])->where('incurance_type_id', $id)->orderBy('status', 'desc')->latest()->get();
+
+    //     return view('admin.insurance_types_and_sub_types.sub_types', compact('sideMenuPermissions', 'sideMenuName', 'InsuranceSubTypes', 'InsuranceType', 'ensuredCrops', 'districts', 'tehsils'));
+    // }
+
     public function index($id)
     {
         $sideMenuName = [];
@@ -32,75 +53,113 @@ class InsuranceSubTypeController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
-        $ensuredCrops = EnsuredCropName::all();  // Fetch all crops
-        $districts = District::all();         // Fetch all districts
-        $tehsils = Tehsil::all();             // Fetch all tehsils
-        $InsuranceType = InsuranceType::find($id);
-        $InsuranceSubTypes = InsuranceSubType::with(['district', 'tehsil'])->where('incurance_type_id', $id)->orderBy('status', 'desc')->latest()->get();
 
-        return view('admin.insurance_types_and_sub_types.sub_types', compact('sideMenuPermissions', 'sideMenuName', 'InsuranceSubTypes', 'InsuranceType', 'ensuredCrops', 'districts', 'tehsils'));
+        $ensuredCrops = EnsuredCropName::all();
+        $districts = District::all();
+        $tehsils = Tehsil::all();
+        $InsuranceType = InsuranceType::find($id);
+        $InsuranceSubTypes = InsuranceSubType::with(['district', 'tehsil'])
+            ->where('incurance_type_id', $id)
+            ->orderBy('status', 'desc')
+            ->latest()
+            ->get();
+
+        return view('admin.insurance_types_and_sub_types.sub_types', compact(
+            'sideMenuPermissions',
+            'sideMenuName',
+            'InsuranceType',
+            'InsuranceSubTypes',
+            'ensuredCrops',
+            'districts',
+            'tehsils'
+        ));
     }
 
 
     public function store(Request $request)
     {
+        $request->validate([
+            'name' => 'required',
+            'district_id' => 'required',
+            'tehsil_id' => 'required',
+            'current_yield' => 'required|numeric',
+            'year' => 'required|integer',
+        ]);
+
+        //  Check for duplicate entry before insert
+        $exists = InsuranceSubType::where('name', $request->name)
+            ->where('district_id', $request->district_id)
+            ->where('tehsil_id', $request->tehsil_id)
+
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()
+                ->withErrors(['duplicate' => 'This crop already exists for the selected district, tehsil, and year.'])
+                ->withInput();
+        }
+
         $insuranceSubType = InsuranceSubType::create([
             'incurance_type_id' => $request->incurance_type_id,
             'name' => $request->name,
-            'district_name' => $request->district_name,
+            'district_id' => $request->district_id,
             'tehsil_id' => $request->tehsil_id,
             'current_yield' => $request->current_yield,
             'year' => $request->year,
         ]);
 
-        $farmers = CropInsurance::with('user')
-            ->where('crop', $request->name)
+        // ✅ Fetch insured farmers from InsuranceHistory
+        $farmers = \App\Models\InsuranceHistory::with('user')
+            ->where('insurance_type_id', $request->incurance_type_id)
             ->where('district_id', $request->district_id)
             ->where('tehsil_id', $request->tehsil_id)
-            ->where('year', $request->year)
+            ->whereYear('created_at', $request->year)
             ->get();
 
         foreach ($farmers as $record) {
-            $benchmark = $record->benchmark_percent;
-            $area = $record->area;
-            $sumInsuredBase = $record->sum_insured_100_percent;
+            $user = $record->user;
+
+            if (!$user || !$user->fcm_token) {
+                continue;
+            }
+
+            $benchmark = $record->benchmark_percent ?? 0;
+            $area = $record->area ?? 0;
+            $sumInsuredBase = $record->sum_insured_100_percent ?? 0;
+
             $sumInsured = ($benchmark / 100) * ($sumInsuredBase * $area);
             $lossPercentage = $benchmark - $request->current_yield;
 
             $compensation = 0;
             $status = 'no loss';
+
             if ($lossPercentage > 0) {
                 $compensation = ($lossPercentage / 100) * $sumInsured;
                 $status = 'loss';
             }
 
-            $record->update([
-                'compensation' => $compensation,
-                'status' => $status,
-            ]);
-
-            $user = $record->user;
-            if ($user && $user->fcm_token) {
-                NotificationHelper::sendFcmNotification(
-                    $user->fcm_token,
-                    'Insurance Update: ' . $record->crop,
-                    $compensation > 0
-                        ? 'You are eligible for Rs. ' . number_format($compensation)
-                        : 'No compensation. Yield met or exceeded benchmark.',
-                    [
-                        'compensation' => $compensation,
-                        'status' => $status,
-                        'crop' => $record->crop,
-                        'year' => $record->year,
-                        'area' => $area,
-                        'benchmark' => $benchmark,
-                        'current_yield' => $request->current_yield,
-                        'sum_insured' => $sumInsured,
-                        'sum_insured_base' => $sumInsuredBase,
-                    ]
-                );
-            }
+            NotificationHelper::sendFcmNotification(
+                $user->fcm_token,
+                'Area Yield Update',
+                $compensation > 0
+                    ? 'You are eligible for Rs. ' . number_format($compensation)
+                    : 'No compensation. Yield met or exceeded benchmark.',
+                [
+                    'type' => 'yield_result',
+                    'crop' => $request->name,
+                    'year' => (string) $request->year,
+                    'area' => (string) $area,
+                    'benchmark' => (string) $benchmark,
+                    'current_yield' => (string) $request->current_yield,
+                    'sum_insured' => (string) $sumInsured,
+                    'sum_insured_base' => (string) $sumInsuredBase,
+                    'status' => $status,
+                    'district_id' => (string) $record->district_id,
+                    'tehsil_id' => (string) $record->tehsil_id,
+                ]
+            );
         }
+
 
         return redirect()
             ->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])
@@ -112,24 +171,45 @@ class InsuranceSubTypeController extends Controller
     public function update(Request $request, $id)
     {
         // dd($request);
+
         $request->validate([
-            'incurance_type_id' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            // 'status' => 'nullable'
+            'name' => 'required',
+            'district_id' => 'required',
+            'tehsil_id' => 'required',
+            'current_yield' => 'required|numeric',
+            'year' => 'required|integer',
         ]);
+
         $data = InsuranceSubType::findOrFail($id);
-        // dd($data);
+
+        // Check for duplicate before updating
+        $exists = InsuranceSubType::where('id', '!=', $id)
+            ->where('name', $request->name)
+            ->where('district_id', $request->district_id)
+            ->where('tehsil_id', $request->tehsil_id)
+
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()
+                ->withErrors(['duplicate' => 'Another record with the same crop, district and tehsil already exists.'])
+                ->withInput();
+        }
+
         $data->update([
             'name' => $request->name,
-            'district_name' => $request->district_name,
+            'district_id' => $request->district_id,
             'tehsil_id' => $request->tehsil_id,
             'current_yield' => $request->current_yield,
             'year' => $request->year,
             // 'status' => $request->status,
         ]);
 
-        return redirect()->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])->with(['message' => 'Insurance Sub-Type Updated Successfully']);
+        return redirect()->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])
+            ->with(['message' => 'Insurance Sub-Type Updated Successfully']);
     }
+
+
 
     public function destroy(Request $request, $id)
     {
@@ -153,9 +233,9 @@ class InsuranceSubTypeController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
-        $ensuredCrops = EnsuredCropName::all();  // Fetch all crops
-        $districts = District::all();         // Fetch all districts
-        $tehsils = Tehsil::all();             // Fetch all tehsils
+        $ensuredCrops = EnsuredCropName::all();
+        $districts = District::all();
+        $tehsils = Tehsil::all();
         $InsuranceType = InsuranceType::find($id);
         $InsuranceSubTypes = InsuranceSubType::with(['district', 'tehsil', 'crop'])
             ->where('incurance_type_id', $id)
@@ -166,15 +246,25 @@ class InsuranceSubTypeController extends Controller
         return view('admin.insurance_types_and_sub_types.sub_types_production_price', compact('sideMenuPermissions', 'sideMenuName', 'InsuranceSubTypes', 'InsuranceType', 'ensuredCrops', 'districts', 'tehsils'));
     }
 
+
     public function production_price_store(Request $request)
     {
+        $request->validate([
+            'incurance_type_id' => 'required|integer',
+            'crop_name_id' => 'required|integer',
+            'year' => 'required|integer',
+            'crops' => 'required|array',
+            'crops.*.district_id' => 'required|integer',
+            'crops.*.tehsil_id' => 'required|integer',
+        ]);
+
         foreach ($request->crops as $crop) {
             $subType = InsuranceSubType::create([
                 'crop_name_id' => $request->crop_name_id,
                 'incurance_type_id' => $request->incurance_type_id,
-                'district_name' => $crop['district_name'] ?? null,
-                'tehsil_id' => $crop['tehsil_id'] ?? null,
-                'cost_of_production' => $crop['cost_of_production'],
+                'district_id' => $crop['district_id'],
+                'tehsil_id' => $crop['tehsil_id'],
+                'cost_of_production' => $crop['cost_of_production'] ?? null,
                 'average_yield' => $crop['average_yield'] ?? null,
                 'historical_average_market_price' => $crop['historical_average_market_price'] ?? null,
                 'real_time_market_price' => $crop['real_time_market_price'] ?? null,
@@ -182,29 +272,26 @@ class InsuranceSubTypeController extends Controller
                 'year' => $request->year,
             ]);
 
-            // 🔔 Notify relevant farmers
-            $farmers = CropInsurance::with('user')
-                ->where('crop', $subType->name)
-                ->where('district_id', $subType->district_name)
-                ->where('tehsil_id', $subType->tehsil_id)
-                ->where('year', $subType->year)
+            // ✅ Now fetch farmers from InsuranceHistory table
+            $farmers = \App\Models\InsuranceHistory::with('user')
+                ->where('insurance_type_id', $request->incurance_type_id)
+                ->where('district_id', $crop['district_id'])
+                ->where('tehsil_id', $crop['tehsil_id'])
+                ->whereYear('created_at', $request->year)
                 ->get();
 
             foreach ($farmers as $record) {
                 $user = $record->user;
                 if ($user && $user->fcm_token) {
-                    NotificationHelper::sendFcmNotification(
+                    \App\Helpers\NotificationHelper::sendFcmNotification(
                         $user->fcm_token,
-                        'Production Price Insurance Update',
-                        'New insured yield and price details are available for your crop.',
+                        'Production Price Update',
                         [
-                            'crop' => $record->crop,
-                            'year' => $record->year,
-                            'district' => $subType->district_name,
-                            'tehsil' => $subType->tehsil_id,
-                            'ensured_yield' => $subType->ensured_yield,
-                            'real_time_price' => $subType->real_time_market_price,
-                            'avg_price' => $subType->historical_average_market_price,
+                            'type' => 'production_price',
+                            'district_id' => (string) $record->district_id,
+                            'tehsil_id' => (string) $record->tehsil_id,
+                            'insurance_type_id' => (string) $record->insurance_type_id,
+                            'year' => (string) $request->year,
                         ]
                     );
                 }
@@ -212,33 +299,42 @@ class InsuranceSubTypeController extends Controller
         }
 
         return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])
-            ->with(['message' => 'Insurance Sub-Types Created Successfully']);
+            ->with(['message' => 'Production prices saved and farmers notified successfully']);
     }
+
 
 
     public function production_price_update(Request $request, $id)
     {
-        // dd($request);
+        //dd($request);
+
         $request->validate([
-            'incurance_type_id' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            // 'status' => 'nullable'
+            'crop_name_id' => 'required|exists:insurance_types,id',
+            'crops.0.district_id' => 'required|exists:districts,id',
+            'crops.0.tehsil_id' => 'required|exists:tehsils,id',
+            'cost_of_production' => 'nullable|numeric',
+            // 'average_yield' => 'nullable|numeric',
+            // 'historical_average_market_price' => 'nullable|numeric',
+            // 'real_time_market_price' => 'nullable|numeric',
+            //'ensured_yield' => 'nullable|numeric',
+            //'year' => 'required',
         ]);
-        $data = InsuranceSubType::findOrFail($id);
-        // dd($data);
-        $data->update([
-            'name' => $request->name,
-            'incurance_type_id' => $request->incurance_type_id,
-            'district_name' => $request->district_name,
-            'tehsil_id' => $request->tehsil_id,
-            'cost_of_production' => $request->cost_of_production,
-            'average_yield' => $request->average_yield,
-            'historical_average_market_price' => $request->historical_average_market_price,
-            'real_time_market_price' => $request->real_time_market_price,
-            'ensured_yield' => $request->ensured_yield,
-            'year' => $request->year,
-            // 'status' => $request->status,
-        ]);
+
+        $insuranceSubType = InsuranceSubType::findOrFail($id);
+
+        $insuranceSubType->crop_name_id = $request->input('crop_name_id');
+        $insuranceSubType->district_id = $request->input('crops.0.district_id');
+        $insuranceSubType->tehsil_id = $request->input('crops.0.tehsil_id');
+        $insuranceSubType->cost_of_production = $request->input('cost_of_production');
+        $insuranceSubType->average_yield = $request->input('average_yield');
+        $insuranceSubType->historical_average_market_price = $request->input('historical_average_market_price');
+        $insuranceSubType->real_time_market_price = $request->input('real_time_market_price');
+        $insuranceSubType->ensured_yield = $request->input('ensured_yield');
+        $insuranceSubType->year = $request->input('year');
+
+        $insuranceSubType->save();
+
+
 
         return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])->with(['message' => 'Insurance Sub-Type Updated Successfully']);
     }
@@ -253,6 +349,7 @@ class InsuranceSubTypeController extends Controller
             return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])->with(['error' => 'This insurance Sub-type cannot be deleted because it is assigned to insurance companies.']);
         }
     }
+
 
     public function satellite_ndvi($id)
     {
@@ -375,7 +472,8 @@ class InsuranceSubTypeController extends Controller
     // Manually store a record from the modal
     public function satellite_ndvi_store(Request $request)
     {
-        $request->validate([
+        // Step 0: Validate
+        $validated = $request->validate([
             'date' => 'required|date',
             'b8' => 'required|numeric|min:0|max:999999999999999',
             'b4' => 'required|numeric|min:0|max:999999999999999',
@@ -383,7 +481,7 @@ class InsuranceSubTypeController extends Controller
             'incurance_type_id' => 'nullable|exists:insurance_types,id',
         ]);
 
-        // Step 1: Save the NDVI record
+        // Step 1: Create NDVI record
         $ndviRecord = InsuranceSubTypeSatelliteNDVI::create([
             'date' => $request->date,
             'b8' => $request->b8,
@@ -392,30 +490,48 @@ class InsuranceSubTypeController extends Controller
             'insurance_type_id' => $request->incurance_type_id,
         ]);
 
-        // Step 2: Notify all farmers who purchased Satellite NDVI insurance
-        $farmers = CropInsurance::with('user')
-            ->where('insurance_type', 'Satellite Index')
+        // Step 2: Get farmers
+        $farmers = \App\Models\InsuranceHistory::with('user')
+            ->where('insurance_type_id', $request->incurance_type_id)
             ->get();
+
+        // Step 3: Loop through and send notification if possible
+        $results = [];
 
         foreach ($farmers as $record) {
             $user = $record->user;
-            if ($user && $user->fcm_token) {
-                \App\Helpers\NotificationHelper::sendFcmNotification(
-                    $user->fcm_token,
-                    'Satellite NDVI Update',
-                    'New NDVI data is available for your insured crop.',
-                    [
-                        'date' => $ndviRecord->date,
-                        'b8' => $ndviRecord->b8,
-                        'b4' => $ndviRecord->b4,
-                        'ndvi' => $ndviRecord->ndvi,
-                    ]
-                );
+
+            if (!$user) {
+                $results[] = ['record_id' => $record->id, 'status' => '❌ User not found'];
+                continue;
             }
+
+            if (!$user->fcm_token) {
+                $results[] = ['user_id' => $user->id, 'status' => '⚠️ No FCM token'];
+                continue;
+            }
+
+            \App\Helpers\NotificationHelper::sendFcmNotification(
+                $user->fcm_token,
+                'Satellite NDVI Update',
+                'NDVI: ' . $ndviRecord->ndvi .
+                    ', Date: ' . $ndviRecord->date .
+                    ', Type ID: ' . $ndviRecord->insurance_type_id,
+                [
+                    'ndvi' => (string) $ndviRecord->ndvi,
+                    'date' => (string) $ndviRecord->date,
+                    'type_id' => (string) $ndviRecord->insurance_type_id,
+                ]
+            );
+
         }
 
-        return back()->with('success', 'NDVI entry saved and farmers notified.');
+        // dd($results, '📊 Notification Results');
+
+        // Final (only reached if dd is removed)
+        return back()->with('success', 'NDVI saved. Notifications sent where applicable.');
     }
+
 
 
     // Delete an entry
@@ -443,12 +559,62 @@ class InsuranceSubTypeController extends Controller
         return view('admin.insurance_types_and_sub_types.sub_types_weather_index', compact('sideMenuPermissions', 'sideMenuName', 'InsuranceSubTypes', 'InsuranceType'));
     }
 
+
     public function showVillageResult($id)
     {
-        $villageCrops = \App\Models\VillageCrop::with('village')
+        // ✅ Fetch weather
+        $weatherController = new \App\Http\Controllers\Admin\WeatherController();
+        $weatherController->fetchLast14DaysWeather($id);
+
+        // ✅ Notification trigger
+        $village = Village::findOrFail($id);
+
+        // Ye logic command wali class se uthao aur yahan paste karo
+        $cropData = $village->villageCrops()->first();
+        if ($cropData) {
+            $avgTemp = $cropData->avg_temp;
+            $avgRain = $cropData->avg_rainfall;
+
+            $highTempDays = VillageWeatherHistory::where('village_id', $village->id)
+                ->where('date', '>=', now()->subDays(13)->toDateString())
+                ->where('temperature', '>=', $avgTemp * 1.2)
+                ->count();
+
+            $rainfall = VillageWeatherHistory::where('village_id', $village->id)
+                ->where('date', '>=', now()->subDays(13)->toDateString())
+                ->sum('rainfall');
+
+            $farmerIds = \App\Models\CropInsurance::where('village_id', $village->id)->pluck('user_id')->unique();
+            $farmers = \App\Models\Farmer::whereIn('id', $farmerIds)->whereNotNull('fcm_token')->get();
+
+            if ($highTempDays === 14) {
+                foreach ($farmers as $farmer) {
+                    \App\Helpers\NotificationHelper::sendFcmNotification(
+                        $farmer->fcm_token,
+                        'Weather Insurance Update',
+                        'Your village had 14 days of high temperature above normal.'
+                    );
+                }
+            }
+
+            if ($rainfall >= $avgRain * 1.5 || $rainfall <= $avgRain * 0.5) {
+                foreach ($farmers as $farmer) {
+                    \App\Helpers\NotificationHelper::sendFcmNotification(
+                        $farmer->fcm_token,
+                        'Weather Insurance Update',
+                        'Rainfall in your village is 50% more or less than normal.'
+                    );
+                }
+            }
+        }
+
+        // ✅ Show to admin
+        $villageWeathers = VillageWeatherHistory::with('village')
+            ->where('village_id', $id)
+            ->orderBy('date', 'desc')
+            ->limit(14)
             ->get();
-            $village = Village::findOrFail($id);
-        return view('admin.insurance_types_and_sub_types.weather_index_result', compact('villageCrops','village'));
+
+        return view('admin.insurance_types_and_sub_types.weather_index_result', compact('village', 'villageWeathers'));
     }
-    
 }

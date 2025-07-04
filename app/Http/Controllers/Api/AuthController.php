@@ -20,58 +20,62 @@ use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
 
-    public function user(){
+    public function user()
+    {
         return response()->json(['message' => 'i m here.'], 200);
-
     }
 
     public function register(Request $request)
     {
         // Validate the incoming request
-        $validator = Validator::make($request->all(), [
-            'email' => ['required',
-            'email',
-            'unique:farmers,email',
-            function ($attribute, $value, $fail) {
-                if (AuthorizedDealer::where('email', $value)->exists()) {
-                    $fail('The email has already been used by a authorized dealer');
-                }
-            }
-        
-        ],
-            'cnic' => [
-                'required',
-                'unique:farmers,cnic',
-                function ($attribute, $value, $fail) {
-                    if (AuthorizedDealer::where('cnic', $value)->exists()) {
-                        $fail('The cnic has already been used by a authorized dealer');
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'email' => [
+                    'required',
+                    'email',
+                    'unique:farmers,email',
+                    function ($attribute, $value, $fail) {
+                        if (AuthorizedDealer::where('email', $value)->exists()) {
+                            $fail('The email has already been used by a authorized dealer');
+                        }
                     }
-                }
-            ],
-            'phone' => [
-                'required',
-                'unique:farmers,contact',
-                function ($attribute, $value, $fail) {
-                    if (AuthorizedDealer::where('contact', $value)->exists()) {
-                        $fail('The phone number has already been used by a authorized dealer');
+
+                ],
+                'cnic' => [
+                    'required',
+                    'unique:farmers,cnic',
+                    function ($attribute, $value, $fail) {
+                        if (AuthorizedDealer::where('cnic', $value)->exists()) {
+                            $fail('The cnic has already been used by a authorized dealer');
+                        }
                     }
-                }
+                ],
+                'phone' => [
+                    'required',
+                    'unique:farmers,contact',
+                    function ($attribute, $value, $fail) {
+                        if (AuthorizedDealer::where('contact', $value)->exists()) {
+                            $fail('The phone number has already been used by a authorized dealer');
+                        }
+                    }
+                ],
             ],
-        ],
-    [
-        'phone.required' => 'The phone number is required',
-        'phone.unique' => 'The phone number has already been taken',
-    ]);
+            [
+                'phone.required' => 'The phone number is required',
+                'phone.unique' => 'The phone number has already been taken',
+            ]
+        );
 
-    $errors = $validator->errors();
+        $errors = $validator->errors();
 
-    if ($errors->has('cnic')) {
-        return response()->json(['message' => $errors->first('cnic')], 422);
-    } elseif ($errors->has('email')) {
-        return response()->json(['message' => $errors->first('email')], 422);
-    } elseif ($errors->has('phone')) {
-        return response()->json(['message' => $errors->first('phone')], 422);
-    }
+        if ($errors->has('cnic')) {
+            return response()->json(['message' => $errors->first('cnic')], 422);
+        } elseif ($errors->has('email')) {
+            return response()->json(['message' => $errors->first('email')], 422);
+        } elseif ($errors->has('phone')) {
+            return response()->json(['message' => $errors->first('phone')], 422);
+        }
 
         // raw password for email
         $rawPassword = $request->password;
@@ -84,6 +88,7 @@ class AuthController extends Controller
             'cnic' => $request->cnic,
             'contact' => $request->phone,
             'dob' => $request->dob,
+            'fcm_token' => $request->fcm_token
         ]);
 
         $mailData = [
@@ -95,7 +100,7 @@ class AuthController extends Controller
 
 
         // dd($mailData);
-        Mail::to($user->email)->send(new WelcomeMail($mailData));
+        // Mail::to($user->email)->send(new WelcomeMail($mailData));
 
         // Create Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -112,33 +117,32 @@ class AuthController extends Controller
     {
         $loginInput = $request->header('email') ?? $request->input('email');
         $password = $request->header('password') ?? $request->input('password');
-    
-        // if (!$loginInput || !$password) {
-        //     return response()->json(['message' => 'Email or Password required'], 422);
-        // }
-    
-        // $user = Farmer::where('email', $email)->first();
-        // Try to find user by email, CNIC, or contact (phone)
-            $user = Farmer::where('email', $loginInput)
+
+        $user = Farmer::where('email', $loginInput)
             ->orWhere('cnic', $loginInput)
             ->orWhere('contact', $loginInput)
             ->first();
-    
+
         if (!$user) {
-            return response()->json(['message' => 'Account not found.Please try again or register.'], 401);
+            return response()->json(['message' => 'Account not found. Please try again or register.'], 401);
         }
-    
-        if(!Hash::check($password, $user->password))
-        {
+
+        if (!Hash::check($password, $user->password)) {
             return response()->json(['message' => 'Incorrect password'], 401);
         }
 
         if ($user->status != 1) {
             return response()->json(['message' => 'Your account is deactivated'], 403);
         }
-    
+
+        // ✅ Update FCM Token if provided
+        if ($request->has('fcm_token')) {
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
-    
+
         return response()->json([
             'message' => 'Login Successful',
             'token' => $token,
@@ -156,7 +160,8 @@ class AuthController extends Controller
             'role' => 'farmer'
         ]);
     }
-    
+
+
 
     public function sendOtp(Request $request)
     {
@@ -170,7 +175,7 @@ class AuthController extends Controller
             }
 
             $user = Farmer::where('email', $request->email)
-                        ->first();
+                ->first();
 
             if (!$user) {
                 return response()->json(['message' => 'Please enter a valid email address.'], 404);
@@ -193,7 +198,6 @@ class AuthController extends Controller
                 'message' => 'OTP has been sent to your email successfully.',
                 'email' => $request->email
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred while sending the OTP.'], 500);
         }
@@ -213,9 +217,9 @@ class AuthController extends Controller
             }
 
             $check = DB::table('password_resets')
-                        ->where('email', $request->email)
-                        ->where('token', $request->otp)
-                        ->first();
+                ->where('email', $request->email)
+                ->where('token', $request->otp)
+                ->first();
 
             if ($check) {
 
@@ -227,7 +231,6 @@ class AuthController extends Controller
             }
 
             return response()->json(['message' => 'Invalid OTP. Please try again.'], 401);
-
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred while verifying the OTP.'], 500);
         }
@@ -243,17 +246,17 @@ class AuthController extends Controller
                 'email' => 'required|email',
                 'password' => 'required|string|min:8',
             ]);
-    
+
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
-    
+
             $user = Farmer::where('email', $request->email)->first();
-    
+
             if (!$user) {
                 return response()->json(['message' => 'Account not found.Please try again.'], 404);
             }
-    
+
             if (Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'message' => 'Your new password cannot be the same as the old one.'
@@ -262,16 +265,15 @@ class AuthController extends Controller
 
             $user->password = Hash::make($request->password);
             $user->save();
-    
+
             return response()->json([
                 'message' => 'Password changed successfully.'
             ], 200);
-    
         } catch (\Exception $e) {
             return response()->json(['message' => 'An error occurred while resetting the password.'], 500);
         }
     }
-    
+
 
     public function logout(Request $request)
     {
@@ -289,46 +291,31 @@ class AuthController extends Controller
         $user = Auth::guard('api')->user(); // Retrieve authenticated user
 
         if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401); // If no user found, return 401
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-        $dob= Carbon::parse($user->dob)->format('Y-m-d');
+        $dob = Carbon::parse($user->dob)->format('Y-m-d');
         return response()->json([
-            'data' => [ 
-            'id'  => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'contact' => $user->contact,
-            'cnic' => $user->cnic,
-            'image' => $user->image,
-            'status' => $user->status,
-            'dob' => $dob,
+            'data' => [
+                'id'  => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'contact' => $user->contact,
+                'cnic' => $user->cnic,
+                'image' => $user->image,
+                'status' => $user->status,
+                'dob' => $dob,
             ]
-        ],200);
+        ], 200);
     }
 
     public function updateProfile(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::guard('api')->user();
 
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Custom validator to handle validation errors manually
-        // $validator = Validator::make($request->all(), [
-        //     'name' => 'required|string',
-        //     'email' => 'required|email|unique:farmers,email,' . $user->id,
-        //     'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
-        // ]);
-
-        // if ($validator->fails()) {
-        //     return response()->json([
-        //         'error' => 'Validation failed',
-        //         'messages' => $validator->errors()
-        //     ], 422);
-        // }
-
-        // $data = $request->only(['name', 'fname','dob']);
         $user->name = $request->name ?? $user->name;
         $user->fname = $request->fname ?? $user->fname;
         $user->dob = $request->dob ?? $user->dob;
@@ -338,13 +325,13 @@ class AuthController extends Controller
             $extension = $file->getClientOriginalExtension();
             $filename = time() . '.' . $extension;
             $file->move(public_path('admin/assets/images/users'), $filename);
-            $data['image'] = 'public/admin/assets/images/users/' . $filename;
+            $user->image = 'public/admin/assets/images/users/' . $filename;
         }
 
-        // $user->update($data);
         $user->save();
-        return response()->json(['message' => 'Profile updated successfully',
-        
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
             'id' => $user->id,
             'name' => $user->name,
             'fname' => $user->fname,
@@ -352,10 +339,25 @@ class AuthController extends Controller
             'cnic' => $user->cnic,
             'phone' => $user->contact,
             'dob' => $user->dob ? Carbon::parse($user->dob)->format('d/m/Y') : null,
-            'image' => $user->image ,
-        
-    ],200);
+            'image' => $user->image,
+        ], 200);
     }
-    
 
+
+    public function deleteAccount(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user) {
+            $user->delete();
+
+            return response()->json([
+                'message' => 'Account deleted successfully.'
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'User not authenticated.'
+        ], 401);
+    }
 }

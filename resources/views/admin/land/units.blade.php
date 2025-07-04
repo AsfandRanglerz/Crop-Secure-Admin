@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Land Data Management')
+@section('title', 'Land Units')
 @section('content')
 
     {{-- Add unit Modal --}}
@@ -8,12 +8,12 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="unitModalLabel">Add Unit</h5>
+                    <h5 class="modal-title" id="unitModalLabel">Create Unit</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('unit.store') }}" method="POST">
+                <form id="CreateForm" action="{{ route('unit.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <!-- Message Textbox -->
@@ -23,11 +23,12 @@
                             @error('unit')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
+                                
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
             </div>
@@ -48,7 +49,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form action="{{ route('unit.update', $land->id) }}" method="POST">
+                    <form class="EditForm" action="{{ route('unit.update', $land->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="modal-body">
@@ -148,31 +149,122 @@
 @endsection
 
 @section('js')
+<script>
+    $(document).ready(function () {
+        $('#table_id_events').DataTable();
+
+        // Validation for Add Unit
+        $('#unitModal form').on('submit', function (e) {
+            const unitInput = $(this).find('input[name="unit"]');
+            const errorBox = $('#unitValidationErrors');
+            const unitValue = unitInput.val().trim();
+
+            errorBox.addClass('d-none').html('');
+
+            if (unitValue === '') {
+                e.preventDefault();
+                errorBox.removeClass('d-none').html('<ul><li>Unit name is required.</li></ul>');
+            }
+        });
+
+        // Validation for Edit Unit - Attach to each edit modal
+        @foreach ($units as $land)
+            $('#editunitModal-{{ $land->id }} form').on('submit', function (e) {
+                const unitInput = $(this).find('input[name="unit"]');
+                const errorBox = $('#editUnitValidationErrors-{{ $land->id }}');
+                const unitValue = unitInput.val().trim();
+
+                errorBox.addClass('d-none').html('');
+
+                if (unitValue === '') {
+                    e.preventDefault();
+                    errorBox.removeClass('d-none').html('<ul><li>Unit name is required.</li></ul>');
+                }
+            });
+        @endforeach
+
+        // Delete confirmation
+        $('.show_confirm').click(function (event) {
+            var form = $(this).closest("form");
+            event.preventDefault();
+            swal({
+                title: `Are you sure you want to delete this record?`,
+                text: "If you delete this, it will be gone forever.",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+
+@if ($errors->has('name'))
+        <script>
+            toastr.error("{{ $errors->first('unit') }}", 'Validation Error', {
+                timeOut: 5000
+            });
+        </script>
+    @endif
 
     <script>
         $(document).ready(function() {
-            $('#table_id_events').DataTable()
-        })
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
-    <script type="text/javascript">
-        $('.show_confirm').click(function(event) {
-            var form = $(this).closest("form");
-            var name = $(this).data("name");
-            event.preventDefault();
-            swal({
-                    title: `Are you sure you want to delete this record?`,
-                    text: "If you delete this, it will be gone forever.",
-                    icon: "warning",
-                    buttons: true,
-                    dangerMode: true,
-                })
-                .then((willDelete) => {
-                    if (willDelete) {
-                        form.submit();
+            // ✅ Form validation for Create District
+            $('#CreateForm').on('submit', function(e) {
+                let form = $(this);
+                let isValid = true;
+
+                const nameField = form.find('input[name="unit"]');
+                const name = nameField.val().trim();
+
+                // Clear old error
+                form.find('.text-danger').remove();
+
+                if (name === '') {
+                    nameField.after('<span class="text-danger">The Unit name is required.</span>');
+                    isValid = false;
+                }
+
+                if (!isValid) e.preventDefault();
+            });
+
+            // ✅ Remove error on input
+            $('#CreateForm input[name="unit"]').on('input', function() {
+                $(this).next('.text-danger').remove();
+            });
+        });
+
+        $(document).ready(function() {
+            $('.EditForm').each(function() {
+                const form = $(this);
+
+                form.on('submit', function(e) {
+                    let isValid = true;
+
+                    const nameField = form.find('input[name="unit"]');
+                    const name = nameField.val().trim();
+
+                    // Clear old errors
+                    form.find('.text-danger').remove();
+
+                    if (name === '') {
+                        nameField.after(
+                            '<span class="text-danger">The Unit name is required.</span>');
+                        isValid = false;
                     }
+
+                    if (!isValid) e.preventDefault();
                 });
+
+                form.find('input[name="unit"]').on('input', function() {
+                    $(this).next('.text-danger').remove();
+                });
+            });
         });
     </script>
 
 @endsection
+

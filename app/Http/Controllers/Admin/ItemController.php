@@ -32,7 +32,7 @@ class ItemController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:items,name',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'description' => 'nullable|string|max:1000',
         ]);
 
@@ -43,6 +43,8 @@ class ItemController extends Controller
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/items/'), $filename);
             $imagePath = 'uploads/items/' . $filename;
+        }else {
+            $imagePath = 'public/admin/assets/images/default.png';
         }
 
         Item::create([

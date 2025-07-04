@@ -8,23 +8,26 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="districtModalLabel">Add District</h5>
+                    <h5 class="modal-title" id="districtModalLabel">Create District</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('district.store') }}" method="POST">
+                <form id="CreateDistrictForm" action="{{ route('district.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <!-- Message Textbox -->
                         <div class="form-group">
                             <label for="message">District Name</label>
                             <input type="text" name="name" class="form-control">
+                            @error('name')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
             </div>
@@ -45,7 +48,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form action="{{ route('district.update', $land->id) }}" method="POST">
+                    <form class="EditDistrictForm" action="{{ route('district.update', $land->id) }}" method="POST">
                         @csrf
                         @method('POST')
                         <div class="modal-body">
@@ -87,7 +90,7 @@
                                         $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Land Data Management' &&
                                                 $permission['permissions']->contains('create')))
                                     <a class="btn btn-primary mb-3" href="#" data-toggle="modal"
-                                        data-target="#districtModal">Add District</a>
+                                        data-target="#districtModal">Create District</a>
                                 @endif
 
                                 <table class="table responsive" id="table_id_events">
@@ -181,5 +184,70 @@
                 });
         });
     </script>
+
+    @if ($errors->has('name'))
+        <script>
+            toastr.error("{{ $errors->first('name') }}", 'Validation Error', {
+                timeOut: 5000
+            });
+        </script>
+    @endif
+
+    <script>
+        $(document).ready(function() {
+            // ✅ Form validation for Create District
+            $('#CreateDistrictForm').on('submit', function(e) {
+                let form = $(this);
+                let isValid = true;
+
+                const nameField = form.find('input[name="name"]');
+                const name = nameField.val().trim();
+
+                // Clear old error
+                form.find('.text-danger').remove();
+
+                if (name === '') {
+                    nameField.after('<span class="text-danger">The district name is required.</span>');
+                    isValid = false;
+                }
+
+                if (!isValid) e.preventDefault();
+            });
+
+            // ✅ Remove error on input
+            $('#CreateDistrictForm input[name="name"]').on('input', function() {
+                $(this).next('.text-danger').remove();
+            });
+        });
+
+        $(document).ready(function() {
+            $('.EditDistrictForm').each(function() {
+                const form = $(this);
+
+                form.on('submit', function(e) {
+                    let isValid = true;
+
+                    const nameField = form.find('input[name="name"]');
+                    const name = nameField.val().trim();
+
+                    // Clear old errors
+                    form.find('.text-danger').remove();
+
+                    if (name === '') {
+                        nameField.after(
+                            '<span class="text-danger">The district name is required.</span>');
+                        isValid = false;
+                    }
+
+                    if (!isValid) e.preventDefault();
+                });
+
+                form.find('input[name="name"]').on('input', function() {
+                    $(this).next('.text-danger').remove();
+                });
+            });
+        });
+    </script>
+
 
 @endsection

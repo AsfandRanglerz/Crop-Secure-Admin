@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'FAQs')
+@section('title', "FAQ's")
 @section('content')
 
 <div class="main-content" style="min-height: 562px;">
@@ -10,7 +10,7 @@
                     <div class="card">
                         <div class="card-header">
                             <div class="col-12">
-                                <h4>FAQs</h4>
+                                <h4>FAQ's</h4>
                             </div>
                         </div>
                         <div class="card-body table-striped table-bordered table-responsive">
@@ -80,7 +80,7 @@
 <script>
     $(document).ready(function () {
         $('#table_id_events').DataTable({
-            paging: false,
+            paging: true,
             info: false
         });
     });

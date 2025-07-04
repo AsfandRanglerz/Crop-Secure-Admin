@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\CompanyInsuranceSubTypeController;
 use App\Http\Controllers\Admin\ContactUsController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\InsuranceHistoryController;
+use App\Http\Controllers\Admin\WeatherController;
 use App\Models\AboutUs;
 use App\Models\Faq;
 use App\Models\PrivacyPolicy;
@@ -76,17 +77,17 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::post('update-profile', [AdminController::class, 'update_profile']);
 
     // ############ Privacy-policy #################
-    Route::get('privacy-policy', [SecurityController::class, 'PrivacyPolicy']);
+    Route::get('privacy-policy', [SecurityController::class, 'PrivacyPolicy'])->name('privacy.policy');
     Route::get('privacy-policy-edit', [SecurityController::class, 'PrivacyPolicyEdit']);
     Route::post('privacy-policy-update', [SecurityController::class, 'PrivacyPolicyUpdate']);
 
     // ############ Term & Condition #################
-    Route::get('term-condition', [SecurityController::class, 'TermCondition']);
+    Route::get('term-condition', [SecurityController::class, 'TermCondition'])->name('term.condition');
     Route::get('term-condition-edit', [SecurityController::class, 'TermConditionEdit']);
     Route::post('term-condition-update', [SecurityController::class, 'TermConditionUpdate']);
 
     // ############ About Us #################
-    Route::get('about-us', [SecurityController::class, 'AboutUs']);
+    Route::get('about-us', [SecurityController::class, 'AboutUs'])->name('about.us');
     Route::get('about-us-edit', [SecurityController::class, 'AboutUsEdit']);
     Route::post('about-us-update', [SecurityController::class, 'AboutUsUpdate']);
 
@@ -144,17 +145,17 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     // ############ Insurance History #################
     Route::controller(InsuranceHistoryController::class)->group(function () {
-        Route::get('/insurance-history',  'index')->name('insurance.history.index')->middleware('check.subadmin.permission:Ensured Crops,view');
-        Route::delete('/ensured-crops-destroy/{id}',  'destroy')->name('insurance-history.destroy')->middleware('check.subadmin.permission:Ensured Crops,delete');
+        Route::get('/insurance-history',  'index')->name('insurance.history.index')->middleware('check.subadmin.permission:Insurance History,view');
+        Route::delete('/ensured-crops-destroy/{id}',  'destroy')->name('insurance-history.destroy')->middleware('check.subadmin.permission:Insurance History,delete');
     });
 
     // ############ Ensured Crops Name #################
     Route::controller(EnsuredCropNameController::class)->group(function () {
         // For Farmer
-        Route::get('/ensured-crop-name',  'index')->name('ensured.crop.name.index')->middleware('check.subadmin.permission:Ensured Crops,view');
-        Route::post('/ensured-crops-name-store',  'store')->name('ensured.crop.name.store')->middleware('check.subadmin.permission:Ensured Crops,create');
-        Route::post('/ensured-crops-name-update/{id}',  'update')->name('ensured.crop.name.update')->middleware('check.subadmin.permission:Ensured Crops,edit');
-        Route::delete('/ensured-crops-name-destroy/{id}',  'destroy')->name('ensured.crop.name.destroy')->middleware('check.subadmin.permission:Ensured Crops,delete');
+        Route::get('/ensured-crop-name',  'index')->name('ensured.crop.name.index')->middleware('check.subadmin.permission:Insured Crops,view');
+        Route::post('/ensured-crops-name-store',  'store')->name('ensured.crop.name.store')->middleware('check.subadmin.permission:Insured Crops,create');
+        Route::post('/ensured-crops-name-update/{id}',  'update')->name('ensured.crop.name.update')->middleware('check.subadmin.permission:Insured Crops,edit');
+        Route::delete('/ensured-crops-name-destroy/{id}',  'destroy')->name('ensured.crop.name.destroy')->middleware('check.subadmin.permission:Insured Crops,delete');
     });
 
     // ############ Land Data Management #################
@@ -243,33 +244,40 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::post('/insurance-sub-type-update/{id}',  'update')->name('insurance.sub.type.update')->middleware('check.subadmin.permission:Insurance Types,edit');
         Route::delete('/insurance-sub-type-destroy/{id}',  'destroy')->name('insurance.sub.type.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
         Route::get('/insurance-sub-type-production-price/{id}',  'production_price')->name('insurance.sub.type.productionPrice')->middleware('check.subadmin.permission:Insurance Types,view');
-        Route::post('/insurance-sub-type-production-price-store',  'production_price_store')->name('insurance.sub.type.productionPrice.store')->middleware('check.subadmin.permission:Insurance Types,store');
+        Route::post('/insurance-sub-type-production-price-store',  'production_price_store')->name('insurance.sub.type.productionPrice.store')->middleware('check.subadmin.permission:Insurance Types,create');
         Route::post('/insurance-sub-type-production-price-update/{id}',  'production_price_update')->name('insurance.sub.type.productionPrice.update')->middleware('check.subadmin.permission:Insurance Types,edit');
         Route::delete('/insurance-sub-type-production-price-destroy/{id}',  'production_price_destroy')->name('insurance.sub.type.productionPrice.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
         Route::get('/insurance-sub-type-satellite_ndvi/{id}',  'satellite_ndvi')->name('insurance.sub.type.satelliteNDVI')->middleware('check.subadmin.permission:Insurance Types,view');
-        Route::post('/insurance-sub-type-satellite_ndvi-store',  'satellite_ndvi_store')->name('insurance.sub.type.satelliteNDVI.store')->middleware('check.subadmin.permission:Insurance Types,store');
+        Route::post('/insurance-sub-type-satellite_ndvi-store',  'satellite_ndvi_store')->name('insurance.sub.type.satelliteNDVI.store')->middleware('check.subadmin.permission:Insurance Types,create');
         Route::post('/insurance-sub-type-satellite_ndvi-update/{id}',  'satellite_ndvi_update')->name('insurance.sub.type.satelliteNDVI.update')->middleware('check.subadmin.permission:Insurance Types,edit');
         Route::delete('/insurance-sub-type-satellite_ndvi-destroy/{id}',  'satellite_ndvi_destroy')->name('insurance.sub.type.satelliteNDVI.destroy')->middleware('check.subadmin.permission:Insurance Types,delete');
         Route::get('/insurance-sub-type-weather/{id}',  'weather_index')->name('insurance.sub.type.weatherIndex')->middleware('check.subadmin.permission:Insurance Types,view');
     });
-    Route::get('admin/insurance/result/{id}', [InsuranceSubTypeController::class, 'showVillageResult'])->name('admin.insurance.result');
+    Route::get('/insurance/result/{id}', [InsuranceSubTypeController::class, 'showVillageResult'])->name('admin.insurance.result');
 
     Route::get('/insurance-sub-type/{id}/calculate', [InsuranceSubTypeController::class, 'calculateResult'])
     ->name('insurance.sub.type.calculate');
     Route::get('/get-ndvi-data', [InsuranceSubTypeController::class, 'fetchNDVIData'])->name('ndvi.fetch');
     
+    // weather api routes 
+    Route::get('/weather/fetch/{villageId}', [WeatherController::class, 'fetchLast14DaysWeather'])
+        ->name('weather.fetch.14days');
+
+
     // ############ Insurance Claim Requests #################
     Route::controller(InsuranceClaimRequestController::class)->group(function () {
         Route::get('/insurance-claim',  'index')->name('insurance.claim.index')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
         Route::delete('/insurance-claim-destroy/{id}',  'destroy')->name('insurance.claim.destroy')->middleware('check.subadmin.permission:Insurance Claim Requests,delete');
+       
+        Route::post('/insurance-claim/approve/{id}', 'approve')->name('insurance.claim.approve')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
+        Route::post('/insurance-claim/reject/{id}', 'reject')->name('insurance.claim.reject')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
         // buy products
-        Route::get('/insurance-product-claims', 'buyProduct')->name('insurance.product.claims.index');
-
+        Route::get('/insurance-product-claims', 'buyProduct')->name('insurance.product.claims.index')->middleware('check.subadmin.permission:Claim Product Purchase,view');
+        Route::post('/product-claim/approve/{id}', 'approveProduct')->name('product.claim.approve')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
+        Route::post('/product-claim/reject/{id}', 'rejectProduct')->name('product.claim.reject')->middleware('check.subadmin.permission:Insurance Claim Requests,view');
     });
 
-    Route::post('admin/insurance-claim/approve/{id}', [InsuranceClaimRequestController::class, 'approve'])->name('insurance.claim.approve');
-    Route::post('admin/insurance-claim/reject/{id}', [InsuranceClaimRequestController::class, 'reject'])->name('insurance.claim.reject');
-
+    
     // ############ Notifications #################
     Route::controller(NotificationController::class)->group(function () {
         // Route::get('/notification',  'index')->name('notification.index')->middleware('check.subadmin.permission:Notifications,view');
@@ -280,6 +288,8 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::get('/notification-edit/{id}',  'edit')->name('notification.edit');
         Route::post('/notification-update/{id}',  'update')->name('notification.update');
         Route::delete('/notification-destroy/{id}',  'destroy')->name('notification.destroy');
+        Route::delete('admin/notification/delete-all', 'deleteAll')->name('notification.deleteAll');
+
     });
 
 

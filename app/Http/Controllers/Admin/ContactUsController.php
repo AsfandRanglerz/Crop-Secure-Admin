@@ -10,9 +10,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ContactUsController extends Controller
 {
-    //
-
-    public function Index() {
+    public function Index()
+    {
         $contacts = ContactUs::orderby('id', 'desc')->get();
 
         $sideMenuName = [];
@@ -28,7 +27,8 @@ class ContactUsController extends Controller
         return view('admin.contact.index', compact('contacts', 'sideMenuPermissions', 'sideMenuName'));
     }
 
-    public function createview() {
+    public function createview()
+    {
         return view('contact.create');
     }
 
@@ -39,7 +39,7 @@ class ContactUsController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
         ]);
-    
+
         // If validation fails
         if ($validator->fails()) {
             if ($request->ajax()) {
@@ -48,16 +48,16 @@ class ContactUsController extends Controller
                     'errors' => $validator->errors(),
                 ], 422);
             }
-    
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
-    
+
         // Save data
         Contactus::create([
             'email' => $request->email,
             'phone' => $request->phone,
         ]);
-    
+
         // Success response
         if ($request->ajax()) {
             return response()->json([
@@ -65,24 +65,29 @@ class ContactUsController extends Controller
                 'message' => 'Contact information saved successfully.',
             ]);
         }
-    
+
         // return redirect()->route('contact.index')->with('success', 'Contact added successfully.');
     }
-    
 
-    public function updateview($id) {
+
+    public function updateview($id)
+    {
         $find = ContactUs::find($id);
         return view('admin.contact.edit', compact('find'));
-
     }
 
 
     public function update(Request $request, $id)
     {
-        $contact = ContactUs::find($id);
+        $request->validate([
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+        ]);
 
-        $contact->email   = $request->input('email');
-        $contact->phone   = $request->input('phone');
+        $contact = ContactUs::findOrFail($id); 
+
+        $contact->email = $request->input('email');
+        $contact->phone = $request->input('phone');
 
         $contact->save();
 
@@ -90,7 +95,5 @@ class ContactUsController extends Controller
             'status' => 'success',
             'message' => 'Contact information updated successfully!'
         ]);
-        
     }
-
 }

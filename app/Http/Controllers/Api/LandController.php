@@ -100,7 +100,9 @@ class LandController extends Controller
             'district_id' => $request->district_id,
             'tehsil_id' => $request->tehsil_id,
             'uc' => $request->uc,
+            'uc_id' => $request->uc_id,
             'village' => $request->village,
+            'village_id' => $request->village_id,
             'village_latitude' => $request->village_latitude,
             'village_longitude' => $request->village_longitude,
             'other' => $request->other,
@@ -122,7 +124,7 @@ class LandController extends Controller
             'tehsil:id,name'
         ])
             ->select('district_id', 'tehsil_id', 'uc', 'village', 'village_latitude', 'village_longitude', 'other')
-            ->where('user_id', $user->id) // Optional: only if related to user
+            ->where('user_id', $user->id) 
             ->get();
 
         if ($records->isEmpty()) {

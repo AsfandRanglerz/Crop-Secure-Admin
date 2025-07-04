@@ -9,12 +9,12 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="tehsilModalLabel">Add Tehsil</h5>
+                    <h5 class="modal-title" id="tehsilModalLabel">Create Tehsil</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('tehsil.store') }}" method="POST">
+                <form id="CreateTehsiltForm" action="{{ route('tehsil.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="district_id" value="{{ $district->id }}">
                     <div class="modal-body">
@@ -26,7 +26,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
             </div>
@@ -47,7 +47,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('tehsil.update', $tehsil->id) }}" method="POST">
+                <form class="EditTehsilForm" action="{{ route('tehsil.update', $tehsil->id) }}" method="POST">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="district_id" value="{{ $district->id }}">
@@ -84,7 +84,7 @@
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
                                 <a class="btn btn-primary mb-3" href="#" data-toggle="modal"
-                                                    data-target="#tehsilModal">Add Tehsil</a>
+                                                    data-target="#tehsilModal">Create Tehsil</a>
                                 <table class="table responsive" id="table_id_events">
                                     <thead>
                                         <tr>
@@ -161,6 +161,70 @@
                         form.submit();
                     }
                 });
+        });
+    </script>
+
+    @if ($errors->has('name'))
+        <script>
+            toastr.error("{{ $errors->first('name') }}", 'Validation Error', {
+                timeOut: 5000
+            });
+        </script>
+    @endif
+
+    <script>
+        $(document).ready(function() {
+            // ✅ Form validation for Create District
+            $('#CreateTehsiltForm').on('submit', function(e) {
+                let form = $(this);
+                let isValid = true;
+
+                const nameField = form.find('input[name="name"]');
+                const name = nameField.val().trim();
+
+                // Clear old error
+                form.find('.text-danger').remove();
+
+                if (name === '') {
+                    nameField.after('<span class="text-danger">The Tehsil name is required.</span>');
+                    isValid = false;
+                }
+
+                if (!isValid) e.preventDefault();
+            });
+
+            // ✅ Remove error on input
+            $('#CreateDistrictForm input[name="name"]').on('input', function() {
+                $(this).next('.text-danger').remove();
+            });
+        });
+
+         $(document).ready(function() {
+            $('.EditTehsilForm').each(function() {
+                const form = $(this);
+
+                form.on('submit', function(e) {
+                    let isValid = true;
+
+                    const nameField = form.find('input[name="name"]');
+                    const name = nameField.val().trim();
+
+                    // Clear old errors
+                    form.find('.text-danger').remove();
+
+                    if (name === '') {
+                        nameField.after(
+                            '<span class="text-danger">The Tehsil name is required.</span>');
+                        isValid = false;
+                    }
+
+                    if (!isValid) e.preventDefault();
+                });
+
+                form.find('input[name="name"]').on('input', function() {
+                    $(this).next('.text-danger').remove();
+                });
+            });
         });
     </script>
 

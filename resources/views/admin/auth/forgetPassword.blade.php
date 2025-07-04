@@ -18,7 +18,7 @@
                                     <input id="email" type="email" class="form-control" name="email" tabindex="1" >
                                     @error('email') <span class="text-danger">{{$errors->first('email')}}</span>@enderror
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group mb-0">
                                     <button type="submit" class="btn btn-primary btn-lg btn-block" tabindex="4">
                                         Forgot Password
                                     </button>

@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Edit Contact')
+@section('title', 'Edit Contact Us')
 @section('content')
 
     <div class="main-content">
@@ -14,7 +14,7 @@
                     <div class="row">
                         <div class="col-12 col-md-12 col-lg-12">
                             <div class="card">
-                                <h4 class="text-center my-4">Edit Contact</h4>
+                                <h4 class="text-center my-4">Edit Contact Us</h4>
                                 <div class="row mx-0 px-4">
 
                                     <!-- Email Field -->
@@ -24,6 +24,9 @@
                                             <input type="email" class="form-control" id="email" name="email"
                                                 value="{{ $find->email }}" placeholder="Enter your email">
                                             <div class="invalid-feedback"></div>
+                                            @error('email')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     </div>
 
@@ -34,6 +37,9 @@
                                             <input type="text" class="form-control" id="phone" name="phone"
                                                 value="{{ $find->phone }}" placeholder="Enter phone number">
                                             <div class="invalid-feedback"></div>
+                                            @error('phone')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     </div>
 

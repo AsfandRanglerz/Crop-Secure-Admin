@@ -26,7 +26,7 @@ class EnsuredCropNameController extends Controller
         // dd('done');
         $EnsuredCropNames = EnsuredCropName::latest()->get();
         $currentYear = Carbon::now()->year;
-        return view('admin.ensured_crops.name', compact('sideMenuPermissions', 'sideMenuName', 'EnsuredCropNames','currentYear'));
+        return view('admin.ensured_crops.name', compact('sideMenuPermissions', 'sideMenuName', 'EnsuredCropNames', 'currentYear'));
     }
 
     public function store(Request $request)
@@ -35,6 +35,8 @@ class EnsuredCropNameController extends Controller
         // Validation
         $request->validate([
             'name' => 'required|string|unique:ensured_crop_name,name',
+            'sum' => 'required'
+
         ]);
 
         // Create the record
@@ -51,10 +53,10 @@ class EnsuredCropNameController extends Controller
         return redirect()->route('ensured.crop.name.index')->with('message', 'Ensured Crop created successfully!');
     }
 
-    public function update(Request $request, $id) 
+    public function update(Request $request, $id)
     {
         $request->validate([
-            // 'name' => 'required|string|unique:ensured_crop_name,name',
+            'name' => 'required|string|unique:ensured_crop_name,name,' . $id,
         ]);
 
         $data = EnsuredCropName::find($id);
@@ -71,7 +73,7 @@ class EnsuredCropNameController extends Controller
         return redirect()->route('ensured.crop.name.index')->with('message', 'Ensured Crop updated successfully!');
     }
 
-    public function destroy($id) 
+    public function destroy($id)
     {
         EnsuredCropName::destroy($id);
         return redirect()->route('ensured.crop.name.index')->with('message', 'Ensured Crop deleted successfully!');

@@ -116,7 +116,7 @@
                                             <th>Sr.</th>
                                             <th>Name</th>
                                             <th>Email</th>
-                                            <th>Contact</th>
+                                            <th>Phone</th>
                                             <th>Image</th>
                                             <th scope="col">Permissions</th>
                                             <th>Status</th>
@@ -128,7 +128,7 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $subAdmin->name }}</td>
-                                                <td>{{ $subAdmin->email }}</td>
+                                                <td><a href="mailto:{{ $subAdmin->email }}">{{ $subAdmin->email }}</a></td>
                                                 <td>{{ $subAdmin->phone }}</td>
                                                 <td>
                                                     <img src="{{ asset($subAdmin->image) }}" alt="" height="50"

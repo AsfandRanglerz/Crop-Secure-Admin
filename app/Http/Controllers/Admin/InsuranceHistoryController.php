@@ -46,7 +46,7 @@ class InsuranceHistoryController extends Controller
         })->update(['is_seen' => 1]);
 
         // Get insurance history records
-        $histories = InsuranceHistory::orderBy('created_at', 'desc')->get();
+        $histories = InsuranceHistory::with('farmerLands')->orderBy('created_at', 'desc')->get();
 
         return view('admin.insurance_histories.index', compact('sideMenuPermissions', 'sideMenuName', 'histories'));
     }

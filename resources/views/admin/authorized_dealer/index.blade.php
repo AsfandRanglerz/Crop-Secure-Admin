@@ -31,7 +31,7 @@
                                             <th>Image</th>
                                             <th>CNIC</th>
                                             <th>DOB</th>
-                                            <th>Contact</th>
+                                            <th>Phone</th>
                                             <th>District</th>
                                             <th>Items</th>
                                             {{-- <th>Status</th> --}}
@@ -44,7 +44,7 @@
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $dealer->name }}</td>
                                                 <td>{{ $dealer->father_name }}</td>
-                                                <td>{{ $dealer->email }}</td>
+                                                <td><a href="mailto:{{ $dealer->email }}">{{ $dealer->email }}</a></td>
                                                 <td>
                                                     <img src="{{ asset($dealer->image) }}" alt=""
                                                         height="50"width="50" class="image">
@@ -52,7 +52,7 @@
                                                 <td>{{ $dealer->cnic }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($dealer->dob)->format('d/m/Y') }}</td>
                                                 <td>{{ $dealer->contact }}</td>
-                                                <td>{{ $dealer->district }}</td>
+                                                <td>{{ $dealer->district->name ?? 'N/A' }}</td>
                                                 <td>
                                                     <a href="
                                                     {{ route('dealer.item.index', $dealer->id) }}

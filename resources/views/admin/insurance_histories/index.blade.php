@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Insurance History')
+@section('title', 'Purchased Insurances')
 @section('content')
 
 
@@ -11,7 +11,7 @@
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">
-                                    <h4>Insurance History</h4>
+                                    <h4>Purchased Insurances</h4>
                                 </div>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
@@ -25,6 +25,8 @@
                                             <th>Area Unit</th>
                                             <th>Area (acre)</th>
                                             <th>Land Area</th>
+                                            <th>Land Image</th>
+                                            <th>Certificate</th>
                                             <th>Insurance Type</th>
                                             <th>District</th>
                                             <th>Tehsil</th>
@@ -35,7 +37,7 @@
                                             <th>Benchmark</th>
                                             <th>Benchmark Price</th>
                                             <th>Receipt Number</th>
-                                            <th scope="col">Actions</th>
+                                            {{-- <th scope="col">Actions</th> --}}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -47,17 +49,55 @@
                                                 <td>{{ $history->area_unit ?? '-' }}</td>
                                                 <td>{{ $history->area ?? '-' }}</td>
                                                 <td>{{ $history->land ?? '-' }}</td>
-                                                <td>{{ $history->insurance_type ?? '-' }}</td>
-                                                <td>{{ $history->district ?? '-' }}</td>
-                                                <td>{{ $history->tehsil ?? '-' }}</td>
-                                                <td>{{ $history->company ?? '-' }}</td>
-                                                <td>{{ $history->premium_price ?? '-' }}</td>
-                                                <td>{{ $history->sum_insured ?? '-' }}</td>
-                                                <td>{{ $history->payable_amount ?? '-' }}</td>
-                                                <td>{{ $history->benchmark ?? '-' }}</td>
-                                                <td>{{ $history->benchmark_price ?? '-' }}</td>
-                                                <td>{{ $history->receipt_number ?? '-' }}</td>
                                                 <td>
+                                                    @forelse($history->farmerLands as $land)
+                                                        @if ($land->image)
+                                                            <a href="javascript:void(0)" data-toggle="modal"
+                                                                data-target="#imageModal"
+                                                                data-image="{{ asset($land->image) }}"
+                                                                title="View Land Image">
+                                                                <img src="{{ asset($land->image) }}" alt="Land Image"
+                                                                    width="70" height="70"
+                                                                    style="object-fit: cover; border-radius: 5px; border: 1px solid #ddd;">
+                                                            </a>
+
+                                                            <br>
+                                                        @endif
+                                                    @empty
+                                                        <span class="text-muted">No Land Image</span>
+                                                    @endforelse
+                                                </td>
+                                                <td>
+                                                    @forelse($history->farmerLands as $land)
+                                                        @if ($land->certificate)
+                                                            <a href="{{ asset($land->certificate) }}" target="_blank"
+                                                                class="btn btn-sm btn-info" title="View Certificate">
+                                                                <i class="fa fa-paperclip"></i>
+                                                            </a>
+                                                            <br>
+                                                        @endif
+                                                    @empty
+                                                        <span class="text-muted">No Certificate</span>
+                                                    @endforelse
+                                                </td>
+                                                <td>{{ $history->insurance_type ?? '-' }}</td>
+                                                <td>{{ $history->district->name ?? '-' }}</td>
+                                                <td>{{ $history->tehsil->name ?? '-' }}</td>
+                                                <td>{{ $history->company ?? '-' }}</td>
+                                                <td>{{ $history->premium_price ? number_format($history->premium_price) . ' PKR' : '-' }}
+                                                </td>
+                                                <td>{{ $history->sum_insured ? number_format($history->sum_insured) . ' PKR' : '-' }}
+                                                </td>
+                                                <td>{{ $history->payable_amount ? number_format($history->payable_amount) . ' PKR' : '-' }}
+                                                </td>
+                                                <td>{{ $history->benchmark ? $history->benchmark . '%' : '-' }}</td>
+                                                <td>{{ $history->benchmark_price ? number_format($history->benchmark_price) . ' PKR' : '-' }}
+                                                </td>
+
+                                                </td>
+                                                </td>
+                                                <td>{{ $history->receipt_number ?? '-' }}</td>
+                                                {{-- <td>
                                                     <!-- Actions like delete/edit if needed -->
                                                     <form action="{{ route('insurance-history.destroy', $history->id) }}"
                                                         method="POST">
@@ -66,7 +106,7 @@
                                                         <button type="submit"
                                                             class="btn btn-danger show_confirm">Delete</button>
                                                     </form>
-                                                </td>
+                                                </td> --}}
                                             </tr>
                                         @empty
                                             <tr>
@@ -84,7 +124,21 @@
             </div>
         </section>
     </div>
-
+    <!-- Modal Structure -->
+    <div id="imageModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-transparent shadow-none">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true" class="text-white">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body bg-transparent">
+                    <img id="modalImage" src="" alt="" style="width: 100%;">
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('js')
@@ -114,5 +168,14 @@
                 });
         });
     </script>
-
+    <script>
+        $(document).ready(function() {
+            $('#imageModal').on('show.bs.modal', function(event) {
+                var button = $(event.relatedTarget);
+                var imageUrl = button.data('image');
+                var modal = $(this);
+                modal.find('#modalImage').attr('src', imageUrl);
+            });
+        });
+    </script>
 @endsection

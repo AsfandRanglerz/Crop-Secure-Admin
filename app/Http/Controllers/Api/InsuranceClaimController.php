@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AuthorizedDealer;
 use App\Models\DealerItem;
+use App\Models\InsuranceClaimAddress;
 use App\Models\InsuranceHistory;
 use App\Models\InsuranceProductClaim;
 use App\Models\Item;
@@ -15,7 +16,9 @@ class InsuranceClaimController extends Controller
     public function submitClaim(Request $request)
     {
         $farmer = auth()->user();
-
+        // return response()->json([
+        //                 'message' => $farmer
+        //             ], 404);
         $insurance = \App\Models\InsuranceHistory::where('id', $request->insurance_id)
             ->where('user_id', $farmer->id)
             ->first();
@@ -106,45 +109,65 @@ class InsuranceClaimController extends Controller
         ]);
     }
 
-    public function claimProducts(Request $request)
+   public function claimProducts(Request $request)
     {
         $farmer = auth()->user();
 
+        if (!$farmer || !\App\Models\Farmer::find($farmer->id)) {
+            return response()->json(['message' => 'Authenticated user not found in farmers table'], 401);
+        }
+
+        // Get insurance
         $insurance = InsuranceHistory::where('id', $request->insurance_id)
             ->where('user_id', $farmer->id)
             ->first();
 
         if (!$insurance) {
-            return response()->json([
-                'message' => 'Insurance not found',
-            ], 404);
+            return response()->json(['message' => 'Insurance not found'], 404);
         }
 
         if ($insurance->claimed_at !== null) {
-            return response()->json([
-                'message' => 'This insurance has already been claimed.',
-            ], 400);
+            return response()->json(['message' => 'This insurance has already been claimed.'], 400);
         }
 
+        // Get and decode products
         $products = $request->input('products');
-
         if (is_string($products)) {
             $products = json_decode($products, true);
         }
 
         if (!is_array($products)) {
-            return response()->json([
-                'message' => 'Invalid products format. Expected array.',
-                'products_received' => $request->products,
-            ], 422);
+            return response()->json(['message' => 'Invalid products format. Expected array.'], 422);
         }
 
-        $productTotal = 0;
+        // Calculate total cost of current claim
+        $productTotal = collect($products)->sum(function ($product) {
+            return $product['price'] * $product['quantity'];
+        });
 
-        foreach ($products as $product) {
-            $productTotal += $product['price'] * $product['quantity'];
-        }
+        // Check existing claims
+        $alreadyClaimed = InsuranceProductClaim::where('insurance_id', $insurance->id)->sum('price');
+        $availableAmount = $insurance->compensation_amount - $alreadyClaimed;
 
+        // if ($productTotal > $availableAmount) {
+        //     return response()->json([
+        //         'message' => 'Claimed product amount exceeds available compensation.',
+        //         'claimed_amount' => $productTotal,
+        //         'available_amount' => $availableAmount,
+        //     ], 400);
+        // }
+
+        // Save or update address
+        InsuranceClaimAddress::updateOrCreate(
+            ['user_id' => $farmer->id],
+            [
+                'state' => $request->state,
+                'city' => $request->city,
+                'address' => $request->address
+            ]
+        );
+
+        // Create claim record
         InsuranceProductClaim::create([
             'insurance_id'     => $insurance->id,
             'user_id'          => $farmer->id,
@@ -156,21 +179,19 @@ class InsuranceClaimController extends Controller
             'price'            => $productTotal,
         ]);
 
-        $claimedAmount = InsuranceProductClaim::where('insurance_id', $insurance->id)
-            ->sum('price');
+        // Update remaining amount
+        $totalClaimed = $alreadyClaimed + $productTotal;
+        $newRemaining = max(0, $insurance->compensation_amount - $totalClaimed);
 
-        $remainingAmount = max(0, $insurance->compensation_amount - $claimedAmount);
-
-        $insurance->update([
-            'remaining_amount' => $remainingAmount,
-        ]);
+        $insurance->update(['remaining_amount' => $newRemaining]);
 
         return response()->json([
             'message' => 'Product claim recorded successfully',
             'product_total' => $productTotal,
-            'remaining_amount' => $insurance->remaining_amount,
+            'remaining_amount' => $newRemaining,
         ]);
     }
+
 
 
 
@@ -196,7 +217,7 @@ class InsuranceClaimController extends Controller
 
         $districtId = $insurance->district_id;
 
-        $dealerIds = \App\Models\AuthorizedDealer::where('district', $districtId)
+        $dealerIds = \App\Models\AuthorizedDealer::where('district_id', $districtId)
             ->pluck('id');
 
         if ($dealerIds->isEmpty()) {
@@ -333,77 +354,67 @@ class InsuranceClaimController extends Controller
     {
         $farmer = auth()->user();
 
-        // Step 1: Find insurance that belongs to farmer
-        $insurance = \App\Models\InsuranceHistory::where('user_id', $farmer->id)
-            ->latest()
-            ->first();
-// return response()->json([
-//                 'data' => $insurance
-//             ]);
-        if (!$insurance) {
+        $address = \App\Models\InsuranceClaimAddress::where('user_id', $farmer->id)->first();
+
+        if (!$address) {
             return response()->json([
-                'message' => 'No insurance found for this user with this insurance_id',
-                'data' => []
-            ]);
+                'message' => 'No address found.',
+                'data' => null,
+            ], 404);
         }
 
-        // Step 2: Get claims with address from product_claims
-        $claims = InsuranceProductClaim::where('insurance_id', $insurance->id)
-            ->with('insurance') // ← make sure the relation is loaded
-            ->get();
-//  return response()->json([
-//                 'data' => $claims
-//             ]);
-        // Step 3: Format response
-        $data = $claims->map(function ($claim) {
-            return [
-                'claim_id' => $claim->id,
-                'price' => $claim->price,
-                'state' => $claim->state,
-                'city' => $claim->city,
-                'address' => $claim->address,
-                'delivery_status' => $claim->delivery_status,
-                'created_at' => $claim->created_at->toDateTimeString(),
-            ];
-        });
-
         return response()->json([
-            'data' => $data,
+            'message' => 'Claim address retrieved successfully.',
+            'data' => $address
         ]);
     }
 
 
 
-    public function myOrders()
+    public function myOrders(Request $request)
     {
         $farmer = auth()->user();
 
-        // Get orders related to the authenticated farmer
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('limit', 10);
+        $offset = ($page - 1) * $perPage;
+
+        $total = \App\Models\InsuranceProductClaim::whereHas('insurance', function ($query) use ($farmer) {
+            $query->where('user_id', $farmer->id);
+        })->count();
+
         $orders = \App\Models\InsuranceProductClaim::whereHas('insurance', function ($query) use ($farmer) {
             $query->where('user_id', $farmer->id);
-        })->latest()->get();
+        })
+            ->latest()
+            ->skip($offset)
+            ->take($perPage)
+            ->get();
 
-        // Format each order
-        $response = $orders->map(function ($order) {
+        // Fetch address for user once
+        $address = \App\Models\InsuranceClaimAddress::where('user_id', $farmer->id)->first();
+
+        $response = $orders->map(function ($order) use ($address) {
             $insurance = $order->insurance;
 
             return [
-                'order_id' => $order->id,
-                'crop' => $insurance->crop->name ?? 'N/A',
+                'id' => $order->id,
+                'crop' => $insurance->crop ?? 'N/A',
                 'insurance_type' => $insurance->insurance_type ?? 'N/A',
-                'sum_insured' => $insurance->sum_insured,
+                'claim_amount' => $insurance->remaining_amount ?? $insurance->compensation_amount,
+                'land' => $insurance->land,
                 'products' => json_decode($order->products, true),
                 'Total_price' => $order->price,
                 'delivery_status' => $order->delivery_status,
-                'city' => $order->city,
-                'address' => $order->address,
+                'city' => $address->city ?? 'N/A',
+                'address' => $address->address ?? 'N/A',
+                'state' => $address->state ?? 'N/A',
                 'created_at' => $order->created_at->toDateTimeString(),
             ];
         });
 
         return response()->json([
-            'message' => 'My product claims retrieved successfully.',
-            'data' => $response
+            'data' => $response,
         ]);
     }
 }

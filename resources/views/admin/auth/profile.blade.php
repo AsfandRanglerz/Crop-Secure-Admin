@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Profile')
+@section('title', 'Settings')
 @section('content')
     <!-- Main Content -->
     <div class="main-content">
@@ -11,10 +11,7 @@
                         <div class="padding-20">
                             <ul class="nav nav-tabs" id="myTab2" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link" id="home-tab2" data-toggle="tab" href="#about" role="tab" aria-selected="false">About</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="profile-tab2" data-toggle="tab" href="#settings" role="tab" aria-selected="true">Setting</a>
+                                    <a class="nav-link active" id="profile-tab2" data-toggle="tab" href="#settings" role="tab" aria-selected="true">Settings</a>
                                 </li>
                             </ul>
                             <div class="tab-content tab-bordered" id="myTab3Content">
@@ -24,11 +21,6 @@
                                             <strong>Full Name</strong>
                                             <br>
                                             <p class="text-muted">{{$data->name}}</p>
-                                        </div>
-                                        <div class="col-md-3 col-6 b-r">
-                                            <strong>Mobile</strong>
-                                            <br>
-                                            <p class="text-muted">{{$data->phone}}</p>
                                         </div>
                                         <div class="col-md-3 col-6 b-r">
                                             <strong>Email</strong>
@@ -51,9 +43,6 @@
                                 <div class="tab-pane fade active show" id="settings" role="tabpanel" aria-labelledby="profile-tab2">
                                     <form method="post" action="{{url('admin/update-profile')}}" enctype="multipart/form-data">
                                         @csrf
-                                        <div class="card-header">
-                                            <h4>Edit Profile</h4>
-                                        </div>
 {{--                                        @if(\Illuminate\Support\Facades\Session::has('errors'))--}}
 {{--                                            {{dd($errors)}}--}}
 {{--                                            @endif--}}
@@ -96,19 +85,10 @@
 
                                                     </div>
                                                 </div>
-                                                <div class="form-group col-md-6 col-12">
-                                                    <label>Phone</label>
-                                                    <input type="tel" name="phone" value="{{$data->phone}}"  class="form-control" value="">
-                                                    @error('phone')
-                                                    <div class="text-danger">
-                                                        Please fill in the email
-                                                    </div>
-                                                    @enderror
-                                                </div>
                                             </div>
                                         </div>
                                         <div class="card-footer text-right">
-                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                            <button type="submit" class="btn btn-primary">Save</button>
                                         </div>
                                     </form>
                                 </div>

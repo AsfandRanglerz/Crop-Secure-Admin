@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\DealerItem;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\AuthorizedDealer;
 use Illuminate\Support\Facades\Auth;
 
 class DealerItemController extends Controller
@@ -14,7 +15,8 @@ class DealerItemController extends Controller
     {
         $dealer_id = $id;
         $dealerItems = DealerItem::with('authorizedDealer')->where('authorized_dealer_id', $id)->with('item')->latest()->get();
-        
+        $dealer = AuthorizedDealer::findOrFail($id);
+
         $sideMenuName = [];
         $sideMenuPermissions = [];
 
@@ -25,7 +27,7 @@ class DealerItemController extends Controller
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
 
-        return view('admin.authorized_dealer.items.index', compact('sideMenuPermissions', 'sideMenuName', 'dealerItems', 'dealer_id'));
+        return view('admin.authorized_dealer.items.index', compact('sideMenuPermissions', 'sideMenuName', 'dealerItems', 'dealer_id','dealer'));
     }
     public function create($id)
     {
@@ -53,8 +55,8 @@ class DealerItemController extends Controller
         $request->validate([
             'dealer_id' => 'required',
             'item_id' => 'required|string',
-            'quantity' => 'required|string',
-            'price' => 'required|string',
+            'quantity' => 'required|numeric|min:1',
+            'price'    => 'required|numeric|min:0',
         ]);
         // dd($request);
 
@@ -92,8 +94,8 @@ class DealerItemController extends Controller
     {
         $request->validate([
             // 'item_id' => 'required|string',
-            'quantity' => 'nullable|string',
-            'price' => 'nullable|string',
+           'quantity' => 'required|numeric|min:1',
+            'price'    => 'required|numeric|min:0',
         ]);
         // dd($request);
 

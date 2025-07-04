@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class NotificationController extends Controller
 {
@@ -40,32 +41,62 @@ class NotificationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_type' => 'required|array',
             'message' => 'required|string',
+            'farmers' => 'required|array',
+            'title' => 'required|string|max:255',
+            'message' => 'nullable',
         ]);
 
         try {
+            // Save main notification record
             $notification = Notification::create([
-                'user_type' => implode(',', $request->user_type),
+                'user_type' => 'farmer',
+                'title' => $request->title,
                 'message' => $request->message,
                 'is_sent' => 0,
             ]);
 
             foreach ($request->input('farmers', []) as $farmerId) {
+                // Create target entry for each farmer
                 $notification->targets()->create([
                     'targetable_id' => $farmerId,
                     'targetable_type' => \App\Models\Farmer::class,
                 ]);
+
+                // Send FCM to each farmer if they have a valid token
+                $farmer = \App\Models\Farmer::find($farmerId);
+
+                if ($farmer && $farmer->fcm_token) {
+                    $cleanToken = trim($farmer->fcm_token);
+
+                    // Skip if token is clearly invalid or too short
+                    if (strlen($cleanToken) < 20) {
+                        Log::warning("Skipped FCM for Farmer ID {$farmerId}: Token too short or invalid.");
+                        continue;
+                    }
+
+                    try {
+                        \App\Helpers\SimpleNotificationHelper::sendFcmNotification(
+                            $cleanToken,
+                            $request->title,
+                            $request->message
+                        );
+                    } catch (\Exception $e) {
+                        Log::error("FCM send failed for Farmer ID {$farmerId}: " . $e->getMessage());
+                    }
+                } else {
+                    Log::warning("Farmer ID {$farmerId} has no FCM token.");
+                }
             }
 
-            // ✅ Queue Job once here (not in the loop)
-            dispatch(new SendNotificationJob($notification));
-
-            return redirect()->route('notification.index')->with('success', 'Notification queued successfully!');
+            return redirect()->route('notification.index')->with('success', 'Notification sent successfully!');
         } catch (\Exception $e) {
+            Log::error("Notification store failed: " . $e->getMessage());
+
             return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
     }
+
 
 
     public function edit($id)
@@ -74,32 +105,28 @@ class NotificationController extends Controller
         $farmers = Farmer::all();
 
         $selectedFarmerIds = $notification->targets
-            ->where('targetable_type', Farmer::class)
+            ->where('targetable_type', \App\Models\Farmer::class)
             ->pluck('targetable_id')
             ->toArray();
-
-        $selectedUserTypes = explode(',', $notification->user_type);
 
         return view('admin.notification.edit', compact(
             'notification',
             'farmers',
-            'selectedFarmerIds',
-            'selectedUserTypes'
+            'selectedFarmerIds'
         ));
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'user_type' => 'required|array',
             'message' => 'required|string',
+            'farmers' => 'required|array',
         ]);
 
         try {
             $notification = Notification::findOrFail($id);
 
             $notification->update([
-                'user_type' => implode(',', $request->user_type),
                 'message' => $request->message,
             ]);
 
@@ -108,7 +135,7 @@ class NotificationController extends Controller
             foreach ($request->input('farmers', []) as $farmerId) {
                 $notification->targets()->create([
                     'targetable_id' => $farmerId,
-                    'targetable_type' => Farmer::class,
+                    'targetable_type' => \App\Models\Farmer::class,
                 ]);
             }
 
@@ -117,6 +144,7 @@ class NotificationController extends Controller
             return redirect()->back()->withInput()->with('error', 'Error updating notification: ' . $e->getMessage());
         }
     }
+
 
     public function destroy($id)
     {
@@ -129,4 +157,13 @@ class NotificationController extends Controller
             return redirect()->back()->with('error', 'Error deleting notification: ' . $e->getMessage());
         }
     }
+
+    public function deleteAll()
+{
+    // Delete child targets first if foreign key constraints exist
+    Notification::query()->delete(); // This will respect cascading
+
+    return redirect()->back()->with('success', 'All notifications deleted successfully!');
+}
+
 }

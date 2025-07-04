@@ -19,7 +19,8 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('company.insurance.types.store') }}" method="POST" enctype="multipart/form-data">
+                <form id="insuranceTypeForm" action="{{ route('company.insurance.types.store') }}" method="POST"
+                    enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
                         <input type="hidden" name="insurance_company_id" value="{{ $Company->id }}">
@@ -27,7 +28,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="insurance_type_id">Types</label>
-                                    <select name="insurance_type_id[]" id="insurance_type_id" class="form-control" required>
+                                    <select name="insurance_type_id[]" id="insurance_type_id" class="form-control">
                                         @foreach ($Insurance_types->whereIn('name', ['Area Yield Index', 'Production Price Index', 'Weather Index', 'Satellite Index (NDVI)']) as $Insurance_type)
                                             <option value="{{ $Insurance_type->id }}">{{ $Insurance_type->name }}</option>
                                         @endforeach
@@ -105,11 +106,14 @@
                                                 <option value="{{ $crop->name }}">{{ $crop->name }}</option>
                                             @endforeach
                                         </select>
-                                        @error('crop')
-                                            <span class="text-danger">{{ $message }}</span>
+                                        <div class="crop-error"></div> {{-- 💡 Placeholder for JS error --}}
+                                        @error('crop.*')
+                                            <div><span class="text-danger">{{ $message }}</span></div>
                                         @enderror
                                     </div>
                                 </div>
+
+
 
                                 <!-- District Dropdown -->
                                 <div class="col-md-4">
@@ -191,7 +195,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
             </div>
@@ -214,7 +218,8 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
 
-                    <form action="{{ route('company.insurance.types.update', $InsuranceType->id) }}" method="POST">
+                    <form class="editInsuranceTypeForm"
+                        action="{{ route('company.insurance.types.update', $InsuranceType->id) }}" method="POST">
                         @csrf
                         @method('POST')
 
@@ -349,7 +354,7 @@
                                         <div class="form-group">
                                             <label>District</label>
                                             <select name="district_name[]" class="form-control district-select">
-                                                <option value="">Select District</option>
+                                                {{-- <option value="">Select District</option> --}}
                                                 @foreach ($districts as $district)
                                                     <option value="{{ $district->id }}"
                                                         {{ $InsuranceType->district_name == $district->id ? 'selected' : '' }}>
@@ -365,7 +370,7 @@
                                             <label>Tehsil</label>
                                             <select name="tehsil_id[]" class="form-control tehsil-select"
                                                 data-selected="{{ $InsuranceType->tehsil_id }}">
-                                                <option value="">Select Tehsil</option>
+                                                {{-- <option value="">Select Tehsil</option> --}}
                                             </select>
                                         </div>
                                     </div>
@@ -454,7 +459,7 @@
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
                                 @if (Auth::guard('admin')->check() ||
-                                        $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                        $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Companies' &&
                                                 $permission['permissions']->contains('create')))
                                     <a class="btn btn-primary mb-3 text-white" href="#" data-toggle="modal"
                                         data-target="#InsuranceTypesModal">Add Insurance Types</a>
@@ -523,7 +528,7 @@
                                                 <td>
                                                     <div class="d-flex gap-4">
                                                         @if (Auth::guard('admin')->check() ||
-                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Companies' &&
                                                                         $permission['permissions']->contains('edit')))
                                                             <a class="btn btn-primary text-white" href="#"
                                                                 data-toggle="modal"
@@ -532,7 +537,7 @@
 
                                                         <!-- Delete Button -->
                                                         @if (Auth::guard('admin')->check() ||
-                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Companies' &&
                                                                         $permission['permissions']->contains('delete')))
                                                             <form
                                                                 action="
@@ -905,6 +910,157 @@
             // On load
             toggleFieldsBasedOnType();
         });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $('#insuranceTypeForm').on('submit', function(e) {
+                let isValid = true;
+                const form = $(this);
+
+                // Remove any previous error messages
+                form.find('.text-danger').remove();
+
+                const insuranceTypeText = $('#insurance_type_id option:selected').text().trim();
+
+                const isWeatherOrNDVI = insuranceTypeText === 'Weather Index' || insuranceTypeText ===
+                    'Satellite Index (NDVI)';
+
+                // Validate Weather/NDVI crops
+                if (isWeatherOrNDVI) {
+                    const selectedWeatherCrops = $('#weather_ndvi_crops_select2').val();
+                    if (!selectedWeatherCrops || selectedWeatherCrops.length === 0) {
+                        isValid = false;
+                        $('#weather_ndvi_crops_select2').after(
+                            `<span class="text-danger d-block mt-1">Please select at least one crop.</span>`
+                            );
+                    }
+
+                    const premium = $('#premium_price').val();
+                    if (!premium || parseFloat(premium) <= 0) {
+                        isValid = false;
+                        $('#premium_price').closest('.input-group').after(
+                            `<span class="text-danger d-block mt-1">Premium price is required.</span>`);
+                    }
+                } else {
+                    // Validate Standard crop[]
+                    form.find('select[name="crop[]"]').each(function() {
+                        const cropErrorContainer = $(this).closest('.form-group').find(
+                            '.crop-error');
+                        cropErrorContainer.html(''); // clear previous error
+
+                        if (!$(this).val()) {
+                            isValid = false;
+                            cropErrorContainer.html(
+                                `<span class="text-danger d-block mt-1">Please select a crop.</span>`
+                                );
+                        }
+                    });
+
+
+                    // Validate District
+                    form.find('select[name="district_name[]"]').each(function() {
+                        if (!$(this).val()) {
+                            isValid = false;
+                            $(this).after(
+                                `<span class="text-danger d-block mt-1">Please select a district.</span>`
+                                );
+                        }
+                    });
+
+                    // Validate Tehsil
+                    form.find('select[name="tehsil_id[]"]').each(function() {
+                        if (!$(this).val()) {
+                            isValid = false;
+                            $(this).after(
+                                `<span class="text-danger d-block mt-1">Please select a tehsil.</span>`
+                                );
+                        }
+                    });
+
+                    // Validate at least one benchmark + price benchmark
+                    // form.find('input[name^="benchmark"]').each(function () {
+                    //     if (!$(this).val()) {
+                    //         isValid = false;
+                    //         $(this).closest('.input-group').after(`<span class="text-danger d-block mt-1">Benchmark is required.</span>`);
+                    //     }
+                    // });
+
+                    // form.find('input[name^="price_benchmark"]').each(function () {
+                    //     if (!$(this).val()) {
+                    //         isValid = false;
+                    //         $(this).closest('.input-group').after(`<span class="text-danger d-block mt-1">Price benchmark is required.</span>`);
+                    //     }
+                    // });
+                }
+
+                if (!isValid) e.preventDefault();
+            });
+        });
+    </script>
+
+    <script>
+       $(document).on('submit', '.editInsuranceTypeForm', function (e) {
+    const form = $(this);
+    let isValid = true;
+
+    // Clear old error messages
+    form.find('.text-danger').remove();
+
+    const insuranceTypeName = $.trim(form.find('input[readonly]').val());
+
+    // Premium Price required only for Weather Index or Satellite Index (NDVI)
+    if (insuranceTypeName === 'Weather Index' || insuranceTypeName === 'Satellite Index (NDVI)') {
+        const premiumPriceInput = form.find('input[name="premium_price"]');
+        if (!premiumPriceInput.val()) {
+            isValid = false;
+            premiumPriceInput
+                .closest('.form-group')
+                .append('<span class="text-danger d-block mt-1">Please enter premium price.</span>');
+        }
+    }
+
+    // Validate crop[] (either single or multiple select)
+    form.find('select[name="crop[]"]').each(function () {
+        const cropField = $(this);
+        if (!cropField.val() || (Array.isArray(cropField.val()) && cropField.val().length === 0)) {
+            isValid = false;
+            cropField
+                .closest('.form-group')
+                .append('<span class="text-danger d-block mt-1">Please select at least one crop.</span>');
+        }
+    });
+
+    // Only apply district/tehsil check for non-NDVI/weather
+    if (insuranceTypeName !== 'Weather Index' && insuranceTypeName !== 'Satellite Index (NDVI)') {
+        // District check
+        form.find('select[name="district_name[]"]').each(function () {
+            const districtField = $(this);
+            if (!districtField.val()) {
+                isValid = false;
+                districtField
+                    .closest('.form-group')
+                    .append('<span class="text-danger d-block mt-1">Please select a district.</span>');
+            }
+        });
+
+        // Tehsil check
+        form.find('select[name="tehsil_id[]"]').each(function () {
+            const tehsilField = $(this);
+            if (!tehsilField.val()) {
+                isValid = false;
+                tehsilField
+                    .closest('.form-group')
+                    .append('<span class="text-danger d-block mt-1">Please select a tehsil.</span>');
+            }
+        });
+    }
+
+    if (!isValid) {
+        e.preventDefault();
+    }
+});
+
     </script>
 
 

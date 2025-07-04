@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Mail\WelcomeDealerMail;
 use App\Models\AuthorizedDealer;
 use App\Http\Controllers\Controller;
+use App\Models\District;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -17,53 +18,60 @@ class AuthorizedDealerController extends Controller
     public function authorizeDealerRegister(Request $request)
     {
         // Validate the incoming request
-        $validator = Validator::make($request->all(), [
-            'email' => [
-                'required',
-                'email',
-                'unique:authorized_dealers,email',
-                function ($attribute, $value, $fail) {
-                    if (Farmer::where('email', $value)->exists()) {
-                        $fail('The email has already been used by a farmer');
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'email' => [
+                    'required',
+                    'email',
+                    'unique:authorized_dealers,email',
+                    function ($attribute, $value, $fail) {
+                        if (Farmer::where('email', $value)->exists()) {
+                            $fail('The email has already been used by a farmer');
+                        }
                     }
-                }
-            ],
-            'cnic' => [
-                'required',
-                'unique:authorized_dealers,cnic',
-                function ($attribute, $value, $fail) {
-                    if (Farmer::where('cnic', $value)->exists()) {
-                        $fail('The cnic has already been used by a farmer');
+                ],
+                'cnic' => [
+                    'required',
+                    'unique:authorized_dealers,cnic',
+                    function ($attribute, $value, $fail) {
+                        if (Farmer::where('cnic', $value)->exists()) {
+                            $fail('The cnic has already been used by a farmer');
+                        }
                     }
-                }
-            ],
-            'phone' => [
-                'required',
-                'unique:authorized_dealers,contact',
-                function ($attribute, $value, $fail) {
-                    if (Farmer::where('contact', $value)->exists()) {
-                        $fail('The phone number has already been used by a farmer');
+                ],
+                'phone' => [
+                    'required',
+                    'unique:authorized_dealers,contact',
+                    function ($attribute, $value, $fail) {
+                        if (Farmer::where('contact', $value)->exists()) {
+                            $fail('The phone number has already been used by a farmer');
+                        }
                     }
-                }
+                ],
             ],
-        ],
-    [
-        'phone.required' => 'The phone number is required',
-        'phone.unique' => 'The phone number has already been taken',
-    ]
-    );
+            [
+                'phone.required' => 'The phone number is required',
+                'phone.unique' => 'The phone number has already been taken',
+            ]
+        );
 
-    $errors = $validator->errors();
+        $errors = $validator->errors();
 
-    if ($errors->has('cnic')) {
-        return response()->json(['message' => $errors->first('cnic')], 422);
-    } elseif ($errors->has('email')) {
-        return response()->json(['message' => $errors->first('email')], 422);
-    } elseif ($errors->has('phone')) {
-        return response()->json(['message' => $errors->first('phone')], 422);
-    }
+        if ($errors->has('cnic')) {
+            return response()->json(['message' => $errors->first('cnic')], 422);
+        } elseif ($errors->has('email')) {
+            return response()->json(['message' => $errors->first('email')], 422);
+        } elseif ($errors->has('phone')) {
+            return response()->json(['message' => $errors->first('phone')], 422);
+        }
         // raw password for email
         $rawPassword = $request->password;
+
+        $district = District::find($request->district_id);
+        if (!$district) {
+            return response()->json(['message' => 'Invalid district ID provided.'], 422);
+        }
 
         $user = AuthorizedDealer::create([
             'name' => $request->name,
@@ -73,9 +81,9 @@ class AuthorizedDealerController extends Controller
             'cnic' => $request->cnic,
             'contact' => $request->phone,
             'dob' => $request->dob,
-            'district' => $request->district,
-
+            'district_id' => $district->id,
         ]);
+
 
         $mailData = [
             'name' => $user->name,
@@ -97,5 +105,4 @@ class AuthorizedDealerController extends Controller
             'token' => $token,
         ]);
     }
-
 }

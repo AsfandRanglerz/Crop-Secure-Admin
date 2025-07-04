@@ -8,7 +8,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="InsuranceTypesModalLabel">Add Insurance Type</h5>
+                    <h5 class="modal-title" id="InsuranceTypesModalLabel">Create Insurance Type</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -68,7 +68,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form action="{{ route('insurance.type.update', $InsuranceType->id) }}" method="POST">
+                    <form class="EditForm" action="{{ route('insurance.type.update', $InsuranceType->id) }}" method="POST">
                         @csrf
                         @method('POST')
                         <div class="modal-body">
@@ -177,7 +177,7 @@
                                             <td>
                                                 <div class="d-flex gap-4">
                                                     @if (Auth::guard('admin')->check() ||
-                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types' &&
                                                                     $permission['permissions']->contains('edit')))
                                                         <a class="btn btn-primary text-white"
                                                             href="#" data-toggle="modal" data-target="#EditInsuranceTypesModal-{{ $InsuranceType->id }}">Edit</a>
@@ -185,7 +185,7 @@
 
                                                     <!-- Delete Button -->
                                                     @if (Auth::guard('admin')->check() ||
-                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
+                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types' &&
                                                                     $permission['permissions']->contains('delete')))
                                                         {{-- <form action="
                                                         {{ route('insurance.type.destroy', $InsuranceType->id) }}
@@ -242,5 +242,44 @@
                 });
         });
     </script>
+
+    <script>
+    $(document).ready(function () {
+        $('.EditForm').each(function () {
+            const form = $(this);
+
+            form.on('submit', function (e) {
+                let isValid = true;
+
+                const nameField = form.find('input[name="name"]');
+                const statusField = form.find('select[name="status"]');
+                const name = nameField.val().trim();
+                const status = statusField.val();
+
+                // Remove previous error messages
+                form.find('.text-danger').remove();
+
+                if (name === '') {
+                    nameField.after('<span class="text-danger">The Insurance Type name is required.</span>');
+                    isValid = false;
+                }
+
+                if (status === null || status === '') {
+                    statusField.after('<span class="text-danger">Status is required.</span>');
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                }
+            });
+
+            // Remove error on typing/selecting
+            form.find('input[name="name"], select[name="status"]').on('input change', function () {
+                $(this).next('.text-danger').remove();
+            });
+        });
+    });
+</script>
 
 @endsection

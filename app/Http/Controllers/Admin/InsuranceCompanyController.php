@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 
 class InsuranceCompanyController extends Controller
 {
@@ -33,9 +34,19 @@ class InsuranceCompanyController extends Controller
         // dd($request);
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:insurance_companies,email',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:insurance_companies,email',
+
+                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'
+            ],
             'status' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'email.regex' => 'Kindly use the correct email format(e.g., abc123@gmail.com or ABC123@Gmail.com).',
         ]);
         // dd($request);
 
@@ -62,9 +73,18 @@ class InsuranceCompanyController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('authorized_dealers', 'email')->ignore($id),
+                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'
+            ],
             'status' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'email.regex' => 'Kindly use the correct email format(e.g., abc123@gmail.com or ABC123@Gmail.com).',
         ]);
 
         $company = InsuranceCompany::findOrFail($id);

@@ -17,17 +17,33 @@ class CheckSubAdminPermission
      */
     public function handle(Request $request, Closure $next, $sideMenuName, $permissionType)
     {
-        $subadmin = Auth::guard('subadmin')->user();
         $admin = Auth::guard('admin')->user();
+        $subadmin = Auth::guard('subadmin')->user();
 
-        if($admin){
+        // Allow admin through
+        if ($admin) {
             return $next($request);
         }
 
+        // Check subadmin authentication
         if (!$subadmin) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return redirect()->route('login')->withErrors([
+                'message' => 'You must be logged in.',
+            ]);
         }
 
+        // Check if subadmin is deactivated
+        if ($subadmin->status == 0) {
+            Auth::guard('subadmin')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'message' => 'Your account has been deactivated.',
+            ]);
+        }
+
+        // Permission check
         $hasPermission = $subadmin->permissions()
             ->whereHas('side_menu', function ($query) use ($sideMenuName) {
                 $query->where('name', $sideMenuName);

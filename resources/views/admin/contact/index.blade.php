@@ -25,9 +25,6 @@
                                             <th>Sr.</th>
                                             <th>Email</th>
                                             <th>Phone</th>
-
-
-
                                             <th scope="col">Actions</th>
                                         </tr>
                                     </thead>
@@ -35,10 +32,7 @@
                                         @foreach ($contacts as $contact)
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
-
-
-
-                                                <td>{{ $contact->email }}</td>
+                                                <td><a href="mailto:{{ $contact->email }}">{{ $contact->email }}</a></td>
                                                 <td>{{ $contact->phone }}</td>
 
 

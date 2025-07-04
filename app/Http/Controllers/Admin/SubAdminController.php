@@ -10,8 +10,9 @@ use App\Mail\SubAdminLoginPassword;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-
+use Illuminate\Validation\Rule;
 
 class SubAdminController extends Controller
 {
@@ -19,7 +20,7 @@ class SubAdminController extends Controller
     {
         $subAdmins = SubAdmin::with('permissions.side_menu')->orderBy('status', 'desc')->latest()->get();
         $sideMenus = SideMenu::all();
-        
+
         return view('admin.subadmin.index', compact('subAdmins', 'sideMenus'));
     }
 
@@ -35,11 +36,43 @@ class SubAdminController extends Controller
     {
         // dd($request);
         // Validate the incoming request data
+
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:sub_admins,email',
+
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:sub_admins,email',
+                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'
+            ],
+            'password' => 'required|string|min:8',
             'phone' => 'required|unique:sub_admins,phone',
+
+        ], [
+            'name.required' => 'The name field is required.',
+            'email.regex' => 'Kindly use the correct email format(e.g., abc123@gmail.com or ABC123@Gmail.com).',
         ]);
+
+
+        // Format phone number to +92 format
+        $formattedPhone = null;
+        $rawPhone = preg_replace('/[^0-9]/', '', $request->phone);
+
+        if (preg_match('/^03\d{9}$/', $rawPhone)) {
+            $formattedPhone = '+92' . substr($rawPhone, 1);
+        } elseif (preg_match('/^923\d{9}$/', $rawPhone)) {
+            $formattedPhone = '+' . $rawPhone;
+        } elseif (preg_match('/^\+923\d{9}$/', $request->phone)) {
+            $formattedPhone = $request->phone;
+        } else {
+            return back()->withErrors([
+                'phone' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
+            ])->withInput();
+        }
+
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -51,22 +84,19 @@ class SubAdminController extends Controller
             $image = 'public/admin/assets/images/avator.png';
         }
 
-        /**generate random password */
-        $password = random_int(10000000, 99999999);
-
         // Create a new subadmin record
         SubAdmin::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'password' => bcrypt($password),
+            'password' => Hash::make($request->password),
             'status' => $request->status ?? 1,
             'image' => $image
         ]);
 
         $message['name'] = $request->name;
         $message['email'] = $request->email;
-        $message['password'] = $password;
+        $message['password'] = $request->password;
 
         Mail::to($request->email)->send(new SubAdminLoginPassword($message));
 
@@ -84,19 +114,46 @@ class SubAdminController extends Controller
 
     public function update(Request $request, $id)
     {
-        // dd($request);
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email',
-            'phone' => 'required',
-        ]);
-
         $subAdmin = SubAdmin::findOrFail($id);
 
+        // Validate First
+        $request->validate([
+            'name' => 'required',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
+                Rule::unique('sub_admins', 'email')->ignore($subAdmin->id), // ✅ fix duplicate error
+            ],
+            // 'password' => 'required',
+            'phone' => 'required',
+
+        ], [
+            'email.regex' => 'Kindly use the correct email format(e.g., abc123@gmail.com or ABC123@Gmail.com).',
+            'name.regex' => 'Kindly enter a valid name',
+        ]);
+
+        // Format Phone
+        $formattedPhone = null;
+        $rawPhone = preg_replace('/[^0-9]/', '', $request->phone);
+
+        if (preg_match('/^03\d{9}$/', $rawPhone)) {
+            $formattedPhone = '+92' . substr($rawPhone, 1);
+        } elseif (preg_match('/^923\d{9}$/', $rawPhone)) {
+            $formattedPhone = '+' . $rawPhone;
+        } elseif (preg_match('/^\+923\d{9}$/', $request->phone)) {
+            $formattedPhone = $request->phone;
+        } else {
+            return back()->withErrors([
+                'phone' => 'Please enter a valid mobile number (e.g., 03XXXXXXXXX or +92XXXXXXXXXX).'
+            ])->withInput();
+        }
         $image = $subAdmin->image;
 
         if ($request->hasFile('image')) {
-            $destination = 'public/admin/assets/images/users/' . $subAdmin->image;
+            $destination = 'public/admin/assets/images/users/' . basename($subAdmin->image);
             if (File::exists($destination)) {
                 File::delete($destination);
             }
@@ -106,19 +163,23 @@ class SubAdminController extends Controller
             $filename = time() . '.' . $extension;
             $file->move('public/admin/assets/images/users', $filename);
             $image = 'public/admin/assets/images/users/' . $filename;
-            $subAdmin->image = $image;
         }
 
+
+
+        // Update After All Validations
         $subAdmin->update([
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->phone,
-            // 'status' => $request->status,
+            // 'password' => $request->password,
+            'phone' => $formattedPhone,
             'image' => $image,
         ]);
 
         return redirect()->route('subadmin.index')->with('message', 'SubAdmin Updated Successfully');
     }
+
+
 
     public function destroy($id)
     {
@@ -126,6 +187,7 @@ class SubAdminController extends Controller
         SubAdmin::destroy($id);
         return redirect()->route('subadmin.index')->with(['message' => 'SubAdmin Deleted Successfully']);
     }
+
 
     public function updatePermissions(Request $request, $id)
     {
@@ -147,7 +209,7 @@ class SubAdminController extends Controller
                 }
             }
         }
-        
+
         SubAdminPermission::where('sub_admin_id', $id)->delete();
 
         SubAdminPermission::insert($permissions);

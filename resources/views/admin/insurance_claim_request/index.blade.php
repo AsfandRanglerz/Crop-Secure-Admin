@@ -1,7 +1,7 @@
 @extends('admin.layout.app')
 @section('title', 'Insurance Claim Requests')
-
 @section('content')
+
     <div class="main-content" style="min-height: 562px;">
         <section class="section">
             <div class="section-body">
@@ -9,9 +9,7 @@
                     <div class="col-12 col-md-12 col-lg-12">
                         <div class="card">
                             <div class="card-header">
-                                <div class="col-12">
-                                    <h4>Insurance Claim Requests</h4>
-                                </div>
+                                <h4>Insurance Claim Requests</h4>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
                                 <table class="table responsive" id="table_id_events">
@@ -27,7 +25,7 @@
                                             <th>Claim Date</th>
                                             <th>Bank Details</th>
                                             <th>Status</th>
-                                            {{-- <th>Actions</th> --}}
+                                            {{-- <th>Rejection Reason</th> --}}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -45,49 +43,73 @@
                                                     @php
                                                         $bankDetail = $claim->userBankDetail;
                                                     @endphp
-
                                                     @if ($bankDetail)
                                                         <button class="btn btn-info btn-sm view-bank-btn"
                                                             data-toggle="modal" data-target="#bankModalUniversal"
                                                             data-holder="{{ $bankDetail->bank_holder_name ?? 'N/A' }}"
                                                             data-bank="{{ $bankDetail->bank_name ?? 'N/A' }}"
                                                             data-account="{{ $bankDetail->account_number ?? 'N/A' }}">
-                                                            View Bank
+                                                            View
                                                         </button>
                                                     @else
                                                         <span class="text-muted">No Bank Info</span>
                                                     @endif
                                                 </td>
-
                                                 <td>
-                                                    <div class="dropdown">
-                                                        <button
-                                                            class="btn btn-sm 
-                                                        @if ($claim->status === 'approved') btn-success 
-                                                        @elseif($claim->status === 'rejected') btn-danger 
-                                                        @else btn-warning @endif dropdown-toggle"
-                                                            type="button" data-toggle="dropdown">
-                                                            {{ ucfirst($claim->status) }}
-                                                        </button>
-                                                        <div class="dropdown-menu">
-                                                            <a class="dropdown-item approve-btn" href="#"
-                                                                data-id="{{ $claim->id }}" data-toggle="modal"
-                                                                data-target="#uploadModal{{ $claim->id }}">
-                                                                Approve
-                                                            </a>
-                                                            <form method="POST"
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        <div class="dropdown mr-2">
+                                                            <button
+                                                                class="btn btn-sm 
+    @if ($claim->status === 'approved') btn-success 
+    @elseif($claim->status === 'rejected') btn-danger 
+    @else btn-warning @endif dropdown-toggle"
+                                                                type="button" data-toggle="dropdown"
+                                                                @if ($claim->status === 'approved') disabled @endif>
+                                                                {{ ucfirst($claim->status) }}
+                                                            </button>
+
+                                                            <form id="reject-form-{{ $claim->id }}" method="POST"
                                                                 action="{{ route('insurance.claim.reject', $claim->id) }}">
                                                                 @csrf
-                                                                <button type="submit"
-                                                                    class="dropdown-item text-danger">Reject</button>
                                                             </form>
+                                                            @if ($claim->status !== 'approved')
+                                                                <div class="dropdown-menu">
+                                                                    <a class="dropdown-item approve-btn" href="#"
+                                                                        data-id="{{ $claim->id }}" data-toggle="modal"
+                                                                        data-target="#uploadModal{{ $claim->id }}">
+                                                                        Approve
+                                                                    </a>
+
+                                                                    <a class="dropdown-item text-danger" href="#"
+                                                                        data-toggle="modal"
+                                                                        data-target="#rejectModal{{ $claim->id }}">
+                                                                        Reject
+                                                                    </a>
+                                                                </div>
+                                                            @endif
+
                                                         </div>
+
+                                                        @if ($claim->bill_image)
+                                                            <a href="{{ asset('public/' . $claim->bill_image) }}"
+                                                                target="_blank" class="btn btn-sm btn-info"
+                                                                title="View Uploaded Bill">
+                                                                <i class="fa fa-paperclip"></i>
+                                                            </a>
+                                                        @endif
                                                     </div>
                                                 </td>
-                                                <td>
-                                                    {{-- @if (Auth::guard('admin')->check() ||
-                                                            $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' &&
-                                                                    $permission['permissions']->contains('delete')))
+                                                {{-- <td>
+                                                    @if (!empty($claim->rejection_reason))
+                                                        {{ $claim->rejection_reason }}
+                                                    @else
+                                                        No Rejection
+                                                    @endif
+                                                </td> --}}
+
+
+                                                {{-- <td>
+                                                    @if (Auth::guard('admin')->check() || $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insurance Types & Sub-Types' && $permission['permissions']->contains('delete')))
                                                         <form action="{{ route('insurance.claim.destroy', $claim->id) }}"
                                                             method="POST" style="display:inline-block; margin-left: 10px">
                                                             @csrf
@@ -96,8 +118,8 @@
                                                                 class="btn btn-danger btn-flat show_confirm"
                                                                 data-toggle="tooltip">Delete</button>
                                                         </form>
-                                                    @endif --}}
-                                                </td>
+                                                    @endif
+                                                </td> --}}
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -151,14 +173,46 @@
             </div>
         </div>
     </div>
+
+    {{-- Reject Modal --}}
+    @foreach ($insuranceClaims as $claim)
+        <div class="modal fade" id="rejectModal{{ $claim->id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <form action="{{ route('insurance.claim.reject', $claim->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Reject Claim</h5>
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="description{{ $claim->id }}">Description (Reason for Rejection)</label>
+                                <textarea name="description" id="description{{ $claim->id }}" class="form-control" rows="4"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-danger">Submit & Reject</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
+
 @endsection
 
 @section('js')
+    <!-- DataTables -->
     <script>
         $(document).ready(function() {
-            $('#table_id_events').DataTable();
+            $('#table_id_events').DataTable({
+                paging: true,
+                info: false
+            });
         });
-
+    </script>
+    <script>
         $('#bankModalUniversal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget);
             $('#bankHolder').text(button.data('holder'));

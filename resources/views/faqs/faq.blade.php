@@ -14,7 +14,7 @@
     }
 
     .banner {
-        background: #ff5608;
+        background: #86BC41;
 
         padding: 60px 0;
         display: flex;

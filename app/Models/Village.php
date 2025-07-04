@@ -9,16 +9,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Village extends Model
 {
     use HasFactory;
-    protected $guarded=[];
-    
+    protected $guarded = [];
+
     public function uc()
     {
         return $this->belongsTo(Uc::class);
     }
 
-        public function crops()
+    public function crops()
     {
         return $this->hasMany(VillageCrop::class);
     }
-    
+
+    public function weatherHistories()
+    {
+        return $this->hasMany(VillageWeatherHistory::class);
+    }
+
+    public function villageCrops()
+    {
+        return $this->hasMany(\App\Models\VillageCrop::class);
+    }
 }

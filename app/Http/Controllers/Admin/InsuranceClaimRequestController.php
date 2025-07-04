@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\InsuranceHistory;
 use App\Models\InsuranceProductClaim;
 use Illuminate\Support\Facades\Auth;
+use App\Helpers\ClaimNotificationHelper;
+use App\Helpers\ProductClaimNotificationHelper;
 
 class InsuranceClaimRequestController extends Controller
 {
@@ -25,9 +27,9 @@ class InsuranceClaimRequestController extends Controller
 
         // Mark unseen insurance claims as seen
         InsuranceHistory::whereNotNull('claimed_at')
-            ->where(function ($q) {
-                $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
-            })
+            // ->where(function ($q) {
+            //     $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
+            // })
             ->where('status', 'pending')
             ->update(['is_claim_seen' => 1]);
 
@@ -44,6 +46,7 @@ class InsuranceClaimRequestController extends Controller
         return view('admin.insurance_claim_request.index', compact('sideMenuPermissions', 'sideMenuName', 'insuranceClaims'));
     }
 
+
     public function approve(Request $request, $id)
     {
         $request->validate([
@@ -52,33 +55,94 @@ class InsuranceClaimRequestController extends Controller
 
         $claim = InsuranceHistory::findOrFail($id);
 
-        $imagePath = $request->file('bill_image')->store('bill_screenshots', 'public');
+        if ($request->hasFile('bill_image')) {
+            $file = $request->file('bill_image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/bill_screenshots/'), $filename);
+            $imagePath = 'uploads/bill_screenshots/' . $filename;
+        }
 
         $claim->status = 'approved';
-        $claim->bill_image = $imagePath;
+        $claim->bill_image = $imagePath ?? null;
         $claim->save();
+
+        if ($claim->user) {
+            ClaimNotificationHelper::notifyFarmer($claim->user, 'Your claim has been approved.');
+        }
 
         return redirect()->back()->with('success', 'Claim approved with bill image uploaded.');
     }
 
-    public function reject($id)
+
+    public function reject(Request $request, $id)
     {
+        $request->validate([
+            'description' => 'required|string|max:1000',
+        ]);
+
         $claim = InsuranceHistory::findOrFail($id);
         $claim->status = 'rejected';
+        $claim->rejection_reason = $request->description;
         $claim->save();
+
+
+        ClaimNotificationHelper::notifyFarmer($claim->user, 'Your claim has been rejected.');
 
         return redirect()->back()->with('success', 'Claim rejected.');
     }
 
+
     public function buyProduct()
     {
-        InsuranceProductClaim::where('is_seen', false)
+        $sideMenuName = [];
+        $sideMenuPermissions = [];
+
+        // Check for SubAdmin and fetch permissions
+        if (Auth::guard('subadmin')->check()) {
+            $getSubAdminPermissions = new AdminController();
+            $subAdminData = $getSubAdminPermissions->getSubAdminPermissions();
+            $sideMenuName = $subAdminData['sideMenuName'];
+            $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
+        }
+
+        \App\Models\InsuranceProductClaim::where('delivery_status', 'pending')
+            // ->where('is_seen', false)
             ->update(['is_seen' => true]);
+
 
         $claims = InsuranceProductClaim::with(['insurance.user', 'dealer', 'item'])->latest()->paginate(20);
 
-        return view('admin.product_claims.index', compact('claims'));
+        return view('admin.product_claims.index', compact('sideMenuName', 'sideMenuPermissions', 'claims'));
     }
+
+    public function approveProduct($id)
+    {
+        $claim = InsuranceProductClaim::with('insurance.user')->findOrFail($id);
+        $claim->delivery_status = 'approved';
+        $claim->save();
+
+        $farmer = $claim->user;
+        if ($farmer) {
+            ProductClaimNotificationHelper::notifyFarmer($farmer, 'Your product claim has been approved.');
+        }
+
+        return redirect()->back()->with('success', 'Product Claim accepted.');
+    }
+
+    public function rejectProduct($id)
+    {
+        $claim = InsuranceProductClaim::with('insurance.user')->findOrFail($id);
+        $claim->delivery_status = 'rejected';
+        $claim->save();
+
+        $farmer = $claim->user;
+        if ($farmer) {
+            ProductClaimNotificationHelper::notifyFarmer($farmer, 'Your product claim has been rejected.');
+        }
+
+        return redirect()->back()->with('success', 'Product Claim rejected.');
+    }
+
 
 
     public function destroy() {}

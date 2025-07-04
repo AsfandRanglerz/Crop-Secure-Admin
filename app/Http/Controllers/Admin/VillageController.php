@@ -23,7 +23,7 @@ class VillageController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
         }
 
-        $villages = Village::where('uc_id', $id)->orderBy('name', 'asc')->get();
+        $villages = Village::with('crops')->where('uc_id', $id)->orderBy('name', 'asc')->get();
         $crops = EnsuredCropName::all();
 
         return view('admin.land.village.index', compact('uc', 'villages','sideMenuName', 'crops'));

@@ -16,10 +16,12 @@ class Farmer extends Authenticatable
     protected $guarded = [];
 
     protected $dates = ['dob'];
+
     public function setEmailAttribute($value) //set lowercase
     {
         $this->attributes['email'] = strtolower($value);
     }
+    
     public function setNameAttribute($value)
     {
         $this->attributes['name'] = collect(explode(' ', strtolower($value)))
@@ -61,5 +63,10 @@ class Farmer extends Authenticatable
     public function bankDetail()
     {
         return $this->hasOne(\App\Models\UserBankDetail::class, 'user_id');
+    }
+
+    public function cropInsurances()
+    {
+        return $this->hasMany(\App\Models\CropInsurance::class, 'user_id');
     }
 }

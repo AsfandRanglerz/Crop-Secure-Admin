@@ -6,15 +6,15 @@
     {{-- Add Ensured Crops Modal --}}
     <div class="modal fade" id="EnsuredCropModal" tabindex="-1" role="dialog" aria-labelledby="EnsuredCropModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-md" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="EnsuredCropModalLabel">Add Insured Crop</h5>
+                    <h5 class="modal-title" id="EnsuredCropModalLabel">Create Insured Crop</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('ensured.crop.name.store') }}" method="POST">
+                <form id="CreateForm" action="{{ route('ensured.crop.name.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <div class="row mb-3">
@@ -27,71 +27,78 @@
                                     @enderror
                                 </div>
                             </div>
-                            
+
                             <div class="col">
                                 <div class="form-group mb-0">
                                     <label for="sum">Sum Insured</label>
                                     <div class="input-group">
-                                        <input type="number" name="sum" class="form-control" value="{{ old('sum') }}">
+                                        <input type="number" name="sum" id="sumField" class="form-control"
+                                            value="{{ old('sum') }}">
                                         <div class="input-group-append">
-                                            <span class="input-group-text font-weight-bold" style="border: 2px solid #cbd2d8;">PKR</span>
+                                            <span class="input-group-text font-weight-bold"
+                                                style="border: 2px solid #cbd2d8;">PKR</span>
                                         </div>
                                     </div>
-                                    @error('sum')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
+                                    <small class="text-muted d-block mt-1">
+                                        (Note: The sum insured value is applied to 100% benchmark against 1 acre)
+                                    </small>
+                                    {{-- Validation Error Placeholder --}}
+                                    <div id="sumError"></div>
                                 </div>
-                            </div>                            
-                                <small class="text-muted ml-3">(Note:The sum insured value applied to 100% benchmark against 1 acre)</small>
-                            </div> 
-                           
-                    
-                            <div class="form-group">
-                                <label>Harvest Time Period</label>
-                                <div class="d-flex">
-                                    <!-- Harvest Start Month Dropdown -->
+                            </div>
+
+
+                        </div>
+
+
+                        <div class="form-group">
+                            <label>Harvest Time Period</label>
+                            <div class="row">
+                                <div class="col">
                                     <select name="harvest_start" class="form-control">
                                         <option value="" disabled selected>Start Month</option>
-                                        @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
                                             <option value="{{ $month }}">{{ $month }}</option>
                                         @endforeach
                                     </select>
-                            
-                                    <span class="mx-2"></span>
-                            
-                                    <!-- Harvest End Month Dropdown -->
+                                    <div class="text-danger harvest_start_error"></div>
+                                </div>
+                                <div class="col">
                                     <select name="harvest_end" class="form-control">
                                         <option value="" disabled selected>End Month</option>
-                                        @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
                                             <option value="{{ $month }}">{{ $month }}</option>
                                         @endforeach
                                     </select>
+                                    <div class="text-danger harvest_end_error"></div>
                                 </div>
                             </div>
-                            
+                        </div>
 
-                            <div class="form-group">
-                                <label>Insurance Purchase Period</label>
-                                <div class="d-flex">
-                                    <!-- Insurance Start Month Dropdown -->
+                        <div class="form-group">
+                            <label>Insurance Purchase Period</label>
+                            <div class="row">
+                                <div class="col">
                                     <select name="insurance_start" class="form-control">
                                         <option value="" disabled selected>Start Month</option>
-                                        @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
                                             <option value="{{ $month }}">{{ $month }}</option>
                                         @endforeach
                                     </select>
-                            
-                                    <span class="mx-2"></span>
-                            
-                                    <!-- Insurance End Month Dropdown -->
+                                    <div class="text-danger insurance_start_error"></div>
+                                </div>
+                                <div class="col">
                                     <select name="insurance_end" class="form-control">
                                         <option value="" disabled selected>End Month</option>
-                                        @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
                                             <option value="{{ $month }}">{{ $month }}</option>
                                         @endforeach
                                     </select>
+                                    <div class="text-danger insurance_end_error"></div>
                                 </div>
                             </div>
+                        </div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -108,7 +115,7 @@
     @foreach ($EnsuredCropNames as $EnsuredCrop)
         <div class="modal fade" id="EditEnsuredCropModal-{{ $EnsuredCrop->id }}" tabindex="-1" role="dialog"
             aria-labelledby="EditEnsuredCropModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-md" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="EditEnsuredCropModalLabel">Edit Insured Crop</h5>
@@ -124,55 +131,77 @@
                                 <div class="col">
                                     <div class="form-group">
                                         <label for="name">Name</label>
-                                        <input type="text" name="name" class="form-control" value="{{ old('name', $EnsuredCrop->name) }}">
+                                        <input type="text" name="name" class="form-control"
+                                            value="{{ old('name', $EnsuredCrop->name) }}">
                                         @error('name')
                                             <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 </div>
                                 <div class="col">
-                                    <div class="form-group">
-                                        <label>Sum Insured</label>
-                                        <input type="number" name="sum" class="form-control" value="{{ old('sum', $EnsuredCrop->sum_insured_value) }}">
-                                        @error('sum')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
+                                    <div class="form-group mb-0">
+                                        <label for="sum">Sum Insured</label>
+                                        <div class="input-group">
+                                            <input type="number" name="sum"
+                                                id="editSumField-{{ $EnsuredCrop->id }}" class="form-control"
+                                                value="{{ old('sum', $EnsuredCrop->sum_insured_value) }}">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text font-weight-bold"
+                                                    style="border: 2px solid #cbd2d8;">PKR</span>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">(Note: The sum insured value is applied to
+                                            100% benchmark against 1 acre)</small>
+                                        <div id="editSumError-{{ $EnsuredCrop->id }}">
+                                            @error('sum')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        <div class="form-group">
-                            <label>Harvest Time Period</label>
-                            <div class="d-flex">
-                                <select name="harvest_start" class="form-control">
-                                    @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
-                                        <option value="{{ $month }}" {{ old('harvest_start', $EnsuredCrop->harvest_start_time) == $month ? 'selected' : '' }}>{{ $month }}</option>
-                                    @endforeach
-                                </select>
-                                <span class="mx-2"></span>
-                                <select name="harvest_end" class="form-control">
-                                    @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
-                                        <option value="{{ $month }}"  {{ old('harvest_end', $EnsuredCrop->harvest_end_time) == $month ? 'selected' : '' }}>{{ $month }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label>Insurance Purchase Period</label>
-                            <div class="d-flex">
-                                <select name="insurance_start" class="form-control">
-                                    @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
-                                        <option value="{{ $month }}"  {{ old('insurance_start', $EnsuredCrop->insurance_start_time) == $month ? 'selected' : '' }}>{{ $month }}</option>
-                                    @endforeach
-                                </select>
-                                <span class="mx-2"></span>
-                                <select name="insurance_end" class="form-control">
-                                    @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
-                                        <option value="{{ $month  }}"  {{ old('insurance_end', $EnsuredCrop->insurance_end_time) == $month ? 'selected' : '' }}>{{ $month }}</option>
-                                    @endforeach
-                                </select>
                             </div>
-                        </div>
+                            <div class="form-group">
+                                <label>Harvest Time Period</label>
+                                <div class="d-flex">
+                                    <select name="harvest_start" class="form-control">
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                            <option value="{{ $month }}"
+                                                {{ old('harvest_start', $EnsuredCrop->harvest_start_time) == $month ? 'selected' : '' }}>
+                                                {{ $month }}</option>
+                                        @endforeach
+                                    </select>
+                                    <span class="mx-2"></span>
+                                    <select name="harvest_end" class="form-control">
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                            <option value="{{ $month }}"
+                                                {{ old('harvest_end', $EnsuredCrop->harvest_end_time) == $month ? 'selected' : '' }}>
+                                                {{ $month }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Insurance Purchase Period</label>
+                                <div class="d-flex">
+                                    <select name="insurance_start" class="form-control">
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                            <option value="{{ $month }}"
+                                                {{ old('insurance_start', $EnsuredCrop->insurance_start_time) == $month ? 'selected' : '' }}>
+                                                {{ $month }}</option>
+                                        @endforeach
+                                    </select>
+                                    <span class="mx-2"></span>
+                                    <select name="insurance_end" class="form-control">
+                                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                            <option value="{{ $month }}"
+                                                {{ old('insurance_end', $EnsuredCrop->insurance_end_time) == $month ? 'selected' : '' }}>
+                                                {{ $month }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -185,14 +214,11 @@
     @endforeach
 
 
-
-
     <div class="main-content" style="min-height: 562px;">
         <section class="section">
             <div class="section-body">
                 <div class="row">
                     <div class="col-12 col-md-12 col-lg-12">
-                        <a class="btn btn-primary mb-2" href="{{ route('farmers.index') }}">Back</a>
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">
@@ -201,10 +227,10 @@
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
                                 @if (Auth::guard('admin')->check() ||
-                                        $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Ensured Crops' &&
+                                        $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insured Crops' &&
                                                 $permission['permissions']->contains('create')))
-                                    <a class="btn btn-primary mb-3 text-white"
-                                        href="#" data-toggle="modal" data-target="#EnsuredCropModal">Create</a>
+                                    <a class="btn btn-primary mb-3 text-white" href="#" data-toggle="modal"
+                                        data-target="#EnsuredCropModal">Create</a>
                                 @endif
 
                                 <table class="table responsive" id="table_id_events">
@@ -233,18 +259,20 @@
                                                 <td>
                                                     <div class="d-flex gap-4">
                                                         @if (Auth::guard('admin')->check() ||
-                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Ensured Crops' &&
+                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insured Crops' &&
                                                                         $permission['permissions']->contains('edit')))
-                                                            <a href="#"
-                                                                class="btn btn-primary" data-toggle="modal" data-target="#EditEnsuredCropModal-{{ $EnsuredCrop->id }}">Edit</a>
+                                                            <a href="#" class="btn btn-primary" data-toggle="modal"
+                                                                data-target="#EditEnsuredCropModal-{{ $EnsuredCrop->id }}">Edit</a>
                                                         @endif
 
                                                         @if (Auth::guard('admin')->check() ||
-                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Ensured Crops' &&
+                                                                $sideMenuPermissions->contains(fn($permission) => $permission['side_menu_name'] === 'Insured Crops' &&
                                                                         $permission['permissions']->contains('delete')))
-                                                            <form action="
+                                                            <form
+                                                                action="
                                                             {{ route('ensured.crop.name.destroy', $EnsuredCrop->id) }}
-                                                            " method="POST" 
+                                                            "
+                                                                method="POST"
                                                                 style="display:inline-block; margin-left: 10px">
                                                                 @csrf
                                                                 @method('DELETE')
@@ -298,5 +326,124 @@
                 });
         });
     </script>
+    <script>
+        $(document).ready(function() {
+
+            function validateForm(form) {
+                let isValid = true;
+
+                const nameField = form.find('input[name="name"]');
+                const sumField = $('input[name="sum"]');
+                const sumError = $('#sumError');
+                const harvestStart = form.find('select[name="harvest_start"]');
+                const harvestEnd = form.find('select[name="harvest_end"]');
+                const insuranceStart = form.find('select[name="insurance_start"]');
+                const insuranceEnd = form.find('select[name="insurance_end"]');
+
+                // Remove previous errors
+                form.find('.text-danger').remove();
+                sumError.html('');
+
+                // Validate name
+                if (nameField.val().trim() === '') {
+                    nameField.after('<span class="text-danger">The name field is required.</span>');
+                    isValid = false;
+                }
+
+
+                // Validate sum
+                if (sumField.val().trim() === '') {
+                    sumError.html('<span class="text-danger">The sum insured field is required.</span>');
+                    isValid = false;
+                }
+
+
+                // Validate dropdowns
+                if (!harvestStart.val()) {
+                    harvestStart.after('<span class="text-danger">Select a start month.</span>');
+                    isValid = false;
+                }
+
+                if (!harvestEnd.val()) {
+                    harvestEnd.after('<span class="text-danger">Select an end month.</span>');
+                    isValid = false;
+                }
+
+                if (!insuranceStart.val()) {
+                    insuranceStart.after('<span class="text-danger">Select a start month.</span>');
+                    isValid = false;
+                }
+
+                if (!insuranceEnd.val()) {
+                    insuranceEnd.after('<span class="text-danger">Select an end month.</span>');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            // ✅ CREATE form validation
+            $('#CreateForm').on('submit', function(e) {
+                if (!validateForm($(this))) {
+                    e.preventDefault();
+                }
+            });
+
+            // ✅ Input change listeners on CREATE form
+            $('#CreateForm input, #CreateForm select').on('input change', function() {
+                $(this).next('.text-danger').remove();
+            });
+
+            // ✅ All EDIT forms validation
+            $('[id^="EditEnsuredCropModal-"]').each(function() {
+                const form = $(this).find('form');
+                const cropId = form.find('input[name="sum"]').attr('id').split('-')[1];
+
+                form.on('submit', function(e) {
+                    let isValid = true;
+
+                    const nameField = form.find('input[name="name"]');
+                    const sumField = form.find('input[name="sum"]');
+
+                    const name = nameField.val().trim();
+                    const sum = sumField.val().trim();
+
+                    // Clear old errors
+                    form.find('.text-danger').remove();
+
+                    // ✅ Validate name
+                    if (name === '') {
+                        nameField.after(
+                            '<span class="text-danger">The name field is required.</span>');
+                        isValid = false;
+                    }
+
+                    // ✅ Validate sum
+                    const sumErrorContainer = $('#editSumError-' + cropId);
+                    sumErrorContainer.html(''); // Clear previous
+                    if (sum === '') {
+                        sumErrorContainer.html(
+                            '<span class="text-danger">The sum insured field is required.</span>'
+                            );
+                        isValid = false;
+                    }
+
+                    if (!isValid) e.preventDefault();
+                });
+
+                // ✅ Clear error on input
+                form.find('input[name="name"]').on('input', function() {
+                    $(this).next('.text-danger').remove();
+                });
+
+                form.find('input[name="sum"]').on('input', function() {
+                    const cropId = $(this).attr('id').split('-')[1];
+                    $('#editSumError-' + cropId).html('');
+                });
+            });
+
+        });
+    </script>
+
 
 @endsection

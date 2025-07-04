@@ -30,16 +30,16 @@ class SendNotificationJob implements ShouldQueue
 
         foreach ($userTypes as $type) {
             if ($type === 'farmer') {
-                $recipients = Farmer::whereNotNull('device_token')->get();
+                $recipients = Farmer::whereNotNull('fcm_token')->get();
             } elseif ($type === 'dealer') {
-                $recipients = AuthorizedDealer::whereNotNull('device_token')->get();
+                $recipients = AuthorizedDealer::whereNotNull('fcm_token')->get();
             } else {
                 continue;
             }
 
             foreach ($recipients as $recipient) {
                 SimpleNotificationHelper::sendFcmNotification(
-                    $recipient->device_token,
+                    $recipient->fcm_token,
                     'Crop Secure Alert',
                     $notification->message,
                     ['notification_id' => (string)$notification->id]

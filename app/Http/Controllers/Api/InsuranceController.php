@@ -117,7 +117,7 @@ class InsuranceController extends Controller
                         'benchmark' => $benchmark,
                         'sum_insured' => $sumInsured,
                         'compensation' => round($comp, 2),
-                        'remaining_amount' => $insurance->claimed_at ? 0 : round($comp, 2),
+                        'remaining_amount' => round($insurance->remaining_amount ?? $comp, 2),
                         'status' => $comp > 0 ? 'loss' : 'no loss',
                     ];
                 }
@@ -162,7 +162,7 @@ class InsuranceController extends Controller
                         'ppi' => round($ppi, 2) . '%',
                         'ensured_yield' => $sub->ensured_yield,
                         'compensation' => round($comp, 2),
-                        'remaining_amount' => $insurance->claimed_at ? 0 : round($comp, 2),
+                        'remaining_amount' => round($insurance->remaining_amount ?? $comp, 2),
                         'status' => $sub->real_time_market_price < $triggerPrice ? 'loss' : 'no loss',
                     ];
                 }
@@ -187,7 +187,7 @@ class InsuranceController extends Controller
                         'ndvi_date' => $ndvi->date,
                         'threshold' => $threshold,
                         'compensation' => round($comp, 2),
-                        'remaining_amount' => $insurance->claimed_at ? 0 : round($comp, 2),
+                        'remaining_amount' => round($insurance->remaining_amount ?? $comp, 2),
                         'status' => $isLoss ? 'loss' : 'no loss',
                     ];
                 }
@@ -201,5 +201,4 @@ class InsuranceController extends Controller
             'data' => $results,
         ]);
     }
-    
 }

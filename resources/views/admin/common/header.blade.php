@@ -79,10 +79,10 @@
                     <span class="d-sm-none d-lg-inline-block"></span></a>
             <div class="dropdown-menu dropdown-menu-right pullDown">
                 <div class="dropdown-title">
-                    {{ Auth::guard('admin')->check() ? Auth::guard('admin')->user()->name : (Auth::guard('subadmin')->check() ? Auth::guard('subadmin')->user()->name : 'Guest') }}
+                    Hello {{ Auth::guard('admin')->check() ? Auth::guard('admin')->user()->name : (Auth::guard('subadmin')->check() ? Auth::guard('subadmin')->user()->name : 'Guest') }}
                 </div>
 
-                <a href="{{ url('admin/profile') }}" class="dropdown-item has-icon"> <i class="far fa-user"></i> Profile
+                <a href="{{ url('admin/profile') }}" class="dropdown-item has-icon"> <i class="fa fa-cog"></i> Settings
                 </a>
                 {{-- <a href="timeline.html" class="dropdown-item has-icon"> <i class="fas fa-bolt"></i>
                     Activities

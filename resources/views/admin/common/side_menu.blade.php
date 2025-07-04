@@ -94,39 +94,42 @@
             @endif
 
             {{-- Insurance Types & Sub-types --}}
-            @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Types & Sub-Types'))
+            @if (Auth::guard('admin')->check() || $sideMenuName->contains('Insurance Types'))
                 <li
                     class="dropdown {{ request()->is('admin/insurance-type*') || request()->is('admin/insurance-sub-type*') ? 'active' : '' }}">
                     <a href="
                 {{ route('insurance.type.index') }}
                 "
                         class="nav-link px-2">
-                        <i class="fas fa-cogs"></i> <span>Insurances</span>
+                        <i class="fas fa-cogs"></i> <span>Insurance Types</span>
                     </a>
                 </li>
             @endif
 
             @php
-                $newProductClaimCount = \App\Models\InsuranceProductClaim::where('is_seen', false)->count();
+                $newProductClaimCount = \App\Models\InsuranceProductClaim::where('delivery_status', 'pending')->count();
             @endphp
 
-            <li class="dropdown {{ request()->is('admin/insurance-product-claims*') ? 'active' : '' }}">
-                <a href="{{ route('insurance.product.claims.index') }}"
-                    class="nav-link px-2 d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-box-open me-2"></i>
-                        <span>Claim Product Purchases</span>
-                    </div>
-                    @if ($newProductClaimCount > 0)
-                        <span
-                            class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
-                            style="width: 22px; height: 22px; font-size: 12px;"
-                            title="{{ $newProductClaimCount }} pending">
-                            {{ $newProductClaimCount }}
-                        </span>
-                    @endif
-                </a>
-            </li>
+            @if (Auth::guard('admin')->check() || $sideMenuName->contains('Claim Product Purchase'))
+                <li class="dropdown {{ request()->is('admin/insurance-product-claims*') ? 'active' : '' }}">
+                    <a href="{{ route('insurance.product.claims.index') }}"
+                        class="nav-link px-2 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-box-open me-2"></i>
+                            <span>Claim Product Purchases</span>
+                        </div>
+                        @if ($newProductClaimCount > 0)
+                            <span
+                                class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center"
+                                style="width: 22px; height: 22px; font-size: 12px;"
+                                title="{{ $newProductClaimCount }} pending">
+                                {{ $newProductClaimCount }}
+                            </span>
+                        @endif
+                    </a>
+                </li>
+            @endif
+
 
             @php
                 $showInsuranceClaimRequests =
@@ -136,9 +139,9 @@
 
                 if ($showInsuranceClaimRequests && !$onClaimPage) {
                     $newClaimCount = \App\Models\InsuranceHistory::whereNotNull('claimed_at')
-                        ->where(function ($q) {
-                            $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
-                        })
+                        // ->where(function ($q) {
+                        //     $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
+                        // })
                         ->where('status', 'pending')
                         ->count();
                 }
@@ -154,7 +157,7 @@
                         </div>
                         @if ($newClaimCount > 0)
                             <span
-                                class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+                                class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center"
                                 style="width: 22px; height: 22px; font-size: 12px;" title="{{ $newClaimCount }} new">
                                 {{ $newClaimCount }}
                             </span>
@@ -183,7 +186,7 @@
                         class="nav-link px-2 d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-user-shield me-2"></i>
-                            <span>Insurance History</span>
+                            <span>Purchased Insurances</span>
                         </div>
                         @if ($newInsuranceCount > 0)
                             <span
@@ -211,18 +214,16 @@
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('faqs'))
                 <!-- Terms & Conditions Section -->
-                <li
-                    class="dropdown {{ request()->is(['admin/faqs', 'admin/contact-us-createview']) ? 'active' : '' }}">
+                <li class="dropdown {{ request()->is('admin/faqs*') ? 'active' : '' }}">
                     <a href="{{ url('admin/faqs') }}" class="nav-link">
-                        <i data-feather="mail"></i><span>FAQ's</span>
+                        <i data-feather="help-circle"></i><span>FAQ's</span>
                     </a>
                 </li>
             @endif
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('ContactUs'))
                 <!-- Terms & Conditions Section -->
-                <li
-                    class="dropdown {{ request()->is(['admin/contact-us', 'admin/contact-us-createview']) ? 'active' : '' }}">
+                <li class="dropdown {{ request()->is('admin/contact-us*') ? 'active' : '' }}">
                     <a href="{{ url('admin/contact-us') }}" class="nav-link">
                         <i data-feather="mail"></i><span>Contact Us</span>
                     </a>
@@ -236,7 +237,7 @@
             </li>
             <li class="dropdown {{ request()->is('admin/privacy-policy*') ? 'active' : '' }}">
                 <a href="{{ url('/admin/privacy-policy') }}" class="nav-link"><i
-                        data-feather="file-text"></i><span>Privacy policy</span></a>
+                        data-feather="file-text"></i><span>Privacy Policy</span></a>
             </li>
             <li class="dropdown {{ request()->is('admin/term-condition*') ? 'active' : '' }}">
                 <a href="{{ url('/admin/term-condition') }}" class="nav-link"><i
