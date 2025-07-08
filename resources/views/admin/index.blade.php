@@ -73,7 +73,7 @@
                                         <div class="row">
                                             <div class="col-lg-6 pr-0 pt-3">
                                                 <div class="card-content">
-                                                    <h5 class="font-15">Total Crops Insurance</h5>
+                                                    <h5 class="font-15">Purchased Insurances</h5>
                                                     <h2 class="mb-3 font-18">{{ $totalInsuranceCrops }}</h2>
                                                 </div>
                                             </div>

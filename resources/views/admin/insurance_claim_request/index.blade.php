@@ -59,19 +59,16 @@
                                                     <div class="d-flex align-items-center gap-1">
                                                         <div class="dropdown mr-2">
                                                             <button
-                                                                class="btn btn-sm 
-    @if ($claim->status === 'approved') btn-success 
-    @elseif($claim->status === 'rejected') btn-danger 
-    @else btn-warning @endif dropdown-toggle"
-                                                                type="button" data-toggle="dropdown"
-                                                                @if ($claim->status === 'approved') disabled @endif>
+                                                                class="btn btn-sm
+                                                                    @if ($claim->status === 'approved') btn-success 
+                                                                    @elseif($claim->status === 'rejected') btn-danger 
+                                                                    @else btn-warning @endif
+                                                                    @if ($claim->status !== 'approved') dropdown-toggle @endif"
+                                                                type="button"
+                                                                @if ($claim->status !== 'approved') data-toggle="dropdown" @else disabled @endif>
                                                                 {{ ucfirst($claim->status) }}
                                                             </button>
 
-                                                            <form id="reject-form-{{ $claim->id }}" method="POST"
-                                                                action="{{ route('insurance.claim.reject', $claim->id) }}">
-                                                                @csrf
-                                                            </form>
                                                             @if ($claim->status !== 'approved')
                                                                 <div class="dropdown-menu">
                                                                     <a class="dropdown-item approve-btn" href="#"
@@ -80,14 +77,14 @@
                                                                         Approve
                                                                     </a>
 
-                                                                    <a class="dropdown-item text-danger" href="#"
-                                                                        data-toggle="modal"
-                                                                        data-target="#rejectModal{{ $claim->id }}">
-                                                                        Reject
-                                                                    </a>
+                                                                    <form method="POST"
+                                                                        action="{{ route('insurance.claim.reject', $claim->id) }}">
+                                                                        @csrf
+                                                                        <button type="submit"
+                                                                            class="dropdown-item text-danger">Reject</button>
+                                                                    </form>
                                                                 </div>
                                                             @endif
-
                                                         </div>
 
                                                         @if ($claim->bill_image)
@@ -99,6 +96,8 @@
                                                         @endif
                                                     </div>
                                                 </td>
+
+
                                                 {{-- <td>
                                                     @if (!empty($claim->rejection_reason))
                                                         {{ $claim->rejection_reason }}
@@ -175,7 +174,7 @@
     </div>
 
     {{-- Reject Modal --}}
-    @foreach ($insuranceClaims as $claim)
+    {{-- @foreach ($insuranceClaims as $claim)
         <div class="modal fade" id="rejectModal{{ $claim->id }}" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <form action="{{ route('insurance.claim.reject', $claim->id) }}" method="POST">
@@ -198,7 +197,7 @@
                 </form>
             </div>
         </div>
-    @endforeach
+    @endforeach --}}
 
 @endsection
 

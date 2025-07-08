@@ -37,6 +37,7 @@
                                             <th>Benchmark</th>
                                             <th>Benchmark Price</th>
                                             <th>Receipt Number</th>
+                                            <th>Date</th>
                                             {{-- <th scope="col">Actions</th> --}}
                                         </tr>
                                     </thead>
@@ -97,6 +98,8 @@
                                                 </td>
                                                 </td>
                                                 <td>{{ $history->receipt_number ?? '-' }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($history->created_at)->format('d-M-Y') }}</td>
+
                                                 {{-- <td>
                                                     <!-- Actions like delete/edit if needed -->
                                                     <form action="{{ route('insurance-history.destroy', $history->id) }}"

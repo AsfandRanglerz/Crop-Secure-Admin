@@ -62,7 +62,7 @@ class ContactUsController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Contact information saved successfully.',
+                'message' => 'Contact Info Updated Successfully',
             ]);
         }
 
@@ -93,7 +93,7 @@ class ContactUsController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Contact information updated successfully!'
+            'message' => 'Contact info Updated Successfully!'
         ]);
     }
 }

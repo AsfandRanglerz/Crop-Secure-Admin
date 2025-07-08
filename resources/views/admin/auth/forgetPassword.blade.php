@@ -1,5 +1,5 @@
 @extends('admin.auth.layout.app')
-@section('title','Forget Password')
+@section('title', 'Forget Password')
 @section('content')
     <section class="section">
         <div class="container mt-5">
@@ -11,12 +11,14 @@
                         </div>
                         <div class="card-body">
                             <p class="text-muted">We will send a link to reset your password</p>
-                            <form method="POST" action="{{url('admin-reset-password-link')}}">
+                            <form method="POST" action="{{ url('admin-reset-password-link') }}">
                                 @csrf
                                 <div class="form-group">
                                     <label for="email">Email</label>
-                                    <input id="email" type="email" class="form-control" name="email" tabindex="1" >
-                                    @error('email') <span class="text-danger">{{$errors->first('email')}}</span>@enderror
+                                    <input id="email" type="email" class="form-control" name="email" tabindex="1">
+                                    @error('email')
+                                        <span class="text-danger">{{ $errors->first('email') }}</span>
+                                    @enderror
                                 </div>
                                 <div class="form-group mb-0">
                                     <button type="submit" class="btn btn-primary btn-lg btn-block" tabindex="4">
@@ -30,4 +32,7 @@
             </div>
         </div>
     </section>
+@endsection
+@section('script')
+
 @endsection

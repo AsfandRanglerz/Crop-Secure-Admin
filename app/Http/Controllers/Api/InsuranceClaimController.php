@@ -149,14 +149,6 @@ class InsuranceClaimController extends Controller
         $alreadyClaimed = InsuranceProductClaim::where('insurance_id', $insurance->id)->sum('price');
         $availableAmount = $insurance->compensation_amount - $alreadyClaimed;
 
-        // if ($productTotal > $availableAmount) {
-        //     return response()->json([
-        //         'message' => 'Claimed product amount exceeds available compensation.',
-        //         'claimed_amount' => $productTotal,
-        //         'available_amount' => $availableAmount,
-        //     ], 400);
-        // }
-
         // Save or update address
         InsuranceClaimAddress::updateOrCreate(
             ['user_id' => $farmer->id],
@@ -191,8 +183,6 @@ class InsuranceClaimController extends Controller
             'remaining_amount' => $newRemaining,
         ]);
     }
-
-
 
 
     public function getAvailableDealerProductsForClaim(Request $request)

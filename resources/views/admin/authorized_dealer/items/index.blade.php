@@ -22,7 +22,7 @@
                                         <tr>
                                             <th>Sr.</th>
                                             <th>Name</th>
-                                            <th>Quantity</th>
+                                            {{-- <th>Quantity</th> --}}
                                             <th>Price</th>
                                             <th>Status</th>
                                             <th scope="col">Actions</th>
@@ -33,7 +33,7 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ ucfirst($items->item->name) }}</td>
-                                                <td>{{ number_format($items->quantity) }}</td>
+                                                {{-- <td>{{ number_format($items->quantity) }}</td> --}}
                                                 <td>{{ number_format($items->price) }} PKR</td>
                                                 <td>
                                                     @if ($items->status == 1)

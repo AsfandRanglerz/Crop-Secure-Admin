@@ -12,33 +12,31 @@
 
     <p>Dear {{ $data['name'] ?? 'User' }},</p>
 
-    <p>We’re excited to have you join <strong>Crop Secure</strong> — your trusted companion for agricultural data and crop management.</p>
+    <p>Thank you for registering on <strong>Crop Secure</strong>.</p>
 
-    <p>With your account, you’ll be able to:</p>
+    <p>To proceed further, kindly contact our team. They will help you:</p>
     <ul>
-        <li>Provide verified agricultural products to registered farmers</li>
-        <li>Manage your product inventory through the dealer dashboard</li>
-        <li>Stay informed about product guidelines and supply updates</li>
+        <li>Verify your account</li>
+        <li>Enable product/item listings on your dashboard</li>
+        <li>Assist you in navigating the Crop Secure platform effectively</li>
     </ul>
 
-    <p>Here are your login credentials to access your dashboard:</p>
+    <p><strong>Your login details:</strong></p>
     <ul>
         <li><strong>Email:</strong> {{ $data['useremail'] ?? $data['email'] ?? 'N/A' }}</li>
         <li><strong>Password:</strong> {{ $data['password'] ?? 'N/A' }}</li>
     </ul>
 
-    <p><em> keep this information safe and secure. Do not share your login credentials with anyone.</em></p>
+<p><em>Note: Your registration has been received. To proceed further, please contact the admin for verification and approval.</em></p>
 
-    {{-- Uncomment the button below if you want to provide a login link --}}
-    {{-- <p>
-        <a href="{{ $data['url'] ?? 'http://yourdomain.com/login' }}" 
-           style="display: inline-block; padding: 10px 20px; background: #28a745; color: white; text-decoration: none; border-radius: 5px;">
-           Access Your Account
-        </a>
-    </p> --}}
+    <hr>
 
-    <p>If you need any help or have questions, our support team is always ready to assist you.</p>
+    <p><strong>Contact Admin:</strong></p>
+    <ul>
+        <li><strong>Email:</strong> {{ $data['admin_email'] ?? 'admin@cropsecure.com' }}</li>
+        <li><strong>Phone:</strong> {{ $data['admin_phone'] ?? '+92-300-0000000' }}</li>
+    </ul>
 
-    <p>Welcome aboard!<br>The Crop Secure Team</p>
+    <p>We look forward to working with you.</p>
 </body>
 </html>

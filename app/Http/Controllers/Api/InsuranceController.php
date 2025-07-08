@@ -99,8 +99,9 @@ class InsuranceController extends Controller
 
             // ✅ Area Yield Index
             if ((int) $insurance->insurance_type_id === 11) {
+                $createdYear = \Carbon\Carbon::parse($insurance->created_at)->year;
                 $sub = \App\Models\InsuranceSubType::where('incurance_type_id', $insurance->insurance_type_id)
-                    ->latest()
+                    ->where('year', $createdYear)
                     ->first();
 
                 if ($sub && $sub->current_yield !== null) {
@@ -125,8 +126,9 @@ class InsuranceController extends Controller
 
             // ✅ Production Price Based
             elseif ((int) $insurance->insurance_type_id === 12) {
+                $createdYear = \Carbon\Carbon::parse($insurance->created_at)->year;
                 $sub = \App\Models\InsuranceSubType::where('incurance_type_id', $insurance->insurance_type_id)
-                    ->latest()
+                    ->where('year', $createdYear)
                     ->first();
 
                 if (
@@ -170,7 +172,7 @@ class InsuranceController extends Controller
 
 
             // ✅ Satellite Index
-            elseif ((int) $insurance->insurance_type_id === 13) {
+            elseif ((int) $insurance->insurance_type_id === 13 && $insurance->status === 'unclaimed') {
                 $ndvi = \App\Models\InsuranceSubTypeSatelliteNDVI::where('insurance_type_id', $insurance->insurance_type_id)
                     ->latest('date')
                     ->first();

@@ -53,10 +53,30 @@
         </div>
     </section>
 @endsection
-@section('js')
-    @if (\Illuminate\Support\Facades\Session::has('message'))
-        <script>
-            toastr.success('{{ \Illuminate\Support\Facades\Session::get('message') }}');
-        </script>
-    @endif
+@section('script')
+    <script>
+        $(document).ready(function () {
+            // Toggle New Password field
+            $('#togglePasswordIcon').on('click', function () {
+                const $password = $('#password');
+                const type = $password.attr('type') === 'password' ? 'text' : 'password';
+                $password.attr('type', type);
+                $(this).toggleClass('fa-eye fa-eye-slash');
+            });
+
+            // Toggle Confirm Password field
+            $('#toggleConfirmPasswordIcon').on('click', function () {
+                const $confirmPassword = $('#password-confirm');
+                const type = $confirmPassword.attr('type') === 'password' ? 'text' : 'password';
+                $confirmPassword.attr('type', type);
+                $(this).toggleClass('fa-eye fa-eye-slash');
+            });
+
+            // Optional: Hide icon on login button click
+            $('.btn-login').on('click', function () {
+                $('#togglePasswordIcon, #toggleConfirmPasswordIcon').addClass('d-none');
+            });
+        });
+    </script>
 @endsection
+

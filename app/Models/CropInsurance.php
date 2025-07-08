@@ -54,4 +54,16 @@ class CropInsurance extends Model
     {
         return $this->belongsTo(\App\Models\Farmer::class, 'user_id');
     }
+
+
+
+    public function uc()
+    {
+        return $this->belongsTo(Uc::class, 'uc_id');
+    }
+
+    public function village()
+    {
+        return $this->belongsTo(Village::class, 'village_id');
+    }
 }

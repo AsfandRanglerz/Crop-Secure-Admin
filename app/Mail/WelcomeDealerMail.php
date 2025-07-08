@@ -34,7 +34,7 @@ class WelcomeDealerMail extends Mailable
         // ->with(['data' => $this->user]);    
 
         return $this->view('emails.welcomedealer')
-        ->subject('Welcome to Authorized Dealer Registration')
+        ->subject('Welcome to Crop Secure')
         ->with(['data' => $this->user]);
     }
 }

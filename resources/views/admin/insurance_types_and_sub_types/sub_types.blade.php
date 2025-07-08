@@ -91,7 +91,9 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="year">Year</label>
-                                    <input type="text" name="year" class="form-control"
+                                    {{-- <input type="text" name="year" class="form-control"
+                                        value="{{ old('year', 2026) }}" readonly> --}}
+                                        <input type="text" name="year" class="form-control"
                                         value="{{ old('year', now()->year) }}" readonly>
                                     @error('year')
                                         <span class="text-danger">{{ $message }}</span>
@@ -123,7 +125,8 @@
                         <h5 class="modal-title">Edit Insurance Sub-Type</h5>
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
-                    <form class="editInsuranceSubTypeForm" action="{{ route('insurance.sub.type.update', $InsuranceSubType->id) }}" method="POST">
+                    <form class="editInsuranceSubTypeForm"
+                        action="{{ route('insurance.sub.type.update', $InsuranceSubType->id) }}" method="POST">
                         @csrf
                         @method('POST')
                         <div class="modal-body">
@@ -362,7 +365,7 @@
                             data.forEach(function(tehsil) {
                                 tehsilDropdown.append(
                                     `<option value="${tehsil.id}">${tehsil.name}</option>`
-                                    );
+                                );
                             });
                         },
                         error: function(xhr) {
@@ -541,80 +544,104 @@
     </script>
 
     <script>
-    $(document).ready(function () {
-        $('.insuranceSubTypeForm').on('submit', function (e) {
-            let isValid = true;
-            const form = $(this);
+        $(document).ready(function() {
+            $('.insuranceSubTypeForm').on('submit', function(e) {
+                let isValid = true;
+                const form = $(this);
 
-            // Remove previous error messages
-            form.find('.text-danger').remove();
+                // Remove previous error messages
+                form.find('.text-danger').remove();
 
-            const fields = [
-                { name: 'name', message: 'Crop is required.' },
-                { name: 'district_id', message: 'District is required.' },
-                { name: 'tehsil_id', message: 'Tehsil is required.' },
-                { name: 'current_yield', message: 'Current Yield is required.' }
-            ];
-
-            fields.forEach(field => {
-                const input = form.find(`[name="${field.name}"]`);
-
-                if (!input.val()) {
-                    isValid = false;
-
-                    // If input group, insert error after group
-                    if (input.closest('.input-group').length) {
-                        input.closest('.input-group').after(`<span class="text-danger d-block">${field.message}</span>`);
-                    } else {
-                        input.after(`<span class="text-danger">${field.message}</span>`);
+                const fields = [{
+                        name: 'name',
+                        message: 'Crop is required.'
+                    },
+                    {
+                        name: 'district_id',
+                        message: 'District is required.'
+                    },
+                    {
+                        name: 'tehsil_id',
+                        message: 'Tehsil is required.'
+                    },
+                    {
+                        name: 'current_yield',
+                        message: 'Current Yield is required.'
                     }
+                ];
+
+                fields.forEach(field => {
+                    const input = form.find(`[name="${field.name}"]`);
+
+                    if (!input.val()) {
+                        isValid = false;
+
+                        // If input group, insert error after group
+                        if (input.closest('.input-group').length) {
+                            input.closest('.input-group').after(
+                                `<span class="text-danger d-block">${field.message}</span>`);
+                        } else {
+                            input.after(`<span class="text-danger">${field.message}</span>`);
+                        }
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault(); // Prevent form submission if any field is empty
                 }
             });
-
-            if (!isValid) {
-                e.preventDefault(); // Prevent form submission if any field is empty
-            }
         });
-    });
-</script>
+    </script>
 
-<script>
-    $(document).ready(function () {
-        $('.editInsuranceSubTypeForm').on('submit', function (e) {
-            let isValid = true;
-            const form = $(this);
+    <script>
+        $(document).ready(function() {
+            $('.editInsuranceSubTypeForm').on('submit', function(e) {
+                let isValid = true;
+                const form = $(this);
 
-            // Clear previous error messages
-            form.find('.text-danger').remove();
+                // Clear previous error messages
+                form.find('.text-danger').remove();
 
-            const fields = [
-                { name: 'name', label: 'Crop is required.' },
-                { name: 'district_id', label: 'District is required.' },
-                { name: 'tehsil_id', label: 'Tehsil is required.' },
-                { name: 'current_yield', label: 'Current Yield is required.' }
-            ];
-
-            fields.forEach(field => {
-                const input = form.find(`[name="${field.name}"]`);
-
-                if (!input.val()) {
-                    isValid = false;
-
-                    // If it's an input-group like current_yield with %, place error after input-group
-                    if (input.closest('.input-group').length > 0) {
-                        input.closest('.input-group').after(`<span class="text-danger d-block">${field.label}</span>`);
-                    } else {
-                        input.after(`<span class="text-danger">${field.label}</span>`);
+                const fields = [{
+                        name: 'name',
+                        label: 'Crop is required.'
+                    },
+                    {
+                        name: 'district_id',
+                        label: 'District is required.'
+                    },
+                    {
+                        name: 'tehsil_id',
+                        label: 'Tehsil is required.'
+                    },
+                    {
+                        name: 'current_yield',
+                        label: 'Current Yield is required.'
                     }
+                ];
+
+                fields.forEach(field => {
+                    const input = form.find(`[name="${field.name}"]`);
+
+                    if (!input.val()) {
+                        isValid = false;
+
+                        // If it's an input-group like current_yield with %, place error after input-group
+                        if (input.closest('.input-group').length > 0) {
+                            input.closest('.input-group').after(
+                                `<span class="text-danger d-block">${field.label}</span>`);
+                        } else {
+                            input.after(`<span class="text-danger">${field.label}</span>`);
+                        }
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault(); // Stop form from submitting if validation fails
                 }
             });
-
-            if (!isValid) {
-                e.preventDefault(); // Stop form from submitting if validation fails
-            }
         });
-    });
-</script>
+    </script>
 
 
 @endsection

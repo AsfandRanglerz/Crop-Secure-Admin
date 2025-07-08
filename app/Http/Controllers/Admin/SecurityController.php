@@ -77,7 +77,7 @@ class SecurityController extends Controller
         } else {
             TermCondition::create($request->all());
         }
-        return redirect('/admin/term-condition')->with(['status' => true, 'message' => 'Term & Condition Updated Successfully']);
+        return redirect('/admin/term-condition')->with(['status' => true, 'message' => 'Terms & Conditions Updated Successfully']);
     }
 
     public function AboutUs()

@@ -88,6 +88,7 @@ class AuthController extends Controller
             'cnic' => $request->cnic,
             'contact' => $request->phone,
             'dob' => $request->dob,
+            'image' => 'public/admin/assets/images/avator.png',
             'fcm_token' => $request->fcm_token
         ]);
 
@@ -100,7 +101,7 @@ class AuthController extends Controller
 
 
         // dd($mailData);
-        // Mail::to($user->email)->send(new WelcomeMail($mailData));
+        Mail::to($user->email)->send(new WelcomeMail($mailData));
 
         // Create Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;

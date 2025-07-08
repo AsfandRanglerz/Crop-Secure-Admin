@@ -89,7 +89,7 @@ class NotificationController extends Controller
                 }
             }
 
-            return redirect()->route('notification.index')->with('success', 'Notification sent successfully!');
+            return redirect()->route('notification.index')->with('success', 'Notification Sent Successfully');
         } catch (\Exception $e) {
             Log::error("Notification store failed: " . $e->getMessage());
 
@@ -152,7 +152,7 @@ class NotificationController extends Controller
             $notification = Notification::findOrFail($id);
             $notification->delete();
 
-            return redirect()->route('notification.index')->with('success', 'Notification deleted successfully!');
+            return redirect()->route('notification.index')->with('success', 'Notification Deleted Successfully');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error deleting notification: ' . $e->getMessage());
         }
@@ -163,7 +163,7 @@ class NotificationController extends Controller
     // Delete child targets first if foreign key constraints exist
     Notification::query()->delete(); // This will respect cascading
 
-    return redirect()->back()->with('success', 'All notifications deleted successfully!');
+    return redirect()->back()->with('success', 'All notifications Deleted Successfully');
 }
 
 }

@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Models\AuthorizedDealer;
 use App\Models\EnsuredCrop;
 use App\Models\Farmer;
+use App\Models\InsuranceHistory;
 use App\Models\SideMenu;
 use App\Models\SubAdmin;
 use App\Models\SubAdminPermission;
@@ -24,7 +25,7 @@ class AdminController extends Controller
     {
         $totalFarmers = Farmer::all()->count();
         $totalDealers = AuthorizedDealer::all()->count();
-        $totalInsuranceCrops = EnsuredCrop::all()->count();
+        $totalInsuranceCrops = InsuranceHistory::all()->count();
         // dd($totalFarmers);
         $sideMenuName = [];
         $sideMenuPermissions = [];
@@ -64,9 +65,8 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required',
             'email' => 'required',
-            'phone' => 'required'
         ]);
-        $data = $request->only(['name', 'email', 'phone']);
+        $data = $request->only(['name', 'email']);
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -80,7 +80,7 @@ class AdminController extends Controller
         } else {
             SubAdmin::find(Auth::guard('subadmin')->id())->update($data);
         }
-        return back()->with(['status' => true, 'message' => 'Profile Updated Successfully']);
+        return back()->with(['status' => true, 'message' => 'Settings Updated Successfully']);
     }
     public function forgetPassword()
     {
@@ -93,35 +93,43 @@ class AdminController extends Controller
         ]);
 
         $adminExists = DB::table('admins')->where('email', $request->email)->first();
+        $subAdminExists = null;
 
         if (!$adminExists) {
             $subAdminExists = DB::table('sub_admins')->where('email', $request->email)->first();
         }
 
         if (!$adminExists && !$subAdminExists) {
-            return back()->withErrors(['email' => 'The email address is not registered with any admin or subadmin.']);
+            return back()
+                ->withErrors(['email' => 'The email address is not registered with any admin or subadmin.'])
+                ->with('message', 'This email is not registered.')
+                ->with('alert', 'error');
         }
 
         $emailToUse = $adminExists ? $adminExists->email : $subAdminExists->email;
 
         $exists = DB::table('password_resets')->where('email', $emailToUse)->first();
 
-        // $exists = DB::table('password_resets')->where('email', $request->email)->first();
         if ($exists) {
-            return back()->with('message', 'Reset Password link has been already sent');
-            // dd($subAdminExists);
-        } else {
-            $token = Str::random(30);
-            DB::table('password_resets')->insert([
-                'email' => $emailToUse,
-                'token' => $token,
-            ]);
-
-            $data['url'] = url('change_password', $token);
-            Mail::to($emailToUse)->send(new ResetPasswordMail($data));
-            return back()->with('message', 'Reset Password Link Send Successfully');
+            return back()
+                ->with('message', 'Reset Password link has already been sent.')
+                ->with('alert', 'info');
         }
+
+        $token = Str::random(30);
+        DB::table('password_resets')->insert([
+            'email' => $emailToUse,
+            'token' => $token,
+        ]);
+
+        $data['url'] = url('change_password', $token);
+        Mail::to($emailToUse)->send(new ResetPasswordMail($data));
+
+        return back()
+            ->with('message', 'Reset Password Link Sent Successfully.')
+            ->with('alert', 'success');
     }
+
     public function change_password($id)
     {
 
@@ -163,7 +171,7 @@ class AdminController extends Controller
 
         DB::table('password_resets')->where('email', $request->email)->delete();
 
-        return redirect('admin')->with('message', 'Password Reset Successfully!');
+        return redirect('admin')->with('message', 'Password Reset Successfully!')->with('alert', 'success');;
     }
     public function logout()
     {

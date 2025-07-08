@@ -82,6 +82,7 @@ class AuthorizedDealerController extends Controller
             'contact' => $request->phone,
             'dob' => $request->dob,
             'district_id' => $district->id,
+            'image' => 'public/admin/assets/images/avator.png'
         ]);
 
 
@@ -89,7 +90,9 @@ class AuthorizedDealerController extends Controller
             'name' => $user->name,
             'useremail' => $user->email,
             'password' => $rawPassword,
-            'logo' => 'https://ranglerzbeta.in/lqappbackend/public/admin/assets/img/logo.png'
+            'admin_email' => 'admin@cropsecure.com',
+            'admin_phone' => '+92-300-0000000',
+            'logo' => 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png'
         ];
 
 

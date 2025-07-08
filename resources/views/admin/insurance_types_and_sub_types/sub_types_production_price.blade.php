@@ -40,17 +40,6 @@
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="year">Year</label>
-                                    <input type="text" name="year" class="form-control"
-                                        value="{{ old('year', now()->year) }}" readonly>
-                                    @error('year')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-group">
                                     <label for="district">District</label>
                                     <select name="crops[0][district_id]" class="form-control district-select">
                                         <option value="">Select District</option>
@@ -158,6 +147,20 @@
                                     @enderror
                                 </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="year">Year</label>
+                                    <input type="text" name="year" class="form-control"
+                                        value="{{ old('year', now()->year) }}" readonly>
+                                    {{-- <input type="text" name="year" class="form-control"
+                                        value="{{ old('year', 2026) }}" readonly> --}}
+                                    @error('year')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
                         </div>
                         <div id="productionFieldsWrapper"></div>
                         <button type="button" id="addCropRow" class="btn btn-sm btn-info">Add More</button>
@@ -842,6 +845,13 @@
                 }
             });
         });
+    </script>
+    <script>
+        @if ($errors->any())
+            @foreach ($errors->all() as $error)
+                toastr.error("{{ $error }}");
+            @endforeach
+        @endif
     </script>
 
 

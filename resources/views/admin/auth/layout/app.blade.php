@@ -17,6 +17,8 @@
     <!-- Custom style CSS -->
     <link rel="stylesheet" href="{{ asset('public/admin/assets/css/custom.css') }}">
     <link rel='shortcut icon' type='image/x-icon' href="{{ asset('public/admin/assets/img/favicon.png') }}" />
+    <link rel="stylesheet" href="{{ asset('public/admin/assets/toastr/css/toastr.css') }}">
+
     @yield('style')
 </head>
 
@@ -33,10 +35,38 @@
     <script src="{{ asset('public/admin/assets/js/custom.js') }}"></script>
     <!-- Sweet Alert -->
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('public/admin/assets/toastr/js/toastr.min.js') }}"></script>
+<script>
+    toastr.options = {
+        "closeButton": false,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "timeOut": "5000",
+        "extendedTimeOut": "1000"
+    };
+
+    @if (session('message'))
+        toastr.success("{{ session('message') }}");
+    @endif
+
+    @if (session('error'))
+        toastr.error("{{ session('error') }}");
+    @endif
+
+    @if (session('info'))
+        toastr.info("{{ session('info') }}");
+    @endif
+
+    @if (session('warning'))
+        toastr.warning("{{ session('warning') }}");
+    @endif
+</script>
+
+    @yield('script')
+
 </body>
 <!-- auth-login.html  21 Nov 2019 03:49:32 GMT -->
-@yield('script')
-<script>
+{{-- <script>
     const Toast = Swal.mixin({
         toast: true,
         position: 'top-end',
@@ -78,6 +108,6 @@
                 break;
         }
     @endif
-</script>
+</script> --}}
 
 </html>

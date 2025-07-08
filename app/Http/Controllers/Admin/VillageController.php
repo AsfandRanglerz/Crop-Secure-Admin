@@ -26,7 +26,7 @@ class VillageController extends Controller
         $villages = Village::with('crops')->where('uc_id', $id)->orderBy('name', 'asc')->get();
         $crops = EnsuredCropName::all();
 
-        return view('admin.land.village.index', compact('uc', 'villages','sideMenuName', 'crops'));
+    return view('admin.land.village.index', compact('uc', 'villages', 'sideMenuName', 'crops'))->with('n', $uc->tehsil_id);
     }
     
     public function store(Request $request)

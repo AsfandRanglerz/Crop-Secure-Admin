@@ -30,6 +30,7 @@ class FarmerController extends Controller
 
         return view('admin.farmer.index', compact('farmers', 'sideMenuPermissions', 'sideMenuName'));
     }
+
     public function create()
     {
         $sideMenuName = [];
@@ -122,6 +123,9 @@ class FarmerController extends Controller
         $message['contact'] = $request->contact;
         $message['email'] = $request->email;
         $message['password'] = $request->password;
+        $data['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
+        $data['admin_email'] = 'admin@cropsecure.com';
+        $data['admin_phone'] = '+92-300-0000000';
 
         Mail::to($request->email)->send(new FarmerLoginPassword($message));
 
@@ -223,7 +227,7 @@ class FarmerController extends Controller
 
         $farmer->save();
 
-        return redirect()->route('farmers.index')->with('message', 'Farmer updated successfully.');
+        return redirect()->route('farmers.index')->with('message', 'Farmer Updated Successfully');
     }
 
 
@@ -231,5 +235,12 @@ class FarmerController extends Controller
     {
         Farmer::destroy($id);
         return redirect()->route('farmers.index')->with(['message' => 'Farmer Deleted Successfully']);
+    }
+
+    public function viewLandRecord($id)
+    {
+        $farmer = Farmer::with(['cropInsurances.district', 'cropInsurances.tehsil', 'cropInsurances.uc', 'cropInsurances.village'])->findOrFail($id);
+
+        return view('admin.farmer.land_record', compact('farmer'));
     }
 }

@@ -33,7 +33,12 @@ class AuthorizedDealerController extends Controller
 
     public function index()
     {
-        $dealers = AuthorizedDealer::with('district')->orderBy('status', 'desc')->latest()->get();
+        AuthorizedDealer::where('is_seen', false)->update(['is_seen' => true]);
+
+        $dealers = AuthorizedDealer::with('district')
+            ->orderBy('status', 'desc')
+            ->latest()
+            ->get();
 
         $sideMenuName = [];
         $sideMenuPermissions = [];
@@ -44,6 +49,7 @@ class AuthorizedDealerController extends Controller
             $sideMenuName = $subAdminData['sideMenuName'];
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
+
         $districts = District::all();
 
         return view('admin.authorized_dealer.index', compact('dealers', 'sideMenuName', 'sideMenuPermissions', 'districts'));
@@ -143,12 +149,16 @@ class AuthorizedDealerController extends Controller
         ]);
 
 
-        $message['name'] = $request->name;
-        $message['contact'] = $request->contact;
-        $message['email'] = $request->email;
-        $message['password'] = $request->password;
+        $data['name'] = $request->name;
+        $data['contact'] = $request->contact;
+        $data['email'] = $request->email;
+        $data['password'] = $request->password;
+        $data['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
+        $data['admin_email'] = 'admin@cropsecure.com';
+        $data['admin_phone'] = '+92-300-0000000';
 
-        Mail::to($request->email)->send(new WelcomeDealerMail($message));
+        Mail::to($request->email)->send(new WelcomeDealerMail($data));
+
 
         // Return success message
         return redirect()->route('dealer.index')->with(['message' => 'Dealer Created Successfully']);

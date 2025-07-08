@@ -141,6 +141,8 @@ Route::prefix('admin')->middleware('admin')->group(function () {
         Route::get('/farmer-edit/{id}',  'edit')->name('farmer.edit')->middleware('check.subadmin.permission:Farmers,edit');
         Route::post('/farmer-update/{id}',  'update')->name('farmer.update')->middleware('check.subadmin.permission:Farmers,edit');
         Route::delete('/farmer-destroy/{id}',  'destroy')->name('farmer.destroy')->middleware('check.subadmin.permission:Farmers,delete');
+        Route::get('/farmer/land-record/{id}', 'viewLandRecord')->name('farmer.land.record')->middleware('check.subadmin.permission:Farmers,view');
+
     });
 
     // ############ Insurance History #################

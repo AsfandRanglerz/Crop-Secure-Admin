@@ -24,7 +24,7 @@
                                 <div class="form-group position-relative" style="margin-bottom: 0.5rem;">
                                     <label for="password" class="control-label">Password</label>
                                     <input id="password" type="password" class="form-control" name="password"
-                                        tabindex="2" required placeholder="Enter Password" style="padding-right: 2.5rem;">
+                                        tabindex="2" required style="padding-right: 2.5rem;">
                                     <span id="togglePasswordIcon" class="fa fa-eye"
                                         style="position: absolute; top: 2.67rem; right: 0.75rem; cursor: pointer;"></span>
                                     @error('password')

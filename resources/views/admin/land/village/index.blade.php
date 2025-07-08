@@ -188,6 +188,7 @@
             <div class="section-body">
                 <div class="row">
                     <div class="col-12 col-md-12 col-lg-12">
+                    <a class="btn btn-primary mb-2" href="{{ route('union.index', $uc->tehsil_id) }}">Back</a>
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">

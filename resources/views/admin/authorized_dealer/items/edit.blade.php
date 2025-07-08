@@ -27,7 +27,7 @@
                                     </div>
 
                                     <!-- quantity Field -->
-                                    <div class="col-sm-6 pl-sm-0 pr-sm-3">
+                                    {{-- <div class="col-sm-6 pl-sm-0 pr-sm-3">
                                         <div class="form-group">
                                             <label for="quantity">Quantity</label>
                                             <input type="text" class="form-control" id="quantity" name="quantity" value="{{ $dealerItem->quantity }}"
@@ -37,7 +37,7 @@
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
                                         </div>
-                                    </div>
+                                    </div> --}}
 
                                     <!-- price Field -->
                                     <div class="col-sm-6 pl-sm-0 pr-sm-3">

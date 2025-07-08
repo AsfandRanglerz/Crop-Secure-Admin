@@ -55,7 +55,7 @@ class DealerItemController extends Controller
         $request->validate([
             'dealer_id' => 'required',
             'item_id' => 'required|string',
-            'quantity' => 'required|numeric|min:1',
+            // 'quantity' => 'required|numeric|min:1',
             'price'    => 'required|numeric|min:0',
         ]);
         // dd($request);
@@ -63,7 +63,7 @@ class DealerItemController extends Controller
         // Create a new dealer record
         DealerItem::create([
             'item_id' => $request->item_id,
-            'quantity' => $request->quantity,
+            // 'quantity' => $request->quantity,
             'price' => $request->price,
             'authorized_dealer_id' => $request->dealer_id,
             'status' => $request->status,
@@ -94,7 +94,7 @@ class DealerItemController extends Controller
     {
         $request->validate([
             // 'item_id' => 'required|string',
-           'quantity' => 'required|numeric|min:1',
+        //    'quantity' => 'required|numeric|min:1',
             'price'    => 'required|numeric|min:0',
         ]);
         // dd($request);
@@ -103,7 +103,7 @@ class DealerItemController extends Controller
 
         $item->update([
             // 'item_id' => $request->item_id,
-            'quantity' => $request->quantity,
+            // 'quantity' => $request->quantity,
             'price' => $request->price,
             'status' => $request->status,
         ]);

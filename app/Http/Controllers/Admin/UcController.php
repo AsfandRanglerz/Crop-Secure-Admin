@@ -12,7 +12,7 @@ class UcController extends Controller
 {
     public function index($id)
     {
-        $tehsil = Tehsil::find($id);
+        $tehsil = Tehsil::findOrFail($id);
 
         $sideMenuName = [];
 

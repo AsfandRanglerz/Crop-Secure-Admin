@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\AreaYieldNotificationHelper;
+use App\Helpers\NDVINotificationHelper;
 use App\Models\Tehsil;
 use App\Models\District;
 use Illuminate\Http\Request;
@@ -14,6 +16,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use App\Notifications\InsuranceYieldUpdated;
 use App\Helpers\NotificationHelper;
+use App\Helpers\ProductionPriceNotificationHelper;
+use App\Helpers\WeatherNotificationHelper;
+use App\Models\InsuranceHistory;
 use App\Models\InsuranceSubTypeSatelliteNDVI;
 use App\Models\Village;
 use App\Models\VillageWeatherHistory;
@@ -86,11 +91,10 @@ class InsuranceSubTypeController extends Controller
             'year' => 'required|integer',
         ]);
 
-        //  Check for duplicate entry before insert
         $exists = InsuranceSubType::where('name', $request->name)
             ->where('district_id', $request->district_id)
             ->where('tehsil_id', $request->tehsil_id)
-
+            ->where('year', $request->year)
             ->exists();
 
         if ($exists) {
@@ -108,9 +112,9 @@ class InsuranceSubTypeController extends Controller
             'year' => $request->year,
         ]);
 
-        // ✅ Fetch insured farmers from InsuranceHistory
-        $farmers = \App\Models\InsuranceHistory::with('user')
+        $farmers = InsuranceHistory::with('user')
             ->where('insurance_type_id', $request->incurance_type_id)
+            ->where('crop_id', $request->crop_name_id)
             ->where('district_id', $request->district_id)
             ->where('tehsil_id', $request->tehsil_id)
             ->whereYear('created_at', $request->year)
@@ -119,53 +123,36 @@ class InsuranceSubTypeController extends Controller
         foreach ($farmers as $record) {
             $user = $record->user;
 
-            if (!$user || !$user->fcm_token) {
-                continue;
+            // ✅ Area Yield Compensation Calculation
+            $benchmark = $record->benchmark;
+            $sumInsured = $record->sum_insured;
+            $loss = $benchmark - $request->current_yield;
+
+            $comp = $loss > 0 ? ($loss / 100) * $sumInsured : 0;
+
+            // ✅ Save Compensation & Remaining
+            $record->update([
+                'compensation_amount' => round($comp, 2),
+                'remaining_amount' => round($comp, 2),
+            ]);
+
+            // ✅ Notify
+            if ($user && $user->fcm_token) {
+                AreaYieldNotificationHelper::notifyFarmer(
+                    $user,
+                    $request->name,
+                    $request->year,
+                    $request->current_yield
+                );
             }
-
-            $benchmark = $record->benchmark_percent ?? 0;
-            $area = $record->area ?? 0;
-            $sumInsuredBase = $record->sum_insured_100_percent ?? 0;
-
-            $sumInsured = ($benchmark / 100) * ($sumInsuredBase * $area);
-            $lossPercentage = $benchmark - $request->current_yield;
-
-            $compensation = 0;
-            $status = 'no loss';
-
-            if ($lossPercentage > 0) {
-                $compensation = ($lossPercentage / 100) * $sumInsured;
-                $status = 'loss';
-            }
-
-            NotificationHelper::sendFcmNotification(
-                $user->fcm_token,
-                'Area Yield Update',
-                $compensation > 0
-                    ? 'You are eligible for Rs. ' . number_format($compensation)
-                    : 'No compensation. Yield met or exceeded benchmark.',
-                [
-                    'type' => 'yield_result',
-                    'crop' => $request->name,
-                    'year' => (string) $request->year,
-                    'area' => (string) $area,
-                    'benchmark' => (string) $benchmark,
-                    'current_yield' => (string) $request->current_yield,
-                    'sum_insured' => (string) $sumInsured,
-                    'sum_insured_base' => (string) $sumInsuredBase,
-                    'status' => $status,
-                    'district_id' => (string) $record->district_id,
-                    'tehsil_id' => (string) $record->tehsil_id,
-                ]
-            );
         }
+
 
 
         return redirect()
             ->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])
-            ->with(['message' => 'Yield recorded and farmers notified successfully']);
+            ->with(['message' => 'Insurance Result Announced Successfully']);
     }
-
 
 
     public function update(Request $request, $id)
@@ -187,7 +174,7 @@ class InsuranceSubTypeController extends Controller
             ->where('name', $request->name)
             ->where('district_id', $request->district_id)
             ->where('tehsil_id', $request->tehsil_id)
-
+            ->where('year', $request->year)
             ->exists();
 
         if ($exists) {
@@ -206,7 +193,7 @@ class InsuranceSubTypeController extends Controller
         ]);
 
         return redirect()->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])
-            ->with(['message' => 'Insurance Sub-Type Updated Successfully']);
+            ->with(['message' => 'Insurance Result Updated Successfully']);
     }
 
 
@@ -258,7 +245,22 @@ class InsuranceSubTypeController extends Controller
             'crops.*.tehsil_id' => 'required|integer',
         ]);
 
-        foreach ($request->crops as $crop) {
+        foreach ($request->crops as $index => $crop) {
+            // ✅ Step 0: Check if record already exists
+            $exists = InsuranceSubType::where('crop_name_id', $request->crop_name_id)
+                ->where('incurance_type_id', $request->incurance_type_id)
+                ->where('district_id', $crop['district_id'])
+                ->where('tehsil_id', $crop['tehsil_id'])
+                ->where('year', $request->year)
+                ->exists();
+
+            if ($exists) {
+                return redirect()->back()
+                    ->withErrors(['duplicate' => "This crop already exists for the selected district, tehsil, and year"])
+                    ->withInput();
+            }
+
+            // ✅ Step 1: Store production price
             $subType = InsuranceSubType::create([
                 'crop_name_id' => $request->crop_name_id,
                 'incurance_type_id' => $request->incurance_type_id,
@@ -272,53 +274,86 @@ class InsuranceSubTypeController extends Controller
                 'year' => $request->year,
             ]);
 
-            // ✅ Now fetch farmers from InsuranceHistory table
-            $farmers = \App\Models\InsuranceHistory::with('user')
+            // ✅ Step 2: Get relevant farmers
+            $farmers = InsuranceHistory::with('user')
                 ->where('insurance_type_id', $request->incurance_type_id)
+                ->where('crop_id', $request->crop_name_id)
                 ->where('district_id', $crop['district_id'])
                 ->where('tehsil_id', $crop['tehsil_id'])
                 ->whereYear('created_at', $request->year)
                 ->get();
 
+
+            // ✅ Step 3: Notify farmers
+            // Step 3: Notify farmers & calculate compensation
             foreach ($farmers as $record) {
                 $user = $record->user;
-                if ($user && $user->fcm_token) {
-                    \App\Helpers\NotificationHelper::sendFcmNotification(
-                        $user->fcm_token,
-                        'Production Price Update',
-                        [
-                            'type' => 'production_price',
-                            'district_id' => (string) $record->district_id,
-                            'tehsil_id' => (string) $record->tehsil_id,
-                            'insurance_type_id' => (string) $record->insurance_type_id,
-                            'year' => (string) $request->year,
-                        ]
+
+                if (!$user) continue;
+
+                $comp = 0;
+                if (
+                    $subType->cost_of_production !== null &&
+                    $subType->average_yield !== null &&
+                    $subType->real_time_market_price !== null &&
+                    $subType->ensured_yield !== null &&
+                    $record->benchmark !== null
+                ) {
+                    $bep = $subType->cost_of_production / $subType->average_yield;
+                    $triggerPrice = $record->benchmark;
+                    $marketPrice = $subType->real_time_market_price;
+
+                    if ($marketPrice < $triggerPrice) {
+                        $comp = $subType->ensured_yield * ($triggerPrice - $marketPrice) * $record->area;
+                    }
+                }
+
+                // Save compensation and remaining amount in InsuranceHistory
+                $record->update([
+                    'compensation_amount' => round($comp, 2),
+                    'remaining_amount' => round($comp, 2),
+                ]);
+
+                // Send FCM Notification
+                if ($user->fcm_token) {
+                    ProductionPriceNotificationHelper::notifyFarmer(
+                        $user,
+                        $request->year,
+                        $request->incurance_type_id,
+                        $crop['district_id'],
+                        $crop['tehsil_id']
                     );
                 }
             }
         }
 
         return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])
-            ->with(['message' => 'Production prices saved and farmers notified successfully']);
+            ->with(['message' => 'Insurance Result Announced Successfully']);
     }
-
 
 
     public function production_price_update(Request $request, $id)
     {
-        //dd($request);
-
         $request->validate([
             'crop_name_id' => 'required|exists:insurance_types,id',
             'crops.0.district_id' => 'required|exists:districts,id',
             'crops.0.tehsil_id' => 'required|exists:tehsils,id',
             'cost_of_production' => 'nullable|numeric',
-            // 'average_yield' => 'nullable|numeric',
-            // 'historical_average_market_price' => 'nullable|numeric',
-            // 'real_time_market_price' => 'nullable|numeric',
-            //'ensured_yield' => 'nullable|numeric',
-            //'year' => 'required',
         ]);
+
+        // Check for duplicate
+        $duplicateExists = InsuranceSubType::where('crop_name_id', $request->crop_name_id)
+            ->where('district_id', $request->input('crops.0.district_id'))
+            ->where('tehsil_id', $request->input('crops.0.tehsil_id'))
+            ->where('year', $request->input('year'))
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($duplicateExists) {
+            return redirect()->back()
+                ->withErrors(['duplicate' => 'This crop already exists for the selected district, tehsil, and year.'])
+                ->withInput();
+        }
 
         $insuranceSubType = InsuranceSubType::findOrFail($id);
 
@@ -334,10 +369,11 @@ class InsuranceSubTypeController extends Controller
 
         $insuranceSubType->save();
 
-
-
-        return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])->with(['message' => 'Insurance Sub-Type Updated Successfully']);
+        return redirect()
+            ->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])
+            ->with(['message' => 'Insurance Result Updated Successfully']);
     }
+
 
     public function production_price_destroy(Request $request, $id)
     {
@@ -472,7 +508,7 @@ class InsuranceSubTypeController extends Controller
     // Manually store a record from the modal
     public function satellite_ndvi_store(Request $request)
     {
-        // Step 0: Validate
+        // Step 0: Validate input
         $validated = $request->validate([
             'date' => 'required|date',
             'b8' => 'required|numeric|min:0|max:999999999999999',
@@ -481,7 +517,18 @@ class InsuranceSubTypeController extends Controller
             'incurance_type_id' => 'nullable|exists:insurance_types,id',
         ]);
 
-        // Step 1: Create NDVI record
+        // Step 1: Check for duplicate NDVI record
+        $alreadyExists = InsuranceSubTypeSatelliteNDVI::where('date', $request->date)
+            ->where('insurance_type_id', $request->incurance_type_id)
+            ->exists();
+
+        if ($alreadyExists) {
+            return back()
+                ->withErrors(['duplicate' => 'NDVI for the same date already exists.'])
+                ->withInput();
+        }
+
+        // Step 2: Create NDVI record
         $ndviRecord = InsuranceSubTypeSatelliteNDVI::create([
             'date' => $request->date,
             'b8' => $request->b8,
@@ -490,46 +537,37 @@ class InsuranceSubTypeController extends Controller
             'insurance_type_id' => $request->incurance_type_id,
         ]);
 
-        // Step 2: Get farmers
-        $farmers = \App\Models\InsuranceHistory::with('user')
+        // Step 3: Fetch all affected farmers
+        $farmers = InsuranceHistory::with('user')
             ->where('insurance_type_id', $request->incurance_type_id)
+            ->where('status', 'unclaimed')
             ->get();
 
-        // Step 3: Loop through and send notification if possible
-        $results = [];
+        // Step 4: Threshold check and Compensation calculation + notify
+        $threshold = 0.4;
 
         foreach ($farmers as $record) {
             $user = $record->user;
+            $isLoss = $ndviRecord->ndvi < $threshold;
+            $comp = $isLoss ? $record->sum_insured : 0;
 
-            if (!$user) {
-                $results[] = ['record_id' => $record->id, 'status' => '❌ User not found'];
-                continue;
+            // Save compensation and remaining amount
+            $record->update([
+                'compensation_amount' => $comp,
+                'remaining_amount' => $comp,
+            ]);
+
+            if ($isLoss && $user && $user->fcm_token) {
+                NDVINotificationHelper::notifyFarmer(
+                    $user,
+                    $ndviRecord->ndvi,
+                    $ndviRecord->date,
+                    $ndviRecord->insurance_type_id
+                );
             }
-
-            if (!$user->fcm_token) {
-                $results[] = ['user_id' => $user->id, 'status' => '⚠️ No FCM token'];
-                continue;
-            }
-
-            \App\Helpers\NotificationHelper::sendFcmNotification(
-                $user->fcm_token,
-                'Satellite NDVI Update',
-                'NDVI: ' . $ndviRecord->ndvi .
-                    ', Date: ' . $ndviRecord->date .
-                    ', Type ID: ' . $ndviRecord->insurance_type_id,
-                [
-                    'ndvi' => (string) $ndviRecord->ndvi,
-                    'date' => (string) $ndviRecord->date,
-                    'type_id' => (string) $ndviRecord->insurance_type_id,
-                ]
-            );
-
         }
 
-        // dd($results, '📊 Notification Results');
-
-        // Final (only reached if dd is removed)
-        return back()->with('success', 'NDVI saved. Notifications sent where applicable.');
+        return back()->with('success', 'Insurance Result Announced Successfully');
     }
 
 
@@ -562,59 +600,20 @@ class InsuranceSubTypeController extends Controller
 
     public function showVillageResult($id)
     {
-        // ✅ Fetch weather
-        $weatherController = new \App\Http\Controllers\Admin\WeatherController();
-        $weatherController->fetchLast14DaysWeather($id);
-
-        // ✅ Notification trigger
         $village = Village::findOrFail($id);
 
-        // Ye logic command wali class se uthao aur yahan paste karo
-        $cropData = $village->villageCrops()->first();
-        if ($cropData) {
-            $avgTemp = $cropData->avg_temp;
-            $avgRain = $cropData->avg_rainfall;
-
-            $highTempDays = VillageWeatherHistory::where('village_id', $village->id)
-                ->where('date', '>=', now()->subDays(13)->toDateString())
-                ->where('temperature', '>=', $avgTemp * 1.2)
-                ->count();
-
-            $rainfall = VillageWeatherHistory::where('village_id', $village->id)
-                ->where('date', '>=', now()->subDays(13)->toDateString())
-                ->sum('rainfall');
-
-            $farmerIds = \App\Models\CropInsurance::where('village_id', $village->id)->pluck('user_id')->unique();
-            $farmers = \App\Models\Farmer::whereIn('id', $farmerIds)->whereNotNull('fcm_token')->get();
-
-            if ($highTempDays === 14) {
-                foreach ($farmers as $farmer) {
-                    \App\Helpers\NotificationHelper::sendFcmNotification(
-                        $farmer->fcm_token,
-                        'Weather Insurance Update',
-                        'Your village had 14 days of high temperature above normal.'
-                    );
-                }
-            }
-
-            if ($rainfall >= $avgRain * 1.5 || $rainfall <= $avgRain * 0.5) {
-                foreach ($farmers as $farmer) {
-                    \App\Helpers\NotificationHelper::sendFcmNotification(
-                        $farmer->fcm_token,
-                        'Weather Insurance Update',
-                        'Rainfall in your village is 50% more or less than normal.'
-                    );
-                }
-            }
-        }
-
-        // ✅ Show to admin
         $villageWeathers = VillageWeatherHistory::with('village')
             ->where('village_id', $id)
             ->orderBy('date', 'desc')
             ->limit(14)
             ->get();
 
-        return view('admin.insurance_types_and_sub_types.weather_index_result', compact('village', 'villageWeathers'));
+        $cropData = $village->villageCrops()->first();
+
+        return view('admin.insurance_types_and_sub_types.weather_index_result', compact(
+            'village',
+            'villageWeathers',
+            'cropData'
+        ));
     }
 }

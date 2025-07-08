@@ -21,17 +21,31 @@
                 </li>
             @endif
 
+            @php
+                $newDealer = \App\Models\AuthorizedDealer::where('is_seen', false)->count();
+            @endphp
+
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Authorized Dealers'))
-                {{-- Authorized Dealers --}}
                 <li class="dropdown {{ request()->is('admin/dealer*') ? 'active' : '' }}">
-                    <a href="
-                        {{ route('dealer.index') }}
-                        "
-                        class="nav-link">
-                        <i data-feather="shopping-bag"></i><span> Authorized Dealers</span>
+                    <a href="{{ route('dealer.index') }}"
+                        class="nav-link px-2 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i data-feather="shopping-bag" class="me-2"></i>
+                            <span>Authorized Dealers</span>
+                        </div>
+                        @if ($newDealer > 0)
+                            <span
+                                class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center"
+                                style="width: 22px; height: 22px; font-size: 12px;" title="{{ $newDealer }} pending"
+                                aria-label="{{ $newDealer }} new dealers">
+                                {{ $newDealer > 99 ? '99+' : $newDealer }}
+                            </span>
+                        @endif
                     </a>
                 </li>
             @endif
+
+
 
             @if (Auth::guard('admin')->check() || $sideMenuName->contains('Dealer Items'))
                 {{-- Authorized Dealers --}}
@@ -123,13 +137,12 @@
                                 class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center"
                                 style="width: 22px; height: 22px; font-size: 12px;"
                                 title="{{ $newProductClaimCount }} pending">
-                                {{ $newProductClaimCount }}
+                                {{ $newProductClaimCount > 99 ? '99+' : $newProductClaimCount }}
                             </span>
                         @endif
                     </a>
                 </li>
             @endif
-
 
             @php
                 $showInsuranceClaimRequests =
@@ -137,7 +150,7 @@
                 $onClaimPage = request()->is('admin/insurance-claim*');
                 $newClaimCount = 0;
 
-                if ($showInsuranceClaimRequests && !$onClaimPage) {
+                if ($showInsuranceClaimRequests) {
                     $newClaimCount = \App\Models\InsuranceHistory::whereNotNull('claimed_at')
                         // ->where(function ($q) {
                         //     $q->where('is_claim_seen', 0)->orWhereNull('is_claim_seen');
@@ -146,7 +159,6 @@
                         ->count();
                 }
             @endphp
-
             @if ($showInsuranceClaimRequests)
                 <li class="dropdown {{ $onClaimPage ? 'active' : '' }}">
                     <a href="{{ route('insurance.claim.index') }}"
@@ -159,7 +171,7 @@
                             <span
                                 class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center"
                                 style="width: 22px; height: 22px; font-size: 12px;" title="{{ $newClaimCount }} new">
-                                {{ $newClaimCount }}
+                                {{ $newClaimCount > 99 ? '99+' : $newClaimCount }}
                             </span>
                         @endif
                     </a>
@@ -190,10 +202,10 @@
                         </div>
                         @if ($newInsuranceCount > 0)
                             <span
-                                class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+                                class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center"
                                 style="width: 22px; height: 22px; font-size: 12px;"
                                 title="{{ $newInsuranceCount }} new">
-                                {{ $newInsuranceCount }}
+                                {{ $newInsuranceCount > 99 ? '99+' : $newInsuranceCount }}
                             </span>
                         @endif
                     </a>

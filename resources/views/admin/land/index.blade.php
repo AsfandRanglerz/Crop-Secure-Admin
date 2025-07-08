@@ -82,7 +82,7 @@
                             <div class="card-header">
                                 <div class="col-12 d-flex justify-content-between">
                                     <h4>Land Data Management</h4>
-                                    <a class="btn btn-primary" href="{{ route('units.index') }}">Area Units</a>
+                                    {{-- <a class="btn btn-primary" href="{{ route('units.index') }}">Area Units</a> --}}
                                 </div>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">

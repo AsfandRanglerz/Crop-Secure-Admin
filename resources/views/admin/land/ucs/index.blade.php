@@ -72,7 +72,7 @@
             <div class="section-body">
                 <div class="row">
                     <div class="col-12 col-md-12 col-lg-12">
-                        {{-- <a class="btn btn-primary mb-2" href="{{ route('tehsil.index', $tehsil->id) }}">Back</a> --}}
+                    <a class="btn btn-primary mb-2" href="{{ route('tehsil.index', $tehsil->district_id) }}">Back</a>
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">

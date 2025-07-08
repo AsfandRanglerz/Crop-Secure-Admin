@@ -50,7 +50,7 @@ class EnsuredCropNameController extends Controller
         ]);
 
         // Redirect or return response
-        return redirect()->route('ensured.crop.name.index')->with('message', 'Ensured Crop created successfully!');
+        return redirect()->route('ensured.crop.name.index')->with('message', 'Insured Crop Created Successfully');
     }
 
     public function update(Request $request, $id)
@@ -70,12 +70,12 @@ class EnsuredCropNameController extends Controller
             'insurance_end_time' => $request->insurance_end,
         ]);
 
-        return redirect()->route('ensured.crop.name.index')->with('message', 'Ensured Crop updated successfully!');
+        return redirect()->route('ensured.crop.name.index')->with('message', 'Insured Crop Updated Successfully');
     }
 
     public function destroy($id)
     {
         EnsuredCropName::destroy($id);
-        return redirect()->route('ensured.crop.name.index')->with('message', 'Ensured Crop deleted successfully!');
+        return redirect()->route('ensured.crop.name.index')->with('message', 'Insured Crop Deleted Successfully');
     }
 }

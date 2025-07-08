@@ -8,10 +8,11 @@ use App\Models\VillageWeatherHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class WeatherController extends Controller
 {
-    public function fetchLast14DaysWeather($villageId)
+    public function fetchTodayWeather($villageId)
     {
         $village = Village::find($villageId);
         if (!$village || !$village->latitude || !$village->longitude) return;
@@ -20,31 +21,29 @@ class WeatherController extends Controller
         $lon = $village->longitude;
         $apiKey = '1e6e6235ad62763cd112c7a3adda011e';
 
-        for ($i = 1; $i <= 14; $i++) {
-            $date = Carbon::now()->subDays($i);
-            $timestamp = $date->timestamp;
+        // ✅ Current weather endpoint
+        $res = Http::get("https://api.openweathermap.org/data/2.5/weather", [
+            'lat' => $lat,
+            'lon' => $lon,
+            'units' => 'metric',
+            'appid' => $apiKey,
+        ]);
 
-            $res = Http::get("https://api.openweathermap.org/data/2.5/onecall/timemachine", [
-                'lat' => $lat,
-                'lon' => $lon,
-                'dt' => $timestamp,
-                'units' => 'metric',
-                'appid' => $apiKey,
-            ]);
+        if ($res->successful()) {
+            $data = $res->json();
+            $avgTemp = $data['main']['temp'] ?? null;
+            $totalRain = $data['rain']['1h'] ?? 0;
 
-            if ($res->successful()) {
-                $hourly = $res->json()['hourly'] ?? [];
+            // ✅ Store today's data
+            \App\Models\VillageWeatherHistory::updateOrCreate(
+                ['village_id' => $village->id, 'date' => now()->toDateString()],
+                ['temperature' => $avgTemp, 'rainfall' => $totalRain]
+            );
 
-                $avgTemp = collect($hourly)->avg('temp');
-                $totalRain = collect($hourly)->sum(function ($hour) {
-                    return $hour['rain']['1h'] ?? 0;
-                });
-
-                VillageWeatherHistory::updateOrCreate(
-                    ['village_id' => $village->id, 'date' => $date->toDateString()],
-                    ['temperature' => $avgTemp, 'rainfall' => $totalRain]
-                );
-            }
+            // ✅ Delete old data (15+ days)
+            \App\Models\VillageWeatherHistory::where('village_id', $village->id)
+                ->where('date', '<', now()->subDays(14)->toDateString())
+                ->delete();
         }
     }
 }

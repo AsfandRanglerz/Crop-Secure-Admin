@@ -59,7 +59,7 @@ class EnsuredCropController extends Controller
         ]);
 
         // Redirect or return response
-        return redirect()->route('ensured.crops.index', ['id' => $request->farmer_id])->with('message', 'Ensured Crop created successfully!');
+        return redirect()->route('ensured.crops.index', ['id' => $request->farmer_id])->with('message', 'Insured Crop Created Successfully');
     }
 
     public function update(Request $request, $id)

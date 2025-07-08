@@ -9,6 +9,7 @@ use App\Models\InsuranceProductClaim;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\ClaimNotificationHelper;
 use App\Helpers\ProductClaimNotificationHelper;
+use App\Models\DealerItem;
 
 class InsuranceClaimRequestController extends Controller
 {
@@ -76,13 +77,13 @@ class InsuranceClaimRequestController extends Controller
 
     public function reject(Request $request, $id)
     {
-        $request->validate([
-            'description' => 'required|string|max:1000',
-        ]);
+        // $request->validate([
+        //     'description' => 'required|string|max:1000',
+        // ]);
 
         $claim = InsuranceHistory::findOrFail($id);
         $claim->status = 'rejected';
-        $claim->rejection_reason = $request->description;
+        $claim->rejection_reason = null;
         $claim->save();
 
 
@@ -115,19 +116,60 @@ class InsuranceClaimRequestController extends Controller
         return view('admin.product_claims.index', compact('sideMenuName', 'sideMenuPermissions', 'claims'));
     }
 
+    // public function approveProduct($id)
+    // {
+    //     $claim = InsuranceProductClaim::with('insurance.user')->findOrFail($id);
+    //     $claim->delivery_status = 'approved';
+    //     $claim->save();
+
+    //     $farmer = $claim->user;
+    //     if ($farmer) {
+    //         ProductClaimNotificationHelper::notifyFarmer($farmer, 'Your product claim has been approved.');
+    //     }
+
+    //     return redirect()->back()->with('success', 'Product Claim accepted.');
+    // }
+
     public function approveProduct($id)
     {
         $claim = InsuranceProductClaim::with('insurance.user')->findOrFail($id);
         $claim->delivery_status = 'approved';
         $claim->save();
 
-        $farmer = $claim->user;
+        // ✅ Step 2: Decode the JSON stored in `products` column
+        $productData = json_decode($claim->products, true);
+
+        // ✅ Step 3: Loop through each purchased product
+        if (!empty($productData)) {
+            foreach ($productData as $product) {
+                $dealerId = $product['dealer_id'] ?? null;
+                $itemId = $product['id'] ?? null;
+                $purchasedQty = $product['quantity'] ?? 0;
+
+                if ($dealerId && $itemId && $purchasedQty > 0) {
+                    // ✅ Step 4: Find the dealer item record
+                    $dealerItem = DealerItem::where('authorized_dealer_id', $dealerId)
+                        ->where('item_id', $itemId)
+                        ->first();
+
+                    if ($dealerItem) {
+                        // ✅ Step 5: Subtract the quantity
+                        $dealerItem->quantity = max(0, $dealerItem->quantity - $purchasedQty);
+                        $dealerItem->save();
+                    }
+                }
+            }
+        }
+
+        // ✅ Notify Farmer
+        $farmer = $claim->insurance->user;
         if ($farmer) {
             ProductClaimNotificationHelper::notifyFarmer($farmer, 'Your product claim has been approved.');
         }
 
-        return redirect()->back()->with('success', 'Product Claim accepted.');
+        return redirect()->back()->with('success', 'Product Claim accepted and dealer stock updated.');
     }
+
 
     public function rejectProduct($id)
     {
