@@ -34,7 +34,7 @@
 
                         <!-- Crop Select -->
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            {{-- <div class="col-md-4">
                                 <label for="crop_name_0">Select Crop</label>
                                 <select name="crops[0][crop_name_id]" id="crop_name_0" class="form-control">
                                     <option value="">Select Crop</option>
@@ -42,7 +42,7 @@
                                         <option value="{{ $crop->id }}">{{ $crop->name }}</option>
                                     @endforeach
                                 </select>
-                            </div>
+                            </div> --}}
                             <div class="col-md-4">
                                 <label for="avg_temp_0">Average Temperature</label>
                                 <div class="input-group">
@@ -67,8 +67,8 @@
                             </div>
                         </div>
 
-                        <div id="cropFieldsWrapper"></div>
-                        <button type="button" id="addCropRow" class="btn btn-sm btn-info">Add More</button>
+                        {{-- <div id="cropFieldsWrapper"></div>
+                        <button type="button" id="addCropRow" class="btn btn-sm btn-info">Add More</button> --}}
                     </div>
 
 
@@ -115,7 +115,7 @@
                             @foreach ($village->crops as $crop)
                                 <div class="row mb-4">
                                     <!-- Crop Name -->
-                                    <div class="col-md-4">
+                                    {{-- <div class="col-md-4">
                                         <label for="crop_name_{{ $editIndex }}" class="form-label">Select Crop</label>
                                         <select name="crops[{{ $editIndex }}][crop_name_id]"
                                             id="crop_name_{{ $editIndex }}" class="form-control" required>
@@ -127,7 +127,7 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                    </div>
+                                    </div> --}}
 
                                     <!-- Average Temperature -->
                                     <div class="col-md-4">
@@ -166,9 +166,9 @@
 
 
                             <!-- Optional: Button to add more crops in edit modal -->
-                            <div id="editCropFieldsWrapper-{{ $village->id }}"></div>
+                            {{-- <div id="editCropFieldsWrapper-{{ $village->id }}"></div>
                             <button type="button" class="btn btn-sm btn-info addMoreCropsEdit"
-                                data-village-id="{{ $village->id }}" data-index="{{ $editIndex }}">Add More</button>
+                                data-village-id="{{ $village->id }}" data-index="{{ $editIndex }}">Add More</button> --}}
 
                         </div>
                         <div class="modal-footer">
@@ -188,11 +188,13 @@
             <div class="section-body">
                 <div class="row">
                     <div class="col-12 col-md-12 col-lg-12">
-                    <a class="btn btn-primary mb-2" href="{{ route('union.index', $uc->tehsil_id) }}">Back</a>
+                        <a class="btn btn-primary mb-2" href="{{ route('union.index', $uc->tehsil_id) }}">Back</a>
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">
-                                    <h4>{{ $uc->name }} - Villages</h4>
+                                    <h4> {{ $uc->tehsil->district->name ?? 'N/A' }} -
+                                        {{ $uc->tehsil->name ?? 'N/A' }} -
+                                        {{ $uc->name }} - Villages</h4>
                                 </div>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">
@@ -256,68 +258,112 @@
     </script>
 
     <script>
-    let placeSelected = false;
+        // ✅ GLOBAL TRACKERS
+        let placeSelectedAdd = false;
 
-    function initAutocomplete() {
-        const input = document.getElementById('village_name');
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-            types: ['(regions)'],
-            componentRestrictions: { country: 'pk' }
-        });
+        function initAutocomplete() {
+            // ✅ For Add Form
+            const createInput = document.getElementById('village_name');
+            if (createInput) {
+                const autocomplete = new google.maps.places.Autocomplete(createInput, {
+                    types: ['(regions)'],
+                    componentRestrictions: {
+                        country: 'pk'
+                    }
+                });
 
-        autocomplete.addListener('place_changed', function () {
-            const place = autocomplete.getPlace();
-            if (place && place.geometry) {
-                placeSelected = true;
-                document.getElementById('latitude').value = place.geometry.location.lat();
-                document.getElementById('longitude').value = place.geometry.location.lng();
-            } else {
-                placeSelected = false;
-            }
-        });
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    if (place && place.geometry) {
+                        placeSelectedAdd = true;
+                        document.getElementById('latitude').value = place.geometry.location.lat();
+                        document.getElementById('longitude').value = place.geometry.location.lng();
+                    }
+                });
 
-        input.addEventListener('keydown', function () {
-            placeSelected = false;
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        initAutocomplete();
-
-        document.getElementById('CreateForm').addEventListener('submit', function (e) {
-            let isValid = true;
-
-            if (!placeSelected) {
-                alert("⚠️ Please select a valid village from Google suggestions.");
-                isValid = false;
+                createInput.addEventListener('keydown', function() {
+                    placeSelectedAdd = false;
+                });
             }
 
-            const crop = document.getElementById('crop_name_0');
-            const temp = document.getElementById('avg_temp_0');
-            const rain = document.getElementById('avg_rainfall_0');
+            // ✅ For Edit Forms
+            document.querySelectorAll("[id^='village_name_edit_']").forEach(function(input) {
+                const idSuffix = input.id.replace('village_name_edit_', '');
+                const latInput = document.getElementById(`latitude_edit_${idSuffix}`);
+                const lngInput = document.getElementById(`longitude_edit_${idSuffix}`);
 
-            if (!crop.value) {
-                alert("⚠️ Please select a crop.");
-                isValid = false;
-            }
+                // Save original value to detect change
+                const originalValue = input.value;
+                let placeSelectedEdit = true; // ✅ default: true
 
-            // if (!temp.value) {
-            //     alert("⚠️ Please enter average temperature.");
-            //     isValid = false;
-            // }
+                const autocomplete = new google.maps.places.Autocomplete(input, {
+                    types: ['(regions)'],
+                    componentRestrictions: {
+                        country: 'pk'
+                    }
+                });
 
-            // if (!rain.value) {
-            //     alert("⚠️ Please enter average rainfall.");
-            //     isValid = false;
-            // }
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    if (place && place.geometry) {
+                        placeSelectedEdit = true;
+                        latInput.value = place.geometry.location.lat();
+                        lngInput.value = place.geometry.location.lng();
+                    }
+                });
 
-            if (!isValid) {
-                e.preventDefault(); // stop form submit
-                return false;
-            }
+                input.addEventListener('input', function() {
+                    if (input.value !== originalValue) {
+                        placeSelectedEdit = false;
+                    }
+                });
+
+                const form = input.closest("form");
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        if (input.value !== originalValue && !placeSelectedEdit) {
+                            alert("⚠️ Please select a valid village from Google suggestions.");
+                            e.preventDefault();
+                            return false;
+                        }
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initAutocomplete();
+
+            // ✅ Add form submit check
+            document.getElementById('CreateForm').addEventListener('submit', function(e) {
+                let isValid = true;
+
+                if (!placeSelectedAdd) {
+                    alert("⚠️ Please select a valid village from Google suggestions.");
+                    isValid = false;
+                }
+
+                const temp = document.getElementById('avg_temp_0');
+                const rain = document.getElementById('avg_rainfall_0');
+
+                if (!temp.value) {
+                    alert("⚠️ Please enter average temperature.");
+                    isValid = false;
+                }
+
+                if (!rain.value) {
+                    alert("⚠️ Please enter average rainfall.");
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault(); // stop form submit
+                    return false;
+                }
+            });
         });
-    });
-</script>
+    </script>
+
 
 
 

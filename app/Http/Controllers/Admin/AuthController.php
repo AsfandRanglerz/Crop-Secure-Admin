@@ -31,7 +31,7 @@ class AuthController extends Controller
             ],
             $remember_me
         )) {
-            return redirect('admin/dashboard')->with('message', 'Login Successfully!');
+            return redirect('admin/dashboard')->with('message', 'Logged In Successfully');
         }
 
         $subAdmin = SubAdmin::where('email', $request->email)->first();
@@ -41,12 +41,12 @@ class AuthController extends Controller
             if ($subAdmin->status == 1) {
                 auth()->guard('subadmin')->login($subAdmin, $remember_me);
 
-                return redirect('admin/dashboard')->with('message', 'Sub-Admin Login Successfully!');
+                return redirect('admin/dashboard')->with('message', 'Logged In Successfully');
             } else {
-                return back()->with(['alert' => 'error', 'message' => 'Your account is deactivated.']);
+                return back()->with(['alert' => 'error', 'message' => 'Account Deactivated']);
             }
         }
 
-        return back()->with(['alert' => 'error', 'message' => 'Invalid email or password']);
+        return back()->with(['alert' => 'error', 'message' => 'Invalid Email or Password']);
     }
 }

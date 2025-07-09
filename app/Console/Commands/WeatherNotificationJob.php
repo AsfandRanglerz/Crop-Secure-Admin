@@ -28,37 +28,36 @@ class WeatherNotificationJob extends Command
             $avgTemp = $cropData->avg_temp;
             $avgRain = $cropData->avg_rainfall;
 
-            $highTempDays = VillageWeatherHistory::where('village_id', $village->id)
+            $recentWeather = VillageWeatherHistory::where('village_id', $village->id)
                 ->where('date', '>=', now()->subDays(13)->toDateString())
-                ->where('temperature', '>=', $avgTemp * 1.2)
-                ->count();
+                ->get();
 
-            $rainfall = VillageWeatherHistory::where('village_id', $village->id)
-                ->where('date', '>=', now()->subDays(13)->toDateString())
-                ->sum('rainfall');
+            $avgRecordedTemp = $recentWeather->avg('temperature');
+            $avgRecordedRainfall = $recentWeather->avg('rainfall');
 
-            $farmerIds = CropInsurance::where('village_id', $village->id)
+            $expectedTemp = $cropData->avg_temp;
+            $expectedRain = $cropData->avg_rainfall;
+
+            $farmers = Farmer::whereIn('id', CropInsurance::where('village_id', $village->id)
                 ->pluck('user_id')
-                ->unique();
-
-            $farmers = Farmer::whereIn('id', $farmerIds)
+                ->unique())
                 ->whereNotNull('fcm_token')
                 ->get();
 
-            if ($highTempDays === 14) {
+            if ($avgRecordedTemp > $expectedTemp) {
                 foreach ($farmers as $farmer) {
                     WeatherNotificationHelper::notifyFarmer(
                         $farmer,
-                        'Recent weather analysis confirms that unusual temperature conditions have affected crops in your village. Since you are insured, you are eligible to submit a claim under your crop insurance coverage'
+                        "⚠️ Temperature Alert: The average temperature over the past 14 days is {$avgRecordedTemp}°C, which is higher than the expected {$expectedTemp}°C. You may be eligible to submit a crop insurance claim."
                     );
                 }
             }
 
-            if ($rainfall >= $avgRain * 1.5 || $rainfall <= $avgRain * 0.5) {
+            if ($avgRecordedRainfall >= $expectedRain * 1.5 || $avgRecordedRainfall <= $expectedRain * 0.5) {
                 foreach ($farmers as $farmer) {
                     WeatherNotificationHelper::notifyFarmer(
                         $farmer,
-                        'Recent weather analysis confirms that your village has experienced abnormal rainfall levels, which may have caused damage to your crops. Since you are insured, you are eligible to submit a claim under your crop insurance coverage.'
+                        "🌧️ Rainfall Alert: The average rainfall over the past 14 days is {$avgRecordedRainfall}mm, which is abnormal compared to the expected {$expectedRain}mm. You may be eligible to submit a crop insurance claim."
                     );
                 }
             }

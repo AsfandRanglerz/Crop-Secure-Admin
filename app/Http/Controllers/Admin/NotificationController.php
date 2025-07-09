@@ -16,7 +16,12 @@ class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = Notification::with('targets')->latest()->get();
+        $notifications = Notification::with('targets')
+        ->where('deleted_by_admin', false)
+        ->where('created_by_admin', true)
+        ->latest()
+        ->get();
+                
         $farmers = Farmer::all()->keyBy('id');
 
         $sideMenuName = [];
@@ -54,6 +59,7 @@ class NotificationController extends Controller
                 'title' => $request->title,
                 'message' => $request->message,
                 'is_sent' => 0,
+                'created_by_admin' => 1, 
             ]);
 
             foreach ($request->input('farmers', []) as $farmerId) {
@@ -150,20 +156,23 @@ class NotificationController extends Controller
     {
         try {
             $notification = Notification::findOrFail($id);
-            $notification->delete();
 
-            return redirect()->route('notification.index')->with('success', 'Notification Deleted Successfully');
+            // Instead of deleting, mark as deleted by admin
+            $notification->deleted_by_admin = true;
+            $notification->save();
+
+            return redirect()->route('notification.index')->with('success', 'Notification marked as deleted by admin.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error deleting notification: ' . $e->getMessage());
         }
     }
 
+
     public function deleteAll()
-{
-    // Delete child targets first if foreign key constraints exist
-    Notification::query()->delete(); // This will respect cascading
+    {
+        // Delete child targets first if foreign key constraints exist
+        Notification::query()->update(['deleted_by_admin' => true]);
 
-    return redirect()->back()->with('success', 'All notifications Deleted Successfully');
-}
-
+        return redirect()->back()->with('success', 'All notifications Deleted Successfully');
+    }
 }

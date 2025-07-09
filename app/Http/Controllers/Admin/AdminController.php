@@ -62,30 +62,48 @@ class AdminController extends Controller
 
     public function update_profile(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required',
-        ]);
-        $data = $request->only(['name', 'email']);
+        if (Auth::guard('admin')->check()) {
+            $request->validate([
+                'name' => 'required',
+                'email' => 'required|email',
+            ]);
+            $data = $request->only(['name', 'email']);
+        } else {
+            $request->validate([
+                'name' => 'required',
+                'email' => 'required|email',
+                'phone' => 'required',
+            ]);
+            $data = $request->only(['name', 'email', 'phone']);
+        }
 
+        // Handle image
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             $extension = $file->getClientOriginalExtension();
             $filename = time() . '.' . $extension;
-            $file->move('public/admin/assets/images/admin', $filename);
+            $file->move(public_path('admin/assets/images/admin'), $filename);
             $data['image'] = 'public/admin/assets/images/admin/' . $filename;
         }
+
+        // Update record
         if (Auth::guard('admin')->check()) {
             Admin::find(Auth::guard('admin')->id())->update($data);
         } else {
             SubAdmin::find(Auth::guard('subadmin')->id())->update($data);
         }
+
         return back()->with(['status' => true, 'message' => 'Settings Updated Successfully']);
     }
+
+
+
     public function forgetPassword()
     {
         return view('admin.auth.forgetPassword');
     }
+
+
     public function adminResetPasswordLink(Request $request)
     {
         $request->validate([
@@ -102,7 +120,7 @@ class AdminController extends Controller
         if (!$adminExists && !$subAdminExists) {
             return back()
                 ->withErrors(['email' => 'The email address is not registered with any admin or subadmin.'])
-                ->with('message', 'This email is not registered.')
+                ->with('message', 'This email is not registered')
                 ->with('alert', 'error');
         }
 
@@ -112,7 +130,7 @@ class AdminController extends Controller
 
         if ($exists) {
             return back()
-                ->with('message', 'Reset Password link has already been sent.')
+                ->with('message', 'Reset Password link has already been sent')
                 ->with('alert', 'info');
         }
 
@@ -123,12 +141,16 @@ class AdminController extends Controller
         ]);
 
         $data['url'] = url('change_password', $token);
+        $data['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
+
         Mail::to($emailToUse)->send(new ResetPasswordMail($data));
 
         return back()
-            ->with('message', 'Reset Password Link Sent Successfully.')
+            ->with('message', 'Reset Password Link Sent Successfully')
             ->with('alert', 'success');
     }
+
+
 
     public function change_password($id)
     {
@@ -171,8 +193,10 @@ class AdminController extends Controller
 
         DB::table('password_resets')->where('email', $request->email)->delete();
 
-        return redirect('admin')->with('message', 'Password Reset Successfully!')->with('alert', 'success');;
+        return redirect('admin')->with('message', 'Password Reset Successfully')->with('alert', 'success');;
     }
+
+
     public function logout()
     {
         $adminExists = Auth::guard('admin')->logout();
@@ -180,7 +204,7 @@ class AdminController extends Controller
         if (!$adminExists) {
             Auth::guard('subadmin')->logout();
         }
-        return redirect('admin')->with('message', 'Log Out Successfully');
+        return redirect('admin')->with('message', 'Logged Out Successfully');
     }
 
 

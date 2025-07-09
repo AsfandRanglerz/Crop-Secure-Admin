@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\SubAdminPermission;
 use App\Mail\SubAdminLoginPassword;
 use App\Http\Controllers\Controller;
+use App\Models\Contactus;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -18,7 +19,7 @@ class SubAdminController extends Controller
 {
     public function index()
     {
-        $subAdmins = SubAdmin::with('permissions.side_menu')->orderBy('status', 'desc')->latest()->get();
+        $subAdmins = SubAdmin::with('permissions.side_menu')->orderBy('created_at', 'desc')->latest()->get();
         $sideMenus = SideMenu::all();
 
         return view('admin.subadmin.index', compact('subAdmins', 'sideMenus'));
@@ -94,9 +95,15 @@ class SubAdminController extends Controller
             'image' => $image
         ]);
 
+        $contact = Contactus::first(); 
+
         $message['name'] = $request->name;
         $message['email'] = $request->email;
         $message['password'] = $request->password;
+        $message['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
+        $message['admin_email'] = $contact->email;
+        $message['admin_phone'] = $contact->phone;
+        $message['url'] = 'https://ranglerzbeta.in/cropssecure/admin';
 
         Mail::to($request->email)->send(new SubAdminLoginPassword($message));
 
@@ -125,7 +132,7 @@ class SubAdminController extends Controller
                 'email',
                 'max:255',
                 'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
-                Rule::unique('sub_admins', 'email')->ignore($subAdmin->id), // ✅ fix duplicate error
+                Rule::unique('sub_admins', 'email')->ignore($subAdmin->id),
             ],
             // 'password' => 'required',
             'phone' => 'required',
@@ -214,7 +221,7 @@ class SubAdminController extends Controller
 
         SubAdminPermission::insert($permissions);
 
-        return redirect()->route('subadmin.index')->with('message', 'Permissions Updated Successfully');
+        return redirect()->route('subadmin.index')->with('message', 'Permissions Assigned Successfully');
     }
 
     public function StatusChange(Request $request)

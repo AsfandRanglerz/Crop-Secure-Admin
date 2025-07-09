@@ -44,7 +44,7 @@
                                         <div class="form-group">
                                             <label for="email">Email</label>
                                             <input type="text" class="form-control" id="email" name="email"
-                                                value="{{ $farmer->email }}">
+                                                value="{{ $farmer->email }}" readonly>
                                             <div class="invalid-feedback"></div>
                                             @error('email')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -93,7 +93,7 @@
                                         <div class="form-group">
                                             <label for="dob">DOB (Optional)</label>
                                             <input type="date" class="form-control" id="dob" name="dob"
-                                                value="{{ $farmer->dob ? $farmer->dob->format('Y-m-d') : '' }}" required>
+                                                value="{{ $farmer->dob ? $farmer->dob->format('Y-m-d') : '' }}">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>

@@ -303,12 +303,12 @@ Route::prefix('admin')->middleware('admin')->group(function () {
     Route::post('/contact-us-update/{id}', [ContactUsController::class, 'update'])->name('contact.update');
 
       // ############ Faq #################
-    Route::get('faqs', [FaqController::class, 'Faq']);
+    Route::get('faqs', [FaqController::class, 'Faq'])->name('faqs');
     Route::get('faq-edit/{id}', [FaqController::class, 'FaqsEdit'])->name('faq.edit');
     Route::post('faq-update/{id}', [FaqController::class, 'FaqsUpdate']);
     Route::get('faq-view', [FaqController::class, 'FaqView']);
     Route::get('faq-create', [FaqController::class, 'Faqscreateview']);
-    Route::post('faq-store', [FaqController::class, 'Faqsstore']);
+    Route::post('faq-store', [FaqController::class, 'Faqsstore'])->name('faq.store');
     Route::delete('faq-destroy/{id}', [FaqController::class, 'faqdelete'])->name('faq.destroy');
     Route::post('/faqs/reorder', [FaqController::class, 'reorder'])->name('faq.reorder');
 });

@@ -13,7 +13,7 @@ class VillageController extends Controller
 {
     public function index($id)
     {
-        $uc = Uc::find($id);
+        $uc = Uc::with('tehsil.district')->find($id);
 
         $sideMenuName = [];
 
@@ -34,10 +34,10 @@ class VillageController extends Controller
         $request->validate([
             'uc_id' => 'required|exists:ucs,id',
             'name' => 'required|string|unique:villages,name',
-            'crops' => 'required|array|min:1',
-            'crops.*.crop_name_id' => 'required|exists:ensured_crop_name,id',
-            'crops.*.avg_temp' => 'required|numeric',
-            'crops.*.avg_rainfall' => 'required|numeric',
+            // 'crops' => 'required|array|min:1',
+            // 'crops.*.crop_name_id' => 'required|exists:ensured_crop_name,id',
+            // 'crops.*.avg_temp' => 'required|numeric',
+            // 'crops.*.avg_rainfall' => 'required|numeric',
         ]);    
 
         // add village
@@ -51,7 +51,7 @@ class VillageController extends Controller
         // add crops along with village
         foreach ($request->crops as $crop) {
             $village->crops()->create([
-                'crop_name_id' => $crop['crop_name_id'],
+                // 'crop_name_id' => $crop['crop_name_id'],
                 'avg_temp' => $crop['avg_temp'],
                 'avg_rainfall' => $crop['avg_rainfall'],
             ]);
@@ -66,8 +66,8 @@ class VillageController extends Controller
     {
         $request->validate([
             'name' => 'required|string|unique:villages,name,' . $id,
-            'crops' => 'nullable|array',
-            'crops.*.crop_name_id' => 'required|exists:ensured_crop_name,id',
+            // 'crops' => 'nullable|array',
+            // 'crops.*.crop_name_id' => 'required|exists:ensured_crop_name,id',
             'crops.*.avg_temp' => 'required|numeric',
             'crops.*.avg_rainfall' => 'required|numeric',
         ]);
@@ -88,7 +88,7 @@ class VillageController extends Controller
         if ($request->has('crops')) {
             foreach ($request->crops as $crop) {
                 $village->crops()->create([
-                    'crop_name_id' => $crop['crop_name_id'],
+                    // 'crop_name_id' => $crop['crop_name_id'],
                     'avg_temp' => $crop['avg_temp'],
                     'avg_rainfall' => $crop['avg_rainfall'],
                 ]);

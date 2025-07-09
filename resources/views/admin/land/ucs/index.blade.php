@@ -76,7 +76,7 @@
                         <div class="card">
                             <div class="card-header">
                                 <div class="col-12">
-                                    <h4>{{ $tehsil->name }} - Union Councils</h4>
+                                    <h4>{{ $tehsil->district->name }} - {{ $tehsil->name }} - Union Councils</h4>
                                 </div>
                             </div>
                             <div class="card-body table-striped table-bordered table-responsive">

@@ -12,6 +12,7 @@ use App\Models\District;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Mail\WelcomeDealerMail;
+use App\Models\Contactus;
 use Illuminate\Support\Facades\Mail;
 
 class AuthorizedDealerController extends Controller
@@ -148,14 +149,15 @@ class AuthorizedDealerController extends Controller
             'image' => $image
         ]);
 
+        $contact = Contactus::first(); 
 
         $data['name'] = $request->name;
         $data['contact'] = $request->contact;
         $data['email'] = $request->email;
         $data['password'] = $request->password;
         $data['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
-        $data['admin_email'] = 'admin@cropsecure.com';
-        $data['admin_phone'] = '+92-300-0000000';
+        $data['admin_email'] = $contact->email;
+        $data['admin_phone'] = $contact->phone;
 
         Mail::to($request->email)->send(new WelcomeDealerMail($data));
 

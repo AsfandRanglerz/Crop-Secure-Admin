@@ -5,9 +5,9 @@
     <div class="main-content">
         <section class="section">
             <div class="section-body">
-                <form action="{{ url('admin/faq-store') }}" method="POST">
+                <form action="{{ route('faq.store') }}" method="POST">
                     @csrf
-                    <a href="{{ url('/admin/faqs') }}" class="btn mb-3" style="background: #009245;">Back</a>
+                    <a href="{{ route('faqs') }}" class="btn mb-3" style="background: #009245;">Back</a>
                     <div class="row">
                         <div class="col-12 col-md-12 col-lg-12">
                             <div class="card">

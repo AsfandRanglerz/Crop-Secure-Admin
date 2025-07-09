@@ -50,7 +50,9 @@
                                                 </td>
                                                 <td>{{ $farmer->cnic }}</td>
                                                 <td>{{ $farmer->contact }}</td>
-                                                <td>{{ $farmer->dob->format('d/m/Y') }}</td>
+                                                <td>
+                                                    {{ $farmer->dob ? \Carbon\Carbon::parse($farmer->dob)->format('d/m/Y') : '-' }}
+                                                </td>
                                                 <td>
                                                     <a href="{{ route('farmer.land.record', $farmer->id) }}"
                                                         class="btn btn-info btn-sm">View</a>

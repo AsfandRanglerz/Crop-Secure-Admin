@@ -1,4 +1,16 @@
-﻿input[name="password"], input[name="confirmed"] {
+﻿.buttons-excel.buttons-html5 {
+    width: fit-content;
+}
+
+.buttons-print.custom-red-btn {
+    background: red !important;
+}
+
+.cke_notifications_area .cke_notification_warning {
+    display: none;
+}
+
+input[name="password"], input[name="confirmed"] {
     padding-right: 2rem !important;
 }
 

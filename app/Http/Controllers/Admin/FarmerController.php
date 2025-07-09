@@ -6,6 +6,7 @@ use App\Models\Farmer;
 use Illuminate\Http\Request;
 use App\Mail\FarmerLoginPassword;
 use App\Http\Controllers\Controller;
+use App\Models\Contactus;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -104,7 +105,11 @@ class FarmerController extends Controller
             ])->withInput();
         }
 
-
+        if (Farmer::where('contact', $formattedContact)->exists()) {
+            return back()->withErrors([
+                'contact' => 'This contact number is already taken.'
+            ])->withInput();
+        }
         // Create a new farmer record
         Farmer::create([
             'name' => $request->name,
@@ -118,14 +123,15 @@ class FarmerController extends Controller
             'image' => $image
         ]);
 
+        $contact = Contactus::first();
 
         $message['name'] = $request->name;
         $message['contact'] = $request->contact;
         $message['email'] = $request->email;
         $message['password'] = $request->password;
-        $data['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
-        $data['admin_email'] = 'admin@cropsecure.com';
-        $data['admin_phone'] = '+92-300-0000000';
+        $message['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
+        $message['admin_email'] = $contact->email;
+        $message['admin_phone'] = $contact->phone;
 
         Mail::to($request->email)->send(new FarmerLoginPassword($message));
 
@@ -155,14 +161,14 @@ class FarmerController extends Controller
             'name' => 'required|string|max:255',
             'fname' => 'nullable|string|max:255',
             'cnic' => 'required|string',
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('farmers', 'email')->ignore($id),
-                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'
-            ],
+            // 'email' => [
+            //     'required',
+            //     'string',
+            //     'email',
+            //     'max:255',
+            //     Rule::unique('farmers', 'email')->ignore($id),
+            //     'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'
+            // ],
             // 'password' => 'nullable|string|min:8',
             'contact' => 'nullable|string',
             'dob' => 'nullable|date',
@@ -213,7 +219,7 @@ class FarmerController extends Controller
         // Update fields
         $farmer->name = $request->name;
         $farmer->fname = $request->fname;
-        $farmer->email = $request->email;
+        // $farmer->email = $request->email;
         $farmer->cnic = $request->cnic;
         $farmer->contact = $request->contact;
         $farmer->dob = $request->dob;

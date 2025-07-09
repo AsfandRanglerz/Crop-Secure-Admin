@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Mail\SendOtp;
 use App\Models\Farmer;
 use App\Mail\WelcomeMail;
+use App\Mail\FarmerLoginPassword;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\ResetPasswordMail;
@@ -101,7 +102,7 @@ class AuthController extends Controller
 
 
         // dd($mailData);
-        Mail::to($user->email)->send(new WelcomeMail($mailData));
+        Mail::to($user->email)->send(new FarmerLoginPassword($mailData));
 
         // Create Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;

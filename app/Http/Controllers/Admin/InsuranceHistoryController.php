@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\EnsuredCrop;
+use App\Models\InsuranceCompany;
 use App\Models\InsuranceHistory;
+use App\Models\InsuranceType;
 
 class InsuranceHistoryController extends Controller
 {
@@ -27,12 +29,11 @@ class InsuranceHistoryController extends Controller
     //     return view('admin.insurance_histories.index', compact('sideMenuPermissions', 'sideMenuName', 'histories'));
     // }
 
-     public function index()
+    public function index(Request $request)
     {
         $sideMenuName = [];
         $sideMenuPermissions = [];
 
-        // Handle SubAdmin permissions
         if (Auth::guard('subadmin')->check()) {
             $adminController = new AdminController();
             $subAdminData = $adminController->getSubAdminPermissions();
@@ -40,16 +41,45 @@ class InsuranceHistoryController extends Controller
             $sideMenuPermissions = $subAdminData['sideMenuPermissions'];
         }
 
-        // Mark all unseen insurance history entries as seen
         InsuranceHistory::where(function ($query) {
             $query->where('is_seen', 0)->orWhereNull('is_seen');
         })->update(['is_seen' => 1]);
 
-        // Get insurance history records
-        $histories = InsuranceHistory::with('farmerLands')->orderBy('created_at', 'desc')->get();
+        // Filters
+        $historiesQuery = InsuranceHistory::with('farmerLands')->orderBy('created_at', 'desc');
 
-        return view('admin.insurance_histories.index', compact('sideMenuPermissions', 'sideMenuName', 'histories'));
+        if ($request->filled('year')) {
+            $historiesQuery->whereYear('created_at', $request->year);
+        }
+
+        if ($request->filled('insurance_type')) {
+            $historiesQuery->where('insurance_type', $request->insurance_type);
+        }
+
+        if ($request->filled('company')) {
+            $historiesQuery->where('company', $request->company);
+        }
+
+        $histories = $historiesQuery->get();
+
+    $totalPayableAmount = $histories->sum('payable_amount');
+
+        // Correct filter sources
+        $years = InsuranceHistory::selectRaw('YEAR(created_at) as year')->distinct()->pluck('year');
+        $insuranceTypes = InsuranceType::pluck('name');
+        $companies = InsuranceCompany::pluck('name');
+
+        return view('admin.insurance_histories.index', compact(
+            'sideMenuPermissions',
+            'sideMenuName',
+            'histories',
+            'years',
+            'insuranceTypes',
+            'companies',
+            'totalPayableAmount'
+        ));
     }
+
 
 
     public function destroy($id)

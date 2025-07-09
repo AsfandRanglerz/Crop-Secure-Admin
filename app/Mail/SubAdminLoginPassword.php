@@ -16,10 +16,10 @@ class SubAdminLoginPassword extends Mailable
      *
      * @return void
      */
-    public $message;
-    public function __construct($message)
+    public $user;
+    public function __construct($user)
     {
-        $this->message = $message;
+        $this->user = $user;
     }
 
     /**
@@ -29,7 +29,8 @@ class SubAdminLoginPassword extends Mailable
      */
     public function build()
     {
-        return $this->markdown('emails.subadmin_login_password')
-            ->with('message',$this->message);
+             return $this->view('emails.subadmin_login_password')
+            ->subject('Welcome to Crop Secure')
+            ->with(['data' => $this->user]);
     }
 }

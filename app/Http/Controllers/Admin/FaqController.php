@@ -47,7 +47,7 @@ class FaqController extends Controller
     'answer' => strip_tags($request->answer),
         ]);
 
-        return redirect('/admin/faqs')->with('success', 'FAQs created successfully');
+        return redirect()->route('faqs')->with('success', 'FAQ Created Successfully');
     }
 
 
@@ -76,7 +76,7 @@ class FaqController extends Controller
             'question' => $request->question,
             'answer' => $request->answer,
         ]);
-        return redirect('/admin/faqs')->with('success', 'FAQs updated successfully');
+        return redirect('/admin/faqs')->with('success', 'FAQ Updated Successfully');
     }
 
 
@@ -85,7 +85,7 @@ class FaqController extends Controller
         $faq = Faq::find($id);
         if ($faq) {
             $faq->delete();
-            return redirect('/admin/faqs')->with('success', 'FAQs deleted successfully');
+            return redirect('/admin/faqs')->with('success', 'FAQ Deleted Successfully');
         } else {
             return redirect('/admin/faqs')->with('error', 'FAQs not found');
         }

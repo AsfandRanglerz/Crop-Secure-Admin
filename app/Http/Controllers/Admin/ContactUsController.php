@@ -93,7 +93,7 @@ class ContactUsController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Contact info Updated Successfully!'
+            'message' => 'Contact info Updated Successfully'
         ]);
     }
 }

@@ -14,21 +14,7 @@
 
     <p>Thank you for registering on <strong>Crop Secure</strong>.</p>
 
-    <p>To proceed further, kindly contact our team. They will help you:</p>
-    <ul>
-        <li>Verify your account</li>
-        <li>Enable product/item listings on your dashboard</li>
-        <li>Assist you in navigating the Crop Secure platform effectively</li>
-    </ul>
-
-    <p><strong>Your login details:</strong></p>
-    <ul>
-        <li><strong>Email:</strong> {{ $data['useremail'] ?? $data['email'] ?? 'N/A' }}</li>
-        <li><strong>Password:</strong> {{ $data['password'] ?? 'N/A' }}</li>
-    </ul>
-
-<p><em>Note: Your registration has been received. To proceed further, please contact the admin for verification and approval.</em></p>
-
+    <p>Your registration has been received. To move forward, please contact the admin to add your products for sale on crop secure.</p>
     <hr>
 
     <p><strong>Contact Admin:</strong></p>

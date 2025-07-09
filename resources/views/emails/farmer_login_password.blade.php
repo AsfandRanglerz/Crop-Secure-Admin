@@ -17,16 +17,15 @@
     <p><strong>Here are your login credentials:</strong></p>
     <ul>
         <li><strong>Email:</strong> {{ $data['email'] }}</li>
-        <li><strong>Contact:</strong> {{ $data['contact'] ?? 'N/A' }}</li>
         <li><strong>Password:</strong> {{ $data['password'] }}</li>
     </ul>
 
     <p><em>Please keep this information safe and do not share your login details with anyone.</em></p>
 
-    <p>If you need help, feel free to contact:</p>
+    <p>If you need help, feel free to contact at:</p>
     <ul>
-        <li><strong>Admin Email:</strong> {{ $data['admin_email'] ?? 'admin@cropsecure.com' }}</li>
-        <li><strong>Admin Phone:</strong> {{ $data['admin_phone'] ?? '+92-300-0000000' }}</li>
+        <li><strong>Email:</strong> {{ $data['admin_email'] ?? 'admin@cropsecure.com' }}</li>
+        <li><strong>Phone:</strong> {{ $data['admin_phone'] ?? '+92-300-0000000' }}</li>
     </ul>
 
     <p>Thank you,<br>The Crop Secure Team</p>

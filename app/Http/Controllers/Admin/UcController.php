@@ -6,13 +6,14 @@ use App\Models\Uc;
 use App\Models\Tehsil;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\District;
 use Illuminate\Support\Facades\Auth;
 
 class UcController extends Controller
 {
     public function index($id)
     {
-        $tehsil = Tehsil::findOrFail($id);
+        $tehsil = Tehsil::with('district')->findOrFail($id);
 
         $sideMenuName = [];
 
