@@ -66,4 +66,9 @@ class CropInsurance extends Model
     {
         return $this->belongsTo(Village::class, 'village_id');
     }
+
+    public function crop()
+    {
+        return $this->belongsTo(EnsuredCropName::class, 'crop_id');
+    }
 }

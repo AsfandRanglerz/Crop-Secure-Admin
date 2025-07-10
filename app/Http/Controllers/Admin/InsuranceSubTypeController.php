@@ -114,7 +114,7 @@ class InsuranceSubTypeController extends Controller
 
         $farmers = InsuranceHistory::with('user')
             ->where('insurance_type_id', $request->incurance_type_id)
-            ->where('crop_id', $request->crop_name_id)
+            ->where('crop', $request->name)
             ->where('district_id', $request->district_id)
             ->where('tehsil_id', $request->tehsil_id)
             ->whereYear('created_at', $request->year)
@@ -122,21 +122,18 @@ class InsuranceSubTypeController extends Controller
 
         foreach ($farmers as $record) {
             $user = $record->user;
-
-            // ✅ Area Yield Compensation Calculation
+            // dd($user);
             $benchmark = $record->benchmark;
             $sumInsured = $record->sum_insured;
             $loss = $benchmark - $request->current_yield;
 
             $comp = $loss > 0 ? ($loss / 100) * $sumInsured : 0;
 
-            // ✅ Save Compensation & Remaining
             $record->update([
                 'compensation_amount' => round($comp, 2),
                 'remaining_amount' => round($comp, 2),
             ]);
 
-            // ✅ Notify
             if ($user && $user->fcm_token) {
                 AreaYieldNotificationHelper::notifyFarmer(
                     $user,

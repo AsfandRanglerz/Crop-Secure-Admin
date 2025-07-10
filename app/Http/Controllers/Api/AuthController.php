@@ -13,6 +13,7 @@ use App\Mail\ResetPasswordMail;
 use App\Models\AuthorizedDealer;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Contactus;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -93,16 +94,17 @@ class AuthController extends Controller
             'fcm_token' => $request->fcm_token
         ]);
 
-        $mailData = [
-            'name' => $user->name,
-            'useremail' => $user->email,
-            'password' => $rawPassword,
-            'logo' => 'http://localhost/Crop-Secure-Admin/public/admin/assets/img/logo.png'
-        ];
+        $contact = Contactus::first();
 
+        $message['name'] = $request->name;
+        $message['contact'] = $request->contact;
+        $message['email'] = $request->email;
+        $message['password'] = $request->password;
+        $message['logo'] = 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png';
+        $message['admin_email'] = $contact->email;
+        $message['admin_phone'] = $contact->phone;
 
-        // dd($mailData);
-        Mail::to($user->email)->send(new FarmerLoginPassword($mailData));
+        Mail::to($request->email)->send(new FarmerLoginPassword($message));
 
         // Create Sanctum token
         $token = $user->createToken('auth_token')->plainTextToken;

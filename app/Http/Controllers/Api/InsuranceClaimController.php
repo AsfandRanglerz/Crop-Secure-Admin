@@ -220,6 +220,7 @@ class InsuranceClaimController extends Controller
         // Load related item and dealer
         $authorizedItems = \App\Models\DealerItem::with(['item', 'authorizedDealer'])
             ->whereIn('authorized_dealer_id', $dealerIds)
+            ->where('status', 1)
             ->get();
 
         if ($authorizedItems->isEmpty()) {

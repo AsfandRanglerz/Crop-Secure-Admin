@@ -92,7 +92,9 @@ class AreaYieldNotificationHelper
                             'title' => $data['title'] ?? 'Notification',
                             'body' => $data['body'] ?? '',
                         ],
+                        'data' => $data['data'] ?? [], // ✅ Add this line
                     ],
+
                 ],
             ]);
 

@@ -86,12 +86,14 @@ class AuthorizedDealerController extends Controller
         ]);
 
 
+        $contact = \App\Models\Contactus::first();
+
         $mailData = [
             'name' => $user->name,
             'useremail' => $user->email,
             'password' => $rawPassword,
-            'admin_email' => 'admin@cropsecure.com',
-            'admin_phone' => '+92-300-0000000',
+            'admin_email' => $contact->email,
+            'admin_phone' => $contact->phone,
             'logo' => 'https://ranglerzbeta.in/cropssecure/public/admin/assets/img/logo.png'
         ];
 

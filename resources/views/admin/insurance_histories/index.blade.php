@@ -55,8 +55,8 @@
                                         <th>Area Unit</th>
                                         <th>Area (acre)</th>
                                         <th>Land Area</th>
-                                        <th>Land Image</th>
-                                        <th>Certificate</th>
+                                        <th class="noExport">Land Image</th>
+                                        <th class="noExport">Certificate</th>
                                         <th>Insurance Type</th>
                                         <th>District</th>
                                         <th>Tehsil</th>
@@ -209,7 +209,7 @@
                 ],
                 scrollX: true,
                 responsive: true
-            });
+        });
     });
 </script>
 @endsection

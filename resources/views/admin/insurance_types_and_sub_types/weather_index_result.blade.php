@@ -32,6 +32,9 @@
                                             <th>Recorded Temperature (°C)</th>
                                             <th>Recorded Rainfall (mm)</th>
                                             <th>Date</th>
+                                            <th>Time</th>
+                                            {{-- <th>Loss Flag</th>
+                                            <th>Loss Reason</th> --}}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -42,13 +45,21 @@
                                                 <td>{{ $villageCrop->rainfall ?? 'N/A' }}</td>
                                                 <td>{{ $villageCrop->date ? \Carbon\Carbon::parse($villageCrop->date)->format('d M Y') : 'N/A' }}
                                                 </td>
+                                                <td>{{ $villageCrop->time ?? 'N/A' }}</td>
+                                                {{-- <td>
+                                                    @if ($villageCrop->loss_flag)
+                                                        <span class="badge badge-danger">Yes</span>
+                                                    @else
+                                                        <span class="badge badge-success">No</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $villageCrop->loss_reason ?? '-' }}</td> --}}
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center">No data found.</td>
+                                                <td colspan="7" class="text-center">No data found.</td>
                                             </tr>
                                         @endforelse
-
                                     </tbody>
                                 </table>
                             </div> {{-- card-body --}}

@@ -21,7 +21,7 @@ class Farmer extends Authenticatable
     {
         $this->attributes['email'] = strtolower($value);
     }
-    
+
     public function setNameAttribute($value)
     {
         $this->attributes['name'] = collect(explode(' ', strtolower($value)))
@@ -69,4 +69,10 @@ class Farmer extends Authenticatable
     {
         return $this->hasMany(\App\Models\CropInsurance::class, 'user_id');
     }
+
+    public function claimAddress()
+    {
+        return $this->hasOne(\App\Models\InsuranceClaimAddress::class, 'user_id', 'id');
+    }
+    
 }

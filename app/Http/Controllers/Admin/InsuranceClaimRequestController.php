@@ -111,7 +111,7 @@ class InsuranceClaimRequestController extends Controller
             ->update(['is_seen' => true]);
 
 
-        $claims = InsuranceProductClaim::with(['insurance.user', 'dealer', 'item'])->latest()->paginate(20);
+        $claims = InsuranceProductClaim::with(['insurance.user.claimAddress', 'dealer', 'item'])->latest()->paginate(20);
 
         return view('admin.product_claims.index', compact('sideMenuName', 'sideMenuPermissions', 'claims'));
     }

@@ -95,9 +95,9 @@
 
                                                 {{-- Address --}}
                                                 <td>
-                                                    {{ $claim->state ? $claim->state . ', ' : '' }}
-                                                    {{ $claim->city ? $claim->city . ', ' : '' }}
-                                                    {{ $claim->address ?? '-' }}
+                                                    {{ $claim->insurance->user->claimAddress->state ?? '-' }},
+                                                    {{ $claim->insurance->user->claimAddress->city ?? '-' }},
+                                                    {{ $claim->insurance->user->claimAddress->address ?? '-' }}
                                                 </td>
 
                                                 {{-- Delivery Status --}}

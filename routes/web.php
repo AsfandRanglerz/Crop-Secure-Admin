@@ -294,7 +294,6 @@ Route::prefix('admin')->middleware('admin')->group(function () {
 
     });
 
-
     //contact controller
     Route::get('/contact-us', [ContactUsController::class, 'index'])->name('contact.index');
     Route::get('/contact-us-create', [ContactUsController::class, 'create'])->name('contact.create');

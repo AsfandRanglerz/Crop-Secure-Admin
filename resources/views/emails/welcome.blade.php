@@ -5,40 +5,29 @@
 </head>
 <body style="font-family: Arial, sans-serif;">
     <div style="text-align:center;">
-        <img src="{{ $data['logo'] ?? 'logo' }}" 
+        <img src="{{ $data['logo'] ?? asset('public/admin/assets/img/logo.png') }}" 
              alt="Crop Secure Logo" style="margin-bottom: 35px; height: 125px;">
         <h2>Welcome to Crop Secure!</h2>
     </div>
 
     <p>Dear {{ $data['name'] ?? 'User' }},</p>
 
-    <p>We’re excited to have you join <strong>Crop Secure</strong> — your trusted companion for agricultural data and crop management.</p>
+    <p>Thank you for registering on <strong>Crop Secure</strong>. Your account has been created successfully.</p>
 
-    <p>With your account, you’ll be able to:</p>
+    <p><strong>Here are your login credentials:</strong></p>
     <ul>
-        <li>Access detailed crop insurance and land records</li>
-        <li>Stay informed about new schemes and updates</li>
-        <li>Receive notifications and important alerts directly</li>
+        <li><strong>Email:</strong> {{ $data['email'] }}</li>
+        <li><strong>Password:</strong> {{ $data['password'] }}</li>
     </ul>
 
-    <p>Here are your login credentials to access your dashboard:</p>
+    <p><em>Please keep this information safe and do not share your login details with anyone.</em></p>
+
+    <p>If you need help, feel free to contact at:</p>
     <ul>
-        <li><strong>Email:</strong> {{ $data['useremail'] ?? $data['email'] ?? 'N/A' }}</li>
-        <li><strong>Password:</strong> {{ $data['password'] ?? 'N/A' }}</li>
+        <li><strong>Email:</strong> {{ $data['admin_email'] ?? 'admin@cropsecure.com' }}</li>
+        <li><strong>Phone:</strong> {{ $data['admin_phone'] ?? '+92-300-0000000' }}</li>
     </ul>
 
-    <p><em> keep this information safe and secure. Do not share your login credentials with anyone.</em></p>
-
-    {{-- Uncomment the button below if you want to provide a login link --}}
-    {{-- <p>
-        <a href="{{ $data['url'] ?? 'http://yourdomain.com/login' }}" 
-           style="display: inline-block; padding: 10px 20px; background: #28a745; color: white; text-decoration: none; border-radius: 5px;">
-           Access Your Account
-        </a>
-    </p> --}}
-
-    <p>If you need any help or have questions, our support team is always ready to assist you.</p>
-
-    <p>Welcome aboard!<br>The Crop Secure Team</p>
+    <p>Thank you,<br>The Crop Secure Team</p>
 </body>
 </html>

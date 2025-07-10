@@ -4,65 +4,77 @@ namespace App\Console\Commands;
 
 use App\Helpers\WeatherNotificationHelper;
 use App\Models\CropInsurance;
+use App\Models\EnsuredCropName;
 use App\Models\Farmer;
-use App\Models\Village;
+use App\Models\InsuranceHistory;
 use App\Models\VillageWeatherHistory;
 use Illuminate\Console\Command;
+use Carbon\Carbon;
 
 class WeatherNotificationJob extends Command
 {
     protected $signature = 'notify:weather-alerts';
-    protected $description = 'Send weather alerts to farmers based on last 14 days data';
+    protected $description = 'Send weather alerts to farmers based on today\'s village weather data';
 
     public function handle()
     {
-        $villages = Village::with('villageCrops')->get();
-        $weatherController = new \App\Http\Controllers\Admin\WeatherController();
+        $today = now()->toDateString();
 
-        foreach ($villages as $village) {
-            $weatherController->fetchTodayWeather($village->id);
+        // Step 1: Get all Weather Index insurance buyers
+        $insurances = InsuranceHistory::with('user')->where('insurance_type', 'Weather Index')->get();
 
-            $cropData = $village->villageCrops()->first();
-            if (!$cropData) continue;
+        foreach ($insurances as $insurance) {
+            $userId = $insurance->user_id;
 
-            $avgTemp = $cropData->avg_temp;
-            $avgRain = $cropData->avg_rainfall;
+            // Step 2: Get village_id from CropInsurance
+            $cropInsurance = CropInsurance::where('user_id', $userId)->first();
+            if (!$cropInsurance || !$cropInsurance->village_id) continue;
 
-            $recentWeather = VillageWeatherHistory::where('village_id', $village->id)
-                ->where('date', '>=', now()->subDays(13)->toDateString())
-                ->get();
+            $villageId = $cropInsurance->village_id;
 
-            $avgRecordedTemp = $recentWeather->avg('temperature');
-            $avgRecordedRainfall = $recentWeather->avg('rainfall');
+            // Step 3: Get crop info
+            $crop = EnsuredCropName::find($insurance->crop_id);
+            if (!$crop || !$crop->harvest_start_date || !$crop->harvest_end_date) continue;
 
-            $expectedTemp = $cropData->avg_temp;
-            $expectedRain = $cropData->avg_rainfall;
+            $start = Carbon::parse($crop->harvest_start_date);
+            $end = Carbon::parse($crop->harvest_end_date);
 
-            $farmers = Farmer::whereIn('id', CropInsurance::where('village_id', $village->id)
-                ->pluck('user_id')
-                ->unique())
-                ->whereNotNull('fcm_token')
-                ->get();
+            // Step 4: Check if within crop period
+            if (!now()->between($start, $end)) continue;
 
-            if ($avgRecordedTemp > $expectedTemp) {
-                foreach ($farmers as $farmer) {
-                    WeatherNotificationHelper::notifyFarmer(
-                        $farmer,
-                        "⚠️ Temperature Alert: The average temperature over the past 14 days is {$avgRecordedTemp}°C, which is higher than the expected {$expectedTemp}°C. You may be eligible to submit a crop insurance claim."
-                    );
-                }
+            // Step 5: Get today's weather data
+            $todayWeather = VillageWeatherHistory::where('village_id', $villageId)
+                ->whereDate('date', $today)
+                ->first();
+
+            if (!$todayWeather) continue;
+
+            $temperature = $todayWeather->temperature;
+            $rainfall = $todayWeather->rainfall;
+
+            $expectedTemp = $crop->avg_temp ?? 30;
+            $expectedRain = $crop->avg_rainfall ?? 20;
+
+            // Step 6: Get farmer
+            $farmer = $insurance->user;
+            if (!$farmer || !$farmer->fcm_token) continue;
+
+            // Step 7: Notify based on today's weather
+            if ($temperature > $expectedTemp + 5) {
+                WeatherNotificationHelper::notifyFarmer(
+                    $farmer,
+                    "⚠️ Temperature Alert: Today's temperature is {$temperature}°C, higher than expected ({$expectedTemp}°C)."
+                );
             }
 
-            if ($avgRecordedRainfall >= $expectedRain * 1.5 || $avgRecordedRainfall <= $expectedRain * 0.5) {
-                foreach ($farmers as $farmer) {
-                    WeatherNotificationHelper::notifyFarmer(
-                        $farmer,
-                        "🌧️ Rainfall Alert: The average rainfall over the past 14 days is {$avgRecordedRainfall}mm, which is abnormal compared to the expected {$expectedRain}mm. You may be eligible to submit a crop insurance claim."
-                    );
-                }
+            if ($rainfall < $expectedRain * 0.5 || $rainfall > $expectedRain * 1.5) {
+                WeatherNotificationHelper::notifyFarmer(
+                    $farmer,
+                    "🌧️ Rainfall Alert: Today's rainfall is {$rainfall}mm, which is abnormal compared to expected ({$expectedRain}mm)."
+                );
             }
         }
 
-        $this->info('Weather data stored & notifications (if any) sent.');
+        $this->info('✅ 1-day weather notifications sent successfully.');
     }
 }
