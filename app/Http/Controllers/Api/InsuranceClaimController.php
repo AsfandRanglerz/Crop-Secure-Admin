@@ -80,7 +80,12 @@ class InsuranceClaimController extends Controller
             if ($ndvi && $ndvi->ndvi < 0.4) {
                 $maxCompensation = $insurance->sum_insured * $insurance->area;
             }
+        } elseif ((int) $insurance->insurance_type_id === 8) {
+            if ($insurance->compensation_amount) {
+                $maxCompensation = $insurance->compensation_amount;
+            }
         }
+
 
         if ($maxCompensation <= 0) {
             return response()->json([
@@ -109,7 +114,7 @@ class InsuranceClaimController extends Controller
         ]);
     }
 
-   public function claimProducts(Request $request)
+    public function claimProducts(Request $request)
     {
         $farmer = auth()->user();
 

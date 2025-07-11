@@ -1,7 +1,22 @@
 @extends('admin.layout.app')
 @section('title', "FAQ's")
 @section('content')
+    <style>
+        .toggle-faq {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
 
+        .toggle-faq:hover {
+            text-decoration: underline;
+        }
+
+        .d-none {
+            display: none;
+        }
+    </style>
     <div class="main-content" style="min-height: 562px;">
         <section class="section">
             <div class="section-body">
@@ -30,6 +45,7 @@
                                             <th></th> <!-- Sort handle column -->
                                             <th>Sr.</th>
                                             <th>Question</th>
+                                            <th>Answer</th>
                                             <th scope="col">Actions</th>
                                         </tr>
                                     </thead>
@@ -40,7 +56,21 @@
                                                     <i class="fas fa-th"></i>
                                                 </td>
                                                 <td>{{ $loop->iteration }}</td>
-                                                <td>{{ \Illuminate\Support\Str::limit(strip_tags($faq->question), 150, '...') }}
+                                                <td>{{ \Illuminate\Support\Str::limit(strip_tags($faq->question), 50, '...') }}
+                                                <td>
+                                                    @php
+                                                        $fullAnswer = strip_tags($faq->answer);
+                                                        $words = explode(' ', $fullAnswer);
+                                                        $shortAnswer = implode(' ', array_slice($words, 0, 5));
+                                                        $hasMore = count($words) > 5;
+                                                    @endphp
+
+                                                    <span class="faq-preview">{{ $shortAnswer }}</span>
+
+                                                    @if ($hasMore)
+                                                        <span class="faq-full d-none">{{ $fullAnswer }}</span>
+                                                        <a href="#" class="faq-toggle toggle-faq">... Read More</a>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-4">
@@ -165,5 +195,26 @@
             toastr.error("{{ session('error') }}");
         </script>
     @endif
+    <script>
+        $(document).on('click', '.toggle-faq', function(e) {
+            e.preventDefault();
+
+            const $row = $(this).closest('td');
+            const $preview = $row.find('.faq-preview');
+            const $full = $row.find('.faq-full');
+
+            if ($preview.hasClass('d-none')) {
+                // Show preview again
+                $preview.removeClass('d-none');
+                $full.addClass('d-none');
+                $(this).text('... Read More');
+            } else {
+                // Show full
+                $preview.addClass('d-none');
+                $full.removeClass('d-none');
+                $(this).text('Read Less');
+            }
+        });
+    </script>
 
 @endsection

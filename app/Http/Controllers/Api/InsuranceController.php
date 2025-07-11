@@ -101,6 +101,9 @@ class InsuranceController extends Controller
             if ((int) $insurance->insurance_type_id === 11) {
                 $createdYear = \Carbon\Carbon::parse($insurance->created_at)->year;
                 $sub = \App\Models\InsuranceSubType::where('incurance_type_id', $insurance->insurance_type_id)
+                    ->where('name', $insurance->crop)
+                    ->where('district_id', $insurance->district_id)
+                    ->where('tehsil_id', $insurance->tehsil_id)
                     ->where('year', $createdYear)
                     ->first();
 
@@ -128,6 +131,9 @@ class InsuranceController extends Controller
             elseif ((int) $insurance->insurance_type_id === 12) {
                 $createdYear = \Carbon\Carbon::parse($insurance->created_at)->year;
                 $sub = \App\Models\InsuranceSubType::where('incurance_type_id', $insurance->insurance_type_id)
+                    ->where('crop_name_id', $insurance->crop_id)
+                    ->where('district_id', $insurance->district_id)
+                    ->where('tehsil_id', $insurance->tehsil_id)
                     ->where('year', $createdYear)
                     ->first();
 
@@ -172,8 +178,11 @@ class InsuranceController extends Controller
 
 
             // ✅ Satellite Index
-            elseif ((int) $insurance->insurance_type_id === 13 && $insurance->status === 'unclaimed') {
+            elseif ((int) $insurance->insurance_type_id === 13) {
+                $createdYear = \Carbon\Carbon::parse($insurance->created_at)->year;
+
                 $ndvi = \App\Models\InsuranceSubTypeSatelliteNDVI::where('insurance_type_id', $insurance->insurance_type_id)
+                    ->whereYear('date', $createdYear)
                     ->latest('date')
                     ->first();
 
@@ -194,6 +203,27 @@ class InsuranceController extends Controller
                     ];
                 }
             }
+            // ✅ Weather Index
+            elseif ((int) $insurance->insurance_type_id === 8) {
+                // If compensation was already calculated via cron job
+                if ($insurance->compensation_amount !== null) {
+                    $compInfo = [
+                        'type' => 'Weather Index',
+                        'compensation' => round($insurance->compensation_amount, 2),
+                        'remaining_amount' => round($insurance->remaining_amount ?? $insurance->compensation_amount, 2),
+                        'status' => 'loss',
+                    ];
+                } else {
+                    // Still show 'not calculated' if nothing is updated
+                    $compInfo = [
+                        'type' => 'Weather Index',
+                        'compensation' => 0,
+                        'remaining_amount' => 0,
+                        'status' => 'not calculated',
+                    ];
+                }
+            }
+
 
             $base['compensation_info'] = $compInfo;
             $results[] = $base;
