@@ -205,25 +205,36 @@ class InsuranceController extends Controller
             }
             // ✅ Weather Index
             elseif ((int) $insurance->insurance_type_id === 8) {
-                // If compensation was already calculated via cron job
-                if ($insurance->compensation_amount !== null) {
-                    $compInfo = [
-                        'type' => 'Weather Index',
-                        'compensation' => round($insurance->compensation_amount, 2),
-                        'remaining_amount' => round($insurance->remaining_amount ?? $insurance->compensation_amount, 2),
-                        'status' => 'loss',
-                    ];
-                } else {
-                    // Still show 'not calculated' if nothing is updated
-                    $compInfo = [
-                        'type' => 'Weather Index',
-                        'compensation' => 0,
-                        'remaining_amount' => 0,
-                        'status' => 'not calculated',
-                    ];
-                }
-            }
+                $comp = $insurance->compensation_amount ?? 0;
+                $remaining = $insurance->remaining_amount ?? $comp;
 
+                // 🔹 Step 1: Get village_id
+                $villageId = \App\Models\CropInsurance::where('user_id', $insurance->user_id)->value('village_id');
+
+                // 🔹 Step 2: Get admin-set averages
+                $villageCrop = \App\Models\VillageCrop::where('village_id', $villageId)->first();
+                $adminTemp = $villageCrop?->avg_temp ?? null;
+                $adminRain = $villageCrop?->avg_rainfall ?? null;
+
+                // 🔹 Step 3: Calculate user 14-day actual averages
+                $weatherData = \App\Models\VillageWeatherHistory::where('village_id', $villageId)
+                    ->whereBetween('date', [now()->subDays(14)->toDateString(), now()->toDateString()])
+                    ->get();
+
+                $userTemp = $weatherData->avg('temperature');
+                $userRain = $weatherData->avg('rainfall');
+
+                $compInfo = [
+                    'type' => 'Weather Index',
+                    'admin_defined_avg_temperature' => round($adminTemp, 2),
+                    'admin_defined_avg_rainfall' => round($adminRain, 2),
+                    'your_14_day_avg_temperature' => round($userTemp, 2),
+                    'your_14_day_avg_rainfall' => round($userRain, 2),
+                    'compensation' => round($comp, 2),
+                    'remaining_amount' => round($remaining, 2),
+                    'status' => $comp > 0 ? 'loss' : 'no loss',
+                ];
+            }
 
             $base['compensation_info'] = $compInfo;
             $results[] = $base;
