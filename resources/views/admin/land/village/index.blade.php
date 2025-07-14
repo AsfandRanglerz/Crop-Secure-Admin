@@ -268,7 +268,7 @@
                 const autocomplete = new google.maps.places.Autocomplete(createInput, {
                     types: ['(regions)'],
                     componentRestrictions: {
-                        country: 'pk'
+                        // country: 'pk'
                     }
                 });
 

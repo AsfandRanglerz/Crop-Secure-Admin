@@ -10,9 +10,23 @@
                 <div class="row">
                     <div class="col-12 col-md-12 col-lg-12">
                         <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">{{ $InsuranceType->name }}</h4>
+                            <div class="card-header">
+                                <div class="col-12">
+                                    <h4 class="mb-0">{{ $InsuranceType->name }}</h4>
+                                    <p class="mt-2 mb-0 text-danger" style="font-style: italic; font-size: 14px;">
+                                        <strong>Loss Trigger Conditions:</strong> If the temperature in any village consistently exceeds its average temperature by 20% or more for 14 consecutive days, an alert will be triggered.</br>
+                                        If the total rainfall in a village during the season is 50% more or 50% less than the village's average seasonal rainfall, the system will trigger a rainfall alert.</br>
+
+                                    </br><strong>Note:</strong> Rainfall is calculated as the <u>total sum for each day</u>,
+                                        and then the
+                                        <u>14-day total</u> is compared against the village’s average rainfall.<br>
+                                        Temperature is averaged <u>daily</u>, and then a <u>14-day average</u> is compared
+                                        against the village’s
+                                        average temperature.
+                                    </p>
+                                </div>
                             </div>
+
                             <div class="card-body table-striped table-bordered table-responsive">
                                 <table class="table responsive" id="table_id_events">
                                     <thead>

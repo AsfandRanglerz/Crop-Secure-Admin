@@ -7,7 +7,7 @@ use App\Models\CropInsurance;
 use App\Models\EnsuredCropName;
 use App\Models\InsuranceHistory;
 use App\Models\VillageCrop;
-use App\Models\VillageWeatherHistory;
+use App\Models\VillageWeatherDailySummary;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -19,14 +19,30 @@ class WeatherNotificationJob extends Command
 
     public function handle()
     {
-        $today = now()->toDateString();
-        Log::info("📆 Weather Notification Job started for date: $today");
+        $today = now()->toDateTimeString();
+        Log::info("🗖️ Weather Notification Job started at: $today");
 
-        $insurances = InsuranceHistory::with('user')->where('insurance_type', 'Weather Index')->get();
-        Log::info("📦 Total Weather Index insurances found: " . $insurances->count());
+        // Step 1: Fetch weather for each village
+        $weatherController = new \App\Http\Controllers\Admin\WeatherController();
+        $villages = \App\Models\Village::all();
+
+        foreach ($villages as $village) {
+            $weatherController->fetchTodayWeather($village->id);
+            Log::info("🌦️ Weather fetched for village ID: {$village->id}");
+        }
+
+        // Step 2: Alert farmers
+        $insurances = InsuranceHistory::with('user')
+            ->where('insurance_type', 'Weather Index')
+            ->get();
 
         foreach ($insurances as $insurance) {
             Log::info("🔍 Processing insurance ID: {$insurance->id}, User ID: {$insurance->user_id}");
+
+            if ($insurance->last_temperature_alert_sent_at || $insurance->last_rainfall_alert_sent_at) {
+                Log::info("⏩ Alert already sent before. Skipping user_id: {$insurance->user_id}");
+                continue;
+            }
 
             $userId = $insurance->user_id;
             $cropInsurance = CropInsurance::where('user_id', $userId)->first();
@@ -36,8 +52,6 @@ class WeatherNotificationJob extends Command
             }
 
             $villageId = $cropInsurance->village_id;
-
-            // Get crop harvest time period
             $crop = EnsuredCropName::find($insurance->crop_id);
             if (!$crop || !$crop->harvest_start_time || !$crop->harvest_end_time) {
                 Log::warning("🚫 Invalid crop or missing harvest dates for crop_id: {$insurance->crop_id}");
@@ -48,36 +62,44 @@ class WeatherNotificationJob extends Command
             $end = Carbon::createFromFormat('F', $crop->harvest_end_time)->endOfMonth();
 
             if (!now()->between($start, $end)) {
-                Log::info("⏩ Skipping user_id $userId: Current date not in harvest period.");
+                Log::info("⏩ Skipping user_id $userId: Not in harvest period.");
                 continue;
             }
 
             $villageCrop = VillageCrop::where('village_id', $villageId)->first();
             $expectedTemp = $villageCrop?->avg_temp ?? 30;
             $expectedRain = $villageCrop?->avg_rainfall ?? 20;
-            Log::info("📊 Avg (Admin Set) Temp: {$expectedTemp}°C, Rain: {$expectedRain}mm");
 
-            $weatherLast14Days = VillageWeatherHistory::where('village_id', $villageId)
+            Log::info("📊 Admin Avg Temp: {$expectedTemp}°C, Rainfall: {$expectedRain}mm");
+
+            $dailyData = VillageWeatherDailySummary::where('village_id', $villageId)
                 ->whereBetween('date', [now()->subDays(14)->toDateString(), now()->toDateString()])
                 ->get();
 
-            if ($weatherLast14Days->isEmpty()) {
-                Log::warning("🌤️ No weather data for last 14 days for village_id $villageId");
+            if ($dailyData->isEmpty()) {
+                Log::warning("🌤️ No daily summary found for village_id: $villageId");
                 continue;
             }
 
             $abnormalTemp = false;
             $abnormalRain = false;
 
-            foreach ($weatherLast14Days as $dayWeather) {
-                if ($dayWeather->temperature > $expectedTemp + 5) {
+            // Check if any temp is 20% above average
+            foreach ($dailyData as $day) {
+                if ($day->temperature > $expectedTemp * 1.2) {
                     $abnormalTemp = true;
+                    break;
                 }
-                if ($dayWeather->rainfall < $expectedRain * 0.5 || $dayWeather->rainfall > $expectedRain * 1.5) {
-                    $abnormalRain = true;
-                }
+            }
 
-                if ($abnormalTemp && $abnormalRain) break;
+            // Check if 14-day rainfall is >150% or <50% of expected
+            $totalRainfall = $dailyData->sum('avg_rainfall');
+            $expectedTotalRainfall = $expectedRain * 14;
+            if (
+                $totalRainfall < $expectedTotalRainfall * 0.5 ||
+                $totalRainfall > $expectedTotalRainfall * 1.5
+            ) {
+                $abnormalRain = true;
             }
 
             $farmer = $insurance->user;
@@ -90,10 +112,10 @@ class WeatherNotificationJob extends Command
             $lossFlag = false;
             $comp = 0;
 
-            if ($abnormalTemp && $insurance->last_temperature_alert_sent_at !== $todayDate) {
+            if ($abnormalTemp) {
                 WeatherNotificationHelper::notifyFarmer(
                     $farmer,
-                    "🌡️ Temperature Alert\nAdmin Avg: {$expectedTemp}°C\nYour Village Avg (14 days): High\nLoss may occur."
+                    "🌡️ Temperature Alert\nAdmin Avg: {$expectedTemp}°C\nYour Village exceeded 20% threshold.\nLoss may occur."
                 );
                 Log::info("📨 Temp alert sent to user_id: $userId");
                 $insurance->last_temperature_alert_sent_at = $todayDate;
@@ -101,12 +123,12 @@ class WeatherNotificationJob extends Command
                 $comp += 0.25 * $insurance->sum_insured;
             }
 
-            if ($abnormalRain && $insurance->last_rainfall_alert_sent_at !== $todayDate) {
+            if ($abnormalRain) {
                 WeatherNotificationHelper::notifyFarmer(
                     $farmer,
-                    "🌧️ Rainfall Alert\nAdmin Avg: {$expectedRain}mm\nYour Village Avg (14 days): Abnormal\nLoss may occur."
+                    "🌧️ Rainfall Alert\nAdmin Avg: {$expectedRain}mm/day\nYour Village's 14-day total: {$totalRainfall}mm\nLoss may occur."
                 );
-                Log::info("📨 Rain alert sent to user_id: $userId");
+                Log::info("📨 Rainfall alert sent to user_id: $userId");
                 $insurance->last_rainfall_alert_sent_at = $todayDate;
                 $lossFlag = true;
                 $comp += 0.25 * $insurance->sum_insured;
@@ -120,7 +142,7 @@ class WeatherNotificationJob extends Command
                 Log::info("💰 Compensation updated for insurance ID {$insurance->id}");
             }
 
-            // 🔔 No loss notification at end of period
+            // No-loss notification at end of season
             if (
                 !$abnormalTemp && !$abnormalRain &&
                 now()->toDateString() === $end->toDateString() &&
@@ -129,9 +151,9 @@ class WeatherNotificationJob extends Command
             ) {
                 WeatherNotificationHelper::notifyFarmer(
                     $farmer,
-                    "✅ No loss detected during your crop's period.\nAdmin Avg: Temp {$expectedTemp}°C, Rain {$expectedRain}mm\nWeather was stable in your village."
+                    "✅ No loss detected during your crop season.\nAdmin Avg: Temp {$expectedTemp}°C, Rainfall {$expectedRain}mm/day\nWeather was stable."
                 );
-                Log::info("📨 No loss alert sent to user_id: $userId");
+                Log::info("📨 No-loss alert sent to user_id: $userId");
             }
 
             $insurance->save();

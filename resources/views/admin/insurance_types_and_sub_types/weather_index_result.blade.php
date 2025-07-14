@@ -22,8 +22,6 @@
                                 </div>
                             </div>
 
-
-
                             <div class="card-body table-striped table-bordered table-responsive">
                                 <table class="table" id="table_id_results">
                                     <thead>
@@ -32,7 +30,7 @@
                                             <th>Recorded Temperature (°C)</th>
                                             <th>Recorded Rainfall (mm)</th>
                                             <th>Date</th>
-                                            <th>Time</th>
+                                            {{-- <th>Time</th> --}}
                                             {{-- <th>Loss Flag</th>
                                             <th>Loss Reason</th> --}}
                                         </tr>
@@ -41,11 +39,11 @@
                                         @forelse ($villageWeathers as $index => $villageCrop)
                                             <tr>
                                                 <td>{{ $index + 1 }}</td>
-                                                <td>{{ $villageCrop->temperature ?? 'N/A' }}</td>
-                                                <td>{{ $villageCrop->rainfall ?? 'N/A' }}</td>
+                                                <td>{{ $villageCrop->avg_temperature ?? 'N/A' }}</td>
+                                                <td>{{ $villageCrop->avg_rainfall ?? 'N/A' }}</td>
                                                 <td>{{ $villageCrop->date ? \Carbon\Carbon::parse($villageCrop->date)->format('d M Y') : 'N/A' }}
                                                 </td>
-                                                <td>{{ $villageCrop->time ?? 'N/A' }}</td>
+                                                {{-- <td>{{ $villageCrop->time ?? 'N/A' }}</td> --}}
                                                 {{-- <td>
                                                     @if ($villageCrop->loss_flag)
                                                         <span class="badge badge-danger">Yes</span>

@@ -21,6 +21,7 @@ use App\Helpers\WeatherNotificationHelper;
 use App\Models\InsuranceHistory;
 use App\Models\InsuranceSubTypeSatelliteNDVI;
 use App\Models\Village;
+use App\Models\VillageWeatherDailySummary;
 use App\Models\VillageWeatherHistory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -599,10 +600,10 @@ class InsuranceSubTypeController extends Controller
     {
         $village = Village::findOrFail($id);
 
-        $villageWeathers = VillageWeatherHistory::with('village')
+        $villageWeathers = VillageWeatherDailySummary::with('village')
             ->where('village_id', $id)
             ->orderBy('date', 'desc')
-            ->limit(14)
+            // ->orderBy('time', 'desc')
             ->get();
 
         $cropData = $village->villageCrops()->first();
