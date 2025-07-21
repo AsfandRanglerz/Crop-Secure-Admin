@@ -94,7 +94,7 @@ class WeatherNotificationJob extends Command
 
             // Check if 14-day rainfall is >150% or <50% of expected
             $totalRainfall = $dailyData->sum('avg_rainfall');
-            $expectedTotalRainfall = $expectedRain * 14;
+            $expectedTotalRainfall = $expectedRain;
             if (
                 $totalRainfall < $expectedTotalRainfall * 0.5 ||
                 $totalRainfall > $expectedTotalRainfall * 1.5

@@ -401,9 +401,10 @@ class InsuranceSubTypeController extends Controller
         $districts = District::all();
         $tehsils = Tehsil::all();
         $InsuranceType = InsuranceType::find($id);
+        $villages = Village::with('uc.tehsil.district')->get();
 
         // 🟢 Fetch NDVI records, not subtypes
-        $InsuranceSubTypes = InsuranceSubTypeSatelliteNDVI::where('insurance_type_id', $id)
+        $InsuranceSubTypes = InsuranceSubTypeSatelliteNDVI::with('village')->where('insurance_type_id', $id)
             ->orderBy('date', 'desc')
             ->get();
 
@@ -414,94 +415,95 @@ class InsuranceSubTypeController extends Controller
             'InsuranceType',
             'ensuredCrops',
             'districts',
-            'tehsils'
+            'tehsils',
+            'villages'
         ));
     }
 
 
-    public function fetchNDVIData(Request $request)
-    {
-        // Log initial request input
-        Log::info('NDVI fetch request received', $request->all());
+    // public function fetchNDVIData(Request $request)
+    // {
+    //     // Log initial request input
+    //     Log::info('NDVI fetch request received', $request->all());
 
-        // Validate input
-        $request->validate([
-            'date' => 'required|date',
-        ]);
+    //     // Validate input
+    //     $request->validate([
+    //         'date' => 'required|date',
+    //     ]);
 
-        try {
-            $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
-            $apiUrl = 'https://api-connect.eos.com/user-dashboard/statistics';
+    //     try {
+    //         $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
+    //         $apiUrl = 'https://api-connect.eos.com/user-dashboard/statistics';
 
-            // Send API request
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Accept' => 'application/json',
-            ])->get($apiUrl, [
-                'date' => $request->date,
-            ]);
+    //         // Send API request
+    //         $response = Http::withHeaders([
+    //             'Authorization' => 'Bearer ' . $apiKey,
+    //             'Accept' => 'application/json',
+    //         ])->get($apiUrl, [
+    //             'date' => $request->date,
+    //         ]);
 
-            // Log raw response body
-            Log::info('EOS NDVI raw response', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+    //         // Log raw response body
+    //         Log::info('EOS NDVI raw response', [
+    //             'status' => $response->status(),
+    //             'body' => $response->body(),
+    //         ]);
 
-            // If successful, process data
-            if ($response->successful()) {
-                $data = $response->json();
+    //         // If successful, process data
+    //         if ($response->successful()) {
+    //             $data = $response->json();
 
-                $b8 = isset($data['B8']) ? floatval($data['B8']) : 0.0;
-                $b4 = isset($data['B4']) ? floatval($data['B4']) : 0.0;
+    //             $b8 = isset($data['B8']) ? floatval($data['B8']) : 0.0;
+    //             $b4 = isset($data['B4']) ? floatval($data['B4']) : 0.0;
 
-                // Log band values
-                Log::info('NDVI band values', [
-                    'B8' => $b8,
-                    'B4' => $b4,
-                    'B8 + B4' => $b8 + $b4,
-                ]);
+    //             // Log band values
+    //             Log::info('NDVI band values', [
+    //                 'B8' => $b8,
+    //                 'B4' => $b4,
+    //                 'B8 + B4' => $b8 + $b4,
+    //             ]);
 
-                // Prevent division by zero
-                if (($b8 + $b4) == 0.0) {
-                    Log::warning('NDVI calculation skipped due to division by zero', [
-                        'B8' => $b8,
-                        'B4' => $b4
-                    ]);
+    //             // Prevent division by zero
+    //             if (($b8 + $b4) == 0.0) {
+    //                 Log::warning('NDVI calculation skipped due to division by zero', [
+    //                     'B8' => $b8,
+    //                     'B4' => $b4
+    //                 ]);
 
-                    return response()->json([
-                        'error' => 'Invalid B8/B4 values (division by zero)',
-                        'b8' => $b8,
-                        'b4' => $b4,
-                        'ndvi' => null
-                    ], 422);
-                }
+    //                 return response()->json([
+    //                     'error' => 'Invalid B8/B4 values (division by zero)',
+    //                     'b8' => $b8,
+    //                     'b4' => $b4,
+    //                     'ndvi' => null
+    //                 ], 422);
+    //             }
 
-                $ndvi = ($b8 - $b4) / ($b8 + $b4);
+    //             $ndvi = ($b8 - $b4) / ($b8 + $b4);
 
-                return response()->json([
-                    'b8' => $b8,
-                    'b4' => $b4,
-                    'ndvi' => round($ndvi, 4)
-                ]);
-            }
+    //             return response()->json([
+    //                 'b8' => $b8,
+    //                 'b4' => $b4,
+    //                 'ndvi' => round($ndvi, 4)
+    //             ]);
+    //         }
 
-            // Handle unsuccessful EOS API response
-            Log::error('EOS API request failed', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
+    //         // Handle unsuccessful EOS API response
+    //         Log::error('EOS API request failed', [
+    //             'status' => $response->status(),
+    //             'body' => $response->body()
+    //         ]);
 
-            return response()->json(['error' => 'Data not found or EOS request failed'], $response->status());
-        } catch (\Exception $e) {
-            // Log internal error
-            Log::error('NDVI API Exception', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+    //         return response()->json(['error' => 'Data not found or EOS request failed'], $response->status());
+    //     } catch (\Exception $e) {
+    //         // Log internal error
+    //         Log::error('NDVI API Exception', [
+    //             'message' => $e->getMessage(),
+    //             'trace' => $e->getTraceAsString()
+    //         ]);
 
-            return response()->json(['error' => 'Internal server error'], 500);
-        }
-    }
+    //         return response()->json(['error' => 'Internal server error'], 500);
+    //     }
+    // }
 
     // Manually store a record from the modal
     public function satellite_ndvi_store(Request $request)
@@ -509,6 +511,7 @@ class InsuranceSubTypeController extends Controller
         // Step 0: Validate input
         $validated = $request->validate([
             'date' => 'required|date',
+            'village_id' => 'required|exists:villages,id',
             'b8' => 'required|numeric|min:0|max:999999999999999',
             'b4' => 'required|numeric|min:0|max:999999999999999',
             'ndvi' => 'required|numeric',
@@ -517,6 +520,7 @@ class InsuranceSubTypeController extends Controller
 
         // Step 1: Check for duplicate NDVI record
         $alreadyExists = InsuranceSubTypeSatelliteNDVI::where('date', $request->date)
+            ->where('village_id', $request->village_id)
             ->where('insurance_type_id', $request->incurance_type_id)
             ->exists();
 
@@ -529,19 +533,30 @@ class InsuranceSubTypeController extends Controller
         // Step 2: Create NDVI record
         $ndviRecord = InsuranceSubTypeSatelliteNDVI::create([
             'date' => $request->date,
+            'village_id' => $request->village_id,
             'b8' => $request->b8,
             'b4' => $request->b4,
             'ndvi' => $request->ndvi,
             'insurance_type_id' => $request->incurance_type_id,
         ]);
 
-        // Step 3: Fetch all affected farmers
+        // Step 3: Get Farmer IDs from Crop Insurance for this village
+        $farmerIds = CropInsurance::where('village_id', $request->village_id)
+            ->pluck('user_id')
+            ->toArray();
+
+        if (empty($farmerIds)) {
+            return back()->withErrors('info', 'No farmers found in this village.')->withInput();
+        }
+
+        // Step 4: Fetch all affected insurance histories for those farmers
         $farmers = InsuranceHistory::with('user')
             ->where('insurance_type_id', $request->incurance_type_id)
             ->where('status', 'unclaimed')
+            ->whereIn('user_id', $farmerIds)
             ->get();
 
-        // Step 4: Threshold check and Compensation calculation + notify
+        // Step 5: Threshold check and Compensation + Notification
         $threshold = 0.4;
 
         foreach ($farmers as $record) {
@@ -549,7 +564,6 @@ class InsuranceSubTypeController extends Controller
             $isLoss = $ndviRecord->ndvi < $threshold;
             $comp = $isLoss ? $record->sum_insured : 0;
 
-            // Save compensation and remaining amount
             $record->update([
                 'compensation_amount' => $comp,
                 'remaining_amount' => $comp,
@@ -567,6 +581,7 @@ class InsuranceSubTypeController extends Controller
 
         return back()->with('success', 'Insurance Result Announced Successfully');
     }
+
 
 
 

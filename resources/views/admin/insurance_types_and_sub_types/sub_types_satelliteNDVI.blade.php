@@ -23,6 +23,26 @@
                                 <div class="text-danger date-error mt-1"></div>
                             </div>
 
+                            <!-- Select Area -->
+                            <div class="col-md-6">
+                                <label for="area">Select Area</label>
+                                <select class="form-control" name="village_id" id="area" required
+                                    onchange="updateLatLon(this)">
+                                    <option value="">Select</option>
+                                    @foreach ($villages as $village)
+                                        <option value="{{ $village->id }}" data-lat="{{ $village->latitude }}"
+                                            data-lon="{{ $village->longitude }}">
+                                            {{ $village->name }}, {{ $village->uc->name ?? '' }},
+                                            {{ $village->tehsil->name ?? '' }}, {{ $village->district->name ?? '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Hidden Lat/Lon -->
+                            <input type="hidden" name="latitude" id="village_lat">
+                            <input type="hidden" name="longitude" id="village_lon">
+
 
                             <div class="col-md-6">
                                 <label for="b8">B8 (NIR)</label>
@@ -31,13 +51,12 @@
                                 <div class="text-danger b8-error mt-1"></div>
                             </div>
 
-                            <div class="col-md-6 mt-3">
+                            <div class="col-md-6">
                                 <label for="b4">B4 (Red)</label>
                                 <input type="number" max="999999999999999" step="0.0001" class="form-control"
                                     id="b4" name="b4">
-                                <div class="text-danger b4-error mt-1"></div> 
+                                <div class="text-danger b4-error mt-1"></div>
                             </div>
-
 
                             <div class="col-md-6 mt-3">
                                 <label for="ndvi">Calculated NDVI</label>
@@ -82,6 +101,7 @@
                                         <tr>
                                             <th>Sr.</th>
                                             <th>Date</th>
+                                            <th>Area</th>
                                             <th>B4 Value</th>
                                             <th>B8 Value</th>
                                             <th>NDVI</th>
@@ -94,9 +114,16 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $InsuranceSubType->date ?? '-' }}</td>
+                                                <td>
+                                                    {{ $InsuranceSubType->village->name ?? '-' }},
+                                                    {{-- {{ $InsuranceSubType->village->uc->name ?? '' }}, --}}
+                                                    {{-- {{ $InsuranceSubType->village->tehsil->name ?? '' }}, --}}
+                                                    {{-- {{ $InsuranceSubType->village->district->name ?? '' }} --}}
+                                                </td>
                                                 <td>{{ $InsuranceSubType->b4 ?? '-' }}</td>
                                                 <td>{{ $InsuranceSubType->b8 ?? '-' }}</td>
-                                                <td>{{ $InsuranceSubType->ndvi ? round($InsuranceSubType->ndvi * 100, 1) . '%' : '-' }}</td>
+                                                <td>{{ $InsuranceSubType->ndvi ? round($InsuranceSubType->ndvi * 100, 1) . '%' : '-' }}
+                                                </td>
                                                 <td>
                                                     @if ($InsuranceSubType->ndvi < 0.4)
                                                         <span class="badge badge-danger">Poor</span>
@@ -273,11 +300,11 @@
         });
     </script>
     <script>
-    @if ($errors->any())
-        @foreach ($errors->all() as $error)
-            toastr.error("{{ $error }}");
-        @endforeach
-    @endif
-</script>
+        @if ($errors->any())
+            @foreach ($errors->all() as $error)
+                toastr.error("{{ $error }}");
+            @endforeach
+        @endif
+    </script>
 
 @endsection
