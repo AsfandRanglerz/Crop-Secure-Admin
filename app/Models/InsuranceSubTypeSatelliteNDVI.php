@@ -10,8 +10,9 @@ class InsuranceSubTypeSatelliteNDVI extends Model
     use HasFactory;
     protected $guarded = [];
 
-    public function village()
-    {
-        return $this->belongsTo(Village::class);
-    }
+    public function land()
+{
+    return $this->belongsTo(Land::class);
+}
+
 }

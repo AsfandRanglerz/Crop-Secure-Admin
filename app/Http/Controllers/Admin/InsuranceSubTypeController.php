@@ -14,17 +14,13 @@ use App\Http\Controllers\Controller;
 use App\Models\CropInsurance;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
-use App\Notifications\InsuranceYieldUpdated;
-use App\Helpers\NotificationHelper;
 use App\Helpers\ProductionPriceNotificationHelper;
-use App\Helpers\WeatherNotificationHelper;
 use App\Models\InsuranceHistory;
 use App\Models\InsuranceSubTypeSatelliteNDVI;
+use App\Models\Land;
 use App\Models\Village;
 use App\Models\VillageWeatherDailySummary;
-use App\Models\VillageWeatherHistory;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class InsuranceSubTypeController extends Controller
 {
@@ -403,8 +399,20 @@ class InsuranceSubTypeController extends Controller
         $InsuranceType = InsuranceType::find($id);
         $villages = Village::with('uc.tehsil.district')->get();
 
-        // 🟢 Fetch NDVI records, not subtypes
-        $InsuranceSubTypes = InsuranceSubTypeSatelliteNDVI::with('village')->where('insurance_type_id', $id)
+        // Get lands and encode demarcation for HTML
+        $records = Land::select('id', 'location', 'demarcation')->get();
+
+        foreach ($records as $record) {
+            // Parse and store original array
+            $points = json_decode($record->demarcation, true);
+            $record->demarcation_array = is_array($points) ? $points : [];
+
+            // Encode JSON string for Blade dropdown (as string not array)
+            $record->demarcation_json = json_encode($points);
+        }
+
+        $InsuranceSubTypes = InsuranceSubTypeSatelliteNDVI::with('land')
+            ->where('insurance_type_id', $id)
             ->orderBy('date', 'desc')
             ->get();
 
@@ -416,173 +424,154 @@ class InsuranceSubTypeController extends Controller
             'ensuredCrops',
             'districts',
             'tehsils',
-            'villages'
+            'villages',
+            'records'
         ));
     }
 
 
-    // public function fetchNDVIData(Request $request)
-    // {
-    //     // Log initial request input
-    //     Log::info('NDVI fetch request received', $request->all());
-
-    //     // Validate input
-    //     $request->validate([
-    //         'date' => 'required|date',
-    //     ]);
-
-    //     try {
-    //         $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
-    //         $apiUrl = 'https://api-connect.eos.com/user-dashboard/statistics';
-
-    //         // Send API request
-    //         $response = Http::withHeaders([
-    //             'Authorization' => 'Bearer ' . $apiKey,
-    //             'Accept' => 'application/json',
-    //         ])->get($apiUrl, [
-    //             'date' => $request->date,
-    //         ]);
-
-    //         // Log raw response body
-    //         Log::info('EOS NDVI raw response', [
-    //             'status' => $response->status(),
-    //             'body' => $response->body(),
-    //         ]);
-
-    //         // If successful, process data
-    //         if ($response->successful()) {
-    //             $data = $response->json();
-
-    //             $b8 = isset($data['B8']) ? floatval($data['B8']) : 0.0;
-    //             $b4 = isset($data['B4']) ? floatval($data['B4']) : 0.0;
-
-    //             // Log band values
-    //             Log::info('NDVI band values', [
-    //                 'B8' => $b8,
-    //                 'B4' => $b4,
-    //                 'B8 + B4' => $b8 + $b4,
-    //             ]);
-
-    //             // Prevent division by zero
-    //             if (($b8 + $b4) == 0.0) {
-    //                 Log::warning('NDVI calculation skipped due to division by zero', [
-    //                     'B8' => $b8,
-    //                     'B4' => $b4
-    //                 ]);
-
-    //                 return response()->json([
-    //                     'error' => 'Invalid B8/B4 values (division by zero)',
-    //                     'b8' => $b8,
-    //                     'b4' => $b4,
-    //                     'ndvi' => null
-    //                 ], 422);
-    //             }
-
-    //             $ndvi = ($b8 - $b4) / ($b8 + $b4);
-
-    //             return response()->json([
-    //                 'b8' => $b8,
-    //                 'b4' => $b4,
-    //                 'ndvi' => round($ndvi, 4)
-    //             ]);
-    //         }
-
-    //         // Handle unsuccessful EOS API response
-    //         Log::error('EOS API request failed', [
-    //             'status' => $response->status(),
-    //             'body' => $response->body()
-    //         ]);
-
-    //         return response()->json(['error' => 'Data not found or EOS request failed'], $response->status());
-    //     } catch (\Exception $e) {
-    //         // Log internal error
-    //         Log::error('NDVI API Exception', [
-    //             'message' => $e->getMessage(),
-    //             'trace' => $e->getTraceAsString()
-    //         ]);
-
-    //         return response()->json(['error' => 'Internal server error'], 500);
-    //     }
-    // }
-
     // Manually store a record from the modal
+
     public function satellite_ndvi_store(Request $request)
     {
-        // Step 0: Validate input
         $validated = $request->validate([
             'date' => 'required|date',
-            'village_id' => 'required|exists:villages,id',
-            'b8' => 'required|numeric|min:0|max:999999999999999',
-            'b4' => 'required|numeric|min:0|max:999999999999999',
-            'ndvi' => 'required|numeric',
+            'land_id' => 'required|exists:lands,id',
+            'demarcation_points' => 'required|json',
             'incurance_type_id' => 'nullable|exists:insurance_types,id',
         ]);
 
-        // Step 1: Check for duplicate NDVI record
-        $alreadyExists = InsuranceSubTypeSatelliteNDVI::where('date', $request->date)
-            ->where('village_id', $request->village_id)
-            ->where('insurance_type_id', $request->incurance_type_id)
-            ->exists();
+        $points = json_decode($request->demarcation_points, true);
 
-        if ($alreadyExists) {
-            return back()
-                ->withErrors(['duplicate' => 'NDVI for the same date already exists.'])
-                ->withInput();
+        if (!is_array($points) || count($points) < 3) {
+            return back()->withErrors(['demarcation_points' => 'At least 3 points required.'])->withInput();
         }
 
-        // Step 2: Create NDVI record
-        $ndviRecord = InsuranceSubTypeSatelliteNDVI::create([
-            'date' => $request->date,
-            'village_id' => $request->village_id,
-            'b8' => $request->b8,
-            'b4' => $request->b4,
-            'ndvi' => $request->ndvi,
-            'insurance_type_id' => $request->incurance_type_id,
-        ]);
+        // Convert to EOS GeoJSON Polygon coordinates
+        $coordinates = array_map(function ($point) {
+            return [(float) $point['longitude'], (float) $point['latitude']];
+        }, $points);
 
-        // Step 3: Get Farmer IDs from Crop Insurance for this village
-        $farmerIds = CropInsurance::where('village_id', $request->village_id)
-            ->pluck('user_id')
-            ->toArray();
-
-        if (empty($farmerIds)) {
-            return back()->withErrors('info', 'No farmers found in this village.')->withInput();
+        // Ensure polygon is closed (first = last)
+        if ($coordinates[0] !== end($coordinates)) {
+            $coordinates[] = $coordinates[0];
         }
 
-        // Step 4: Fetch all affected insurance histories for those farmers
-        $farmers = InsuranceHistory::with('user')
-            ->where('insurance_type_id', $request->incurance_type_id)
-            ->where('status', 'unclaimed')
-            ->whereIn('user_id', $farmerIds)
-            ->get();
+        $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
 
-        // Step 5: Threshold check and Compensation + Notification
-        $threshold = 0.4;
-
-        foreach ($farmers as $record) {
-            $user = $record->user;
-            $isLoss = $ndviRecord->ndvi < $threshold;
-            $comp = $isLoss ? $record->sum_insured : 0;
-
-            $record->update([
-                'compensation_amount' => $comp,
-                'remaining_amount' => $comp,
+        try {
+            // Step 1: Get view_id from EOS API
+            $response = Http::post("https://api-connect.eos.com/api/lms/search/v2/sentinel2?api_key=$apiKey", [
+                'search' => [
+                    'date' => [
+                        'to' => $request->date,
+                    ],
+                    'shape' => [
+                        'type' => 'Polygon',
+                        'coordinates' => [$coordinates],
+                    ],
+                ]
             ]);
 
-            if ($isLoss && $user && $user->fcm_token) {
-                NDVINotificationHelper::notifyFarmer(
-                    $user,
-                    $ndviRecord->ndvi,
-                    $ndviRecord->date,
-                    $ndviRecord->insurance_type_id
-                );
+            if (!$response->ok()) {
+                return back()->withErrors(['api_error' => 'EOS View ID fetch failed'])->withInput();
             }
+
+            // dd($response->json());
+
+            $viewId = $response->json()['results'][0]['view_id'] ?? null;
+
+            if (!$viewId) {
+                return back()->withErrors(['view_id' => 'No view_id found for this polygon'])->withInput();
+            }
+            $lat = array_sum(array_column($points, 'latitude')) / count($points);
+            $lon = array_sum(array_column($points, 'longitude')) / count($points);
+            // Explode view_id to get segments
+            $segments = explode('/', $viewId);
+
+            if (count($segments) < 8) {
+                return back()->withErrors(['view_id' => 'view_id format is invalid'])->withInput();
+            }
+
+            [$satellite, $utm_zone, $latitude_band, $grid_square, $year, $month, $day, $cloud] = $segments;
+
+            $ndviResponse = Http::get("https://api-connect.eos.com/api/render/{$satellite}/point/{$utm_zone}/{$latitude_band}/{$grid_square}/{$year}/{$month}/{$day}/{$cloud}/NDVI/{$lat}/{$lon}?api_key=$apiKey");
+
+            // $ndviResponse = Http::get("https://api-connect.eos.com/api/render/S2/point/55/G/EP/2016/7/19/0/NDVI/-42.026067/147.824152?api_key=$apiKey");
+            // $ndviResponse = Http::get("https://api-connect.eos.com/api/render/view/$viewId/ndvi?api_key=$apiKey");
+            // dd($ndviResponse->json());
+
+            if (!$ndviResponse->ok()) {
+                return back()->withErrors(['ndvi_error' => 'Failed to fetch NDVI'])->withInput();
+            }
+
+            $ndvi = $ndviResponse->json()['index_value'] ?? null;
+            // dd($ndvi);
+            if (!is_numeric($ndvi)) {
+                return back()->withErrors(['ndvi_value' => 'NDVI data not available'])->withInput();
+            }
+
+
+            // Check if NDVI already exists for the date, village, and type
+            $alreadyExists = InsuranceSubTypeSatelliteNDVI::where('date', $request->date)
+                ->where('land_id', $request->land_id)
+                ->where('insurance_type_id', $request->incurance_type_id)
+                ->exists();
+
+            if ($alreadyExists) {
+                return back()->withErrors(['duplicate' => 'NDVI for the same date already exists.'])->withInput();
+            }
+
+            // Save NDVI data
+            InsuranceSubTypeSatelliteNDVI::create([
+                'date' => $request->date,
+                'land_id' => $request->land_id,
+                'ndvi' => $ndvi,
+                'insurance_type_id' => $request->incurance_type_id,
+            ]);
+
+            // Find relevant farmers
+            $farmerIds = Land::where('id', $request->land_id)
+                ->pluck('user_id')
+                ->toArray();
+
+            if (empty($farmerIds)) {
+                return back()->withErrors(['info' => 'No farmers found in this area.'])->withInput();
+            }
+
+            $farmers = InsuranceHistory::with('user')
+                ->where('insurance_type_id', $request->incurance_type_id)
+                ->where('status', 'unclaimed')
+                ->whereIn('user_id', $farmerIds)
+                ->get();
+
+            // Compensation logic based on NDVI threshold
+            $threshold = 0.4;
+            foreach ($farmers as $record) {
+                $user = $record->user;
+                $isLoss = $ndvi < $threshold;
+                $comp = $isLoss ? $record->sum_insured : 0;
+
+                $record->update([
+                    'compensation_amount' => $comp,
+                    'remaining_amount' => $comp,
+                ]);
+
+                if ($isLoss && $user && $user->fcm_token) {
+                    NDVINotificationHelper::notifyFarmer(
+                        $user,
+                        $ndvi,
+                        $request->date,
+                        $request->incurance_type_id
+                    );
+                }
+            }
+
+            return back()->with('success', 'NDVI saved and farmers notified.');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['exception' => 'Error: ' . $e->getMessage()])->withInput();
         }
-
-        return back()->with('success', 'Insurance Result Announced Successfully');
     }
-
-
 
 
     // Delete an entry

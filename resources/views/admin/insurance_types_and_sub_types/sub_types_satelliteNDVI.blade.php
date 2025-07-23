@@ -26,25 +26,26 @@
                             <!-- Select Area -->
                             <div class="col-md-6">
                                 <label for="area">Select Area</label>
-                                <select class="form-control" name="village_id" id="area" required
+                                <select class="form-control" name="land_id" id="area" required
                                     onchange="updateLatLon(this)">
                                     <option value="">Select</option>
-                                    @foreach ($villages as $village)
-                                        <option value="{{ $village->id }}" data-lat="{{ $village->latitude }}"
-                                            data-lon="{{ $village->longitude }}">
-                                            {{ $village->name }}, {{ $village->uc->name ?? '' }},
-                                            {{ $village->tehsil->name ?? '' }}, {{ $village->district->name ?? '' }}
+                                    @foreach ($records as $record)
+                                        <option value="{{ $record->id }}" data-demarcation='@json($record->demarcation_array)'>
+                                            {{ $record->location }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
 
-                            <!-- Hidden Lat/Lon -->
-                            <input type="hidden" name="latitude" id="village_lat">
-                            <input type="hidden" name="longitude" id="village_lon">
+                            <!-- Hidden textarea for demarcation_points -->
+                            <textarea name="demarcation_points" id="demarcation_points" cols="30" rows="10" hidden></textarea>
+
+                            <!-- Hidden input for ndvi -->
+                            <input type="hidden" id="ndvi" name="ndvi" value="">
 
 
-                            <div class="col-md-6">
+
+                            {{-- <div class="col-md-6">
                                 <label for="b8">B8 (NIR)</label>
                                 <input type="number" max="999999999999999" step="0.0001" class="form-control"
                                     id="b8" name="b8">
@@ -61,10 +62,10 @@
                             <div class="col-md-6 mt-3">
                                 <label for="ndvi">Calculated NDVI</label>
                                 <input type="text" class="form-control" id="ndvi" name="ndvi" readonly>
-                            </div>
+                            </div> --}}
                         </div>
-                        <button type="button" class="btn btn-info btn-sm mt-3" onclick="calculateNDVI()">Calculate
-                            NDVI</button>
+                        {{-- <button type="button" class="btn btn-info btn-sm mt-3" onclick="calculateNDVI()">Calculate
+                            NDVI</button> --}}
                     </div>
 
                     <div class="modal-footer">
@@ -102,8 +103,8 @@
                                             <th>Sr.</th>
                                             <th>Date</th>
                                             <th>Area</th>
-                                            <th>B4 Value</th>
-                                            <th>B8 Value</th>
+                                            {{-- <th>B4 Value</th> --}}
+                                            {{-- <th>B8 Value</th> --}}
                                             <th>NDVI</th>
                                             <th>Vegetation Status</th>
                                             <th>Actions</th>
@@ -114,15 +115,10 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $InsuranceSubType->date ?? '-' }}</td>
-                                                <td>
-                                                    {{ $InsuranceSubType->village->name ?? '-' }},
-                                                    {{-- {{ $InsuranceSubType->village->uc->name ?? '' }}, --}}
-                                                    {{-- {{ $InsuranceSubType->village->tehsil->name ?? '' }}, --}}
-                                                    {{-- {{ $InsuranceSubType->village->district->name ?? '' }} --}}
-                                                </td>
-                                                <td>{{ $InsuranceSubType->b4 ?? '-' }}</td>
-                                                <td>{{ $InsuranceSubType->b8 ?? '-' }}</td>
-                                                <td>{{ $InsuranceSubType->ndvi ? round($InsuranceSubType->ndvi * 100, 1) . '%' : '-' }}
+                                                <td>{{ $InsuranceSubType->land->location ?? '-' }}</td>
+                                                {{-- <td>{{ $InsuranceSubType->b4 ?? '-' }}</td> --}}
+                                                {{-- <td>{{ $InsuranceSubType->b8 ?? '-' }}</td> --}}
+                                                <td>{{ $InsuranceSubType->ndvi ? round($InsuranceSubType->ndvi, 2) . '%' : '-' }}
                                                 </td>
                                                 <td>
                                                     @if ($InsuranceSubType->ndvi < 0.4)
@@ -179,6 +175,18 @@
         </script>
     @endif
     <script>
+        function updateLatLon(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const demarcation = selectedOption.getAttribute('data-demarcation');
+
+            if (demarcation) {
+                document.getElementById('demarcation_points').value = demarcation;
+            } else {
+                document.getElementById('demarcation_points').value = '';
+            }
+        }
+
+
         $(document).ready(function() {
             // Set min and max date to current year only
             const today = new Date();
@@ -227,79 +235,43 @@
             }
         });
 
-        // Auto-fetch NDVI data on date change
-        // $("input[name='date']").on("change", function() {
-        //     const selectedDate = $(this).val();
-        //     const insuranceTypeId = $("input[name='incurance_type_id']").val();
-
-        //     // console.log("Date changed:", selectedDate);
-
-        //     if (!selectedDate) return;
-
-        //     $.ajax({
-        //         url: "{{ route('ndvi.fetch') }}",
-        //         method: "GET",
-        //         data: {
-        //             date: selectedDate,
-        //             insurance_type_id: insuranceTypeId
-        //         },
-        //         success: function(response) {
-        //             console.log("NDVI response:", response);
-        //             $("#b4").val(response.b4);
-        //             $("#b8").val(response.b8);
-        //             $("#ndvi").val(response.ndvi);
-        //         },
-        //         error: function(xhr, status, error) {
-        //             console.error("NDVI error:", error);
-        //             console.log("Status:", status);
-        //             console.log("Response:", xhr.responseText);
-        //             alert("Failed to fetch NDVI data. Try again.");
-        //             $("#b4").val('');
-        //             $("#b8").val('');
-        //             $("#ndvi").val('');
-        //         }
-        //     });
-        // });
-    </script>
-    <script>
         $('#ndviForm').on('submit', function(e) {
             let isValid = true;
 
             const dateInput = $('#ndvi_date');
             const dateValue = dateInput.val();
 
-            const b8Input = $('#b8');
-            const b8Value = b8Input.val();
+            // const b8Input = $('#b8');
+            // const b8Value = b8Input.val();
 
-            const b4Input = $('#b4');
-            const b4Value = b4Input.val();
+            // const b4Input = $('#b4');
+            // const b4Value = b4Input.val();
 
             // Clear all previous errors
             $('.date-error').html('');
-            $('.b8-error').html('');
-            $('.b4-error').html('');
+            // $('.b8-error').html('');
+            // $('.b4-error').html('');
 
             if (!dateValue) {
                 $('.date-error').html('Date is required.');
                 isValid = false;
             }
 
-            if (!b8Value) {
-                $('.b8-error').html('B8 is required.');
-                isValid = false;
-            }
+            // if (!b8Value) {
+            //     $('.b8-error').html('B8 is required.');
+            //     isValid = false;
+            // }
 
-            if (!b4Value) {
-                $('.b4-error').html('B4 is required.');
-                isValid = false;
-            }
+            // if (!b4Value) {
+            //     $('.b4-error').html('B4 is required.');
+            //     isValid = false;
+            // }
 
             if (!isValid) {
                 e.preventDefault(); // Prevent form submission
             }
         });
-    </script>
-    <script>
+
         @if ($errors->any())
             @foreach ($errors->all() as $error)
                 toastr.error("{{ $error }}");
