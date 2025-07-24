@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class InsuranceHistory extends Model
 {
@@ -55,8 +56,8 @@ class InsuranceHistory extends Model
         return $this->hasMany(\App\Models\InsuranceProductClaim::class, 'insurance_id');
     }
 
-    public function farmerLands()
+    public function getLandDataAttribute()
     {
-        return $this->hasMany(\App\Models\Land::class, 'user_id', 'user_id');
+        return Land::whereRaw("CONCAT(location, ' (', area, ' ', area_unit, ')') = ?", [$this->land])->first();
     }
 }

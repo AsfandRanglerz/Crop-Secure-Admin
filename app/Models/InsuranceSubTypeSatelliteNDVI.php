@@ -11,8 +11,12 @@ class InsuranceSubTypeSatelliteNDVI extends Model
     protected $guarded = [];
 
     public function land()
-{
-    return $this->belongsTo(Land::class);
-}
+    {
+        return $this->belongsTo(Land::class);
+    }
 
+    public function farmer()
+    {
+        return $this->belongsTo(Farmer::class, 'user_id');
+    }
 }

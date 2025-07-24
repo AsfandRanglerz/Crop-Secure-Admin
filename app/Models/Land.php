@@ -9,4 +9,10 @@ class Land extends Model
 {
     use HasFactory;
     protected $guarded = [];
+
+
+    public function farmer()
+    {
+        return $this->belongsTo(Farmer::class, 'user_id');
+    }
 }

@@ -20,7 +20,12 @@ use App\Models\InsuranceSubTypeSatelliteNDVI;
 use App\Models\Land;
 use App\Models\Village;
 use App\Models\VillageWeatherDailySummary;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use App\Jobs\ProcessProductionPriceNotificationJob;
+use App\Jobs\SendNDVINotificationJob;
+use Illuminate\Support\Facades\Log;
+use PgSql\Lob;
 
 class InsuranceSubTypeController extends Controller
 {
@@ -132,16 +137,16 @@ class InsuranceSubTypeController extends Controller
             ]);
 
             if ($user && $user->fcm_token) {
-                AreaYieldNotificationHelper::notifyFarmer(
+                // dd($user->fcm_token);
+                Log::info('🚀 Dispatching notification job for user: ' . $user->id);
+                dispatch(new \App\Jobs\SendAreaYieldNotificationJob(
                     $user,
                     $request->name,
                     $request->year,
                     $request->current_yield
-                );
+                ));
             }
         }
-
-
 
         return redirect()
             ->route('insurance.sub.type.index', ['id' => $request->incurance_type_id])
@@ -228,6 +233,7 @@ class InsuranceSubTypeController extends Controller
     }
 
 
+
     public function production_price_store(Request $request)
     {
         $request->validate([
@@ -239,8 +245,7 @@ class InsuranceSubTypeController extends Controller
             'crops.*.tehsil_id' => 'required|integer',
         ]);
 
-        foreach ($request->crops as $index => $crop) {
-            // ✅ Step 0: Check if record already exists
+        foreach ($request->crops as $crop) {
             $exists = InsuranceSubType::where('crop_name_id', $request->crop_name_id)
                 ->where('incurance_type_id', $request->incurance_type_id)
                 ->where('district_id', $crop['district_id'])
@@ -254,7 +259,6 @@ class InsuranceSubTypeController extends Controller
                     ->withInput();
             }
 
-            // ✅ Step 1: Store production price
             $subType = InsuranceSubType::create([
                 'crop_name_id' => $request->crop_name_id,
                 'incurance_type_id' => $request->incurance_type_id,
@@ -268,62 +272,21 @@ class InsuranceSubTypeController extends Controller
                 'year' => $request->year,
             ]);
 
-            // ✅ Step 2: Get relevant farmers
-            $farmers = InsuranceHistory::with('user')
-                ->where('insurance_type_id', $request->incurance_type_id)
-                ->where('crop_id', $request->crop_name_id)
-                ->where('district_id', $crop['district_id'])
-                ->where('tehsil_id', $crop['tehsil_id'])
-                ->whereYear('created_at', $request->year)
-                ->get();
-
-
-            // ✅ Step 3: Notify farmers
-            // Step 3: Notify farmers & calculate compensation
-            foreach ($farmers as $record) {
-                $user = $record->user;
-
-                if (!$user) continue;
-
-                $comp = 0;
-                if (
-                    $subType->cost_of_production !== null &&
-                    $subType->average_yield !== null &&
-                    $subType->real_time_market_price !== null &&
-                    $subType->ensured_yield !== null &&
-                    $record->benchmark !== null
-                ) {
-                    $bep = $subType->cost_of_production / $subType->average_yield;
-                    $triggerPrice = $record->benchmark;
-                    $marketPrice = $subType->real_time_market_price;
-
-                    if ($marketPrice < $triggerPrice) {
-                        $comp = $subType->ensured_yield * ($triggerPrice - $marketPrice) * $record->area;
-                    }
-                }
-
-                // Save compensation and remaining amount in InsuranceHistory
-                $record->update([
-                    'compensation_amount' => round($comp, 2),
-                    'remaining_amount' => round($comp, 2),
-                ]);
-
-                // Send FCM Notification
-                if ($user->fcm_token) {
-                    ProductionPriceNotificationHelper::notifyFarmer(
-                        $user,
-                        $request->year,
-                        $request->incurance_type_id,
-                        $crop['district_id'],
-                        $crop['tehsil_id']
-                    );
-                }
-            }
+            // ✅ Dispatch job
+            dispatch(new ProcessProductionPriceNotificationJob(
+                $subType,
+                $request->year,
+                $request->incurance_type_id,
+                $request->crop_name_id,
+                $crop['district_id'],
+                $crop['tehsil_id']
+            ));
         }
 
         return redirect()->route('insurance.sub.type.productionPrice', ['id' => $request->incurance_type_id])
             ->with(['message' => 'Insurance Result Announced Successfully']);
     }
+
 
 
     public function production_price_update(Request $request, $id)
@@ -399,8 +362,24 @@ class InsuranceSubTypeController extends Controller
         $InsuranceType = InsuranceType::find($id);
         $villages = Village::with('uc.tehsil.district')->get();
 
-        // Get lands and encode demarcation for HTML
-        $records = Land::select('id', 'location', 'demarcation')->get();
+        $insuranceLandStrings = DB::table('insurance_histories')
+            ->select('user_id', 'land')
+            ->whereNotNull('land')
+            ->get()
+            ->pluck('land');
+        $currentYear = now()->year;
+
+        $excludedLandIds = InsuranceSubTypeSatelliteNDVI::whereYear('date', $currentYear)
+            ->pluck('land_id')
+            ->toArray();
+
+        $records = Land::with('farmer:id,name')
+            ->whereIn(DB::raw("CONCAT(location, ' (', area, ' ', area_unit, ')')"), $insuranceLandStrings->values())
+            ->whereNotIn('id', $excludedLandIds)
+            ->select('id', 'location', 'demarcation', 'user_id', 'area', 'area_unit')
+            ->get();
+
+
 
         foreach ($records as $record) {
             // Parse and store original array
@@ -411,7 +390,7 @@ class InsuranceSubTypeController extends Controller
             $record->demarcation_json = json_encode($points);
         }
 
-        $InsuranceSubTypes = InsuranceSubTypeSatelliteNDVI::with('land')
+        $InsuranceSubTypes = InsuranceSubTypeSatelliteNDVI::with('land.farmer')
             ->where('insurance_type_id', $id)
             ->orderBy('date', 'desc')
             ->get();
@@ -513,13 +492,21 @@ class InsuranceSubTypeController extends Controller
 
 
             // Check if NDVI already exists for the date, village, and type
-            $alreadyExists = InsuranceSubTypeSatelliteNDVI::where('date', $request->date)
-                ->where('land_id', $request->land_id)
+            $DatealreadyExists = InsuranceSubTypeSatelliteNDVI::where('date', $request->date)
                 ->where('insurance_type_id', $request->incurance_type_id)
                 ->exists();
 
-            if ($alreadyExists) {
+            if ($DatealreadyExists) {
                 return back()->withErrors(['duplicate' => 'NDVI for the same date already exists.'])->withInput();
+            }
+
+            $AreaalreadyExists = InsuranceSubTypeSatelliteNDVI::where('land_id', $request->land_id)
+                ->where('insurance_type_id', $request->incurance_type_id)
+                ->exists();
+
+
+            if ($AreaalreadyExists) {
+                return back()->withErrors(['duplicate' => 'NDVI for the same area already exists.'])->withInput();
             }
 
             // Save NDVI data
@@ -572,6 +559,116 @@ class InsuranceSubTypeController extends Controller
             return back()->withErrors(['exception' => 'Error: ' . $e->getMessage()])->withInput();
         }
     }
+
+
+    // public function satellite_ndvi_store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'date' => 'required|date',
+    //         'land_id' => 'required|array|min:1',
+    //         'land_id.*' => 'exists:lands,id',
+    //         'demarcation_points_map' => 'required|json',
+    //         'incurance_type_id' => 'nullable|exists:insurance_types,id',
+    //     ]);
+
+    //     $demarcationMap = json_decode($request->demarcation_points_map, true);
+    //     $apiKey = 'apk.ec114200944764f1f5162bf2efc7cd4ccb9afb90efaa35594cf3058b0244d6da';
+    //     $threshold = 0.4;
+
+    //     try {
+    //         foreach ($request->land_id as $landId) {
+    //             $points = $demarcationMap[$landId] ?? null;
+
+    //             if (!$points || count($points) < 3) {
+    //                 continue; // Skip invalid land
+    //             }
+
+    //             // Convert to EOS coordinates
+    //             $coordinates = array_map(function ($point) {
+    //                 return [(float) $point['longitude'], (float) $point['latitude']];
+    //             }, $points);
+
+    //             if ($coordinates[0] !== end($coordinates)) {
+    //                 $coordinates[] = $coordinates[0];
+    //             }
+
+    //             // Get view_id from EOS
+    //             $response = Http::post("https://api-connect.eos.com/api/lms/search/v2/sentinel2?api_key=$apiKey", [
+    //                 'search' => [
+    //                     'date' => ['to' => $request->date],
+    //                     'shape' => ['type' => 'Polygon', 'coordinates' => [$coordinates]],
+    //                 ]
+    //             ]);
+
+    //             if (!$response->ok()) continue;
+
+    //             $viewId = $response->json()['results'][0]['view_id'] ?? null;
+    //             if (!$viewId) continue;
+
+    //             $lat = array_sum(array_column($points, 'latitude')) / count($points);
+    //             $lon = array_sum(array_column($points, 'longitude')) / count($points);
+
+    //             $segments = explode('/', $viewId);
+    //             if (count($segments) < 8) continue;
+
+    //             [$satellite, $utm_zone, $latitude_band, $grid_square, $year, $month, $day, $cloud] = $segments;
+
+    //             $ndviResponse = Http::get("https://api-connect.eos.com/api/render/{$satellite}/point/{$utm_zone}/{$latitude_band}/{$grid_square}/{$year}/{$month}/{$day}/{$cloud}/NDVI/{$lat}/{$lon}?api_key=$apiKey");
+
+    //             if (!$ndviResponse->ok()) continue;
+
+    //             $ndvi = $ndviResponse->json()['index_value'] ?? null;
+    //             if (!is_numeric($ndvi)) continue;
+
+    //             $exists = InsuranceSubTypeSatelliteNDVI::where('date', $request->date)
+    //                 ->where('land_id', $landId)
+    //                 ->where('insurance_type_id', $request->incurance_type_id)
+    //                 ->exists();
+
+    //             if ($exists) continue;
+
+    //             InsuranceSubTypeSatelliteNDVI::create([
+    //                 'date' => $request->date,
+    //                 'land_id' => $landId,
+    //                 'ndvi' => $ndvi,
+    //                 'insurance_type_id' => $request->incurance_type_id,
+    //             ]);
+
+    //             $farmerId = Land::where('id', $landId)->value('user_id');
+    //             if (!$farmerId) continue;
+
+    //             $farmers = InsuranceHistory::with('user')
+    //                 ->where('insurance_type_id', $request->incurance_type_id)
+    //                 ->where('status', 'unclaimed')
+    //                 ->where('user_id', $farmerId)
+    //                 ->get();
+
+    //             foreach ($farmers as $record) {
+    //                 $user = $record->user;
+    //                 $isLoss = $ndvi < $threshold;
+    //                 $comp = $isLoss ? $record->sum_insured : 0;
+
+    //                 $record->update([
+    //                     'compensation_amount' => $comp,
+    //                     'remaining_amount' => $comp,
+    //                 ]);
+
+    //                 if ($isLoss && $user && $user->fcm_token) {
+    //                     dispatch(new SendNDVINotificationJob(
+    //                         $user,
+    //                         $ndvi,
+    //                         $request->date,
+    //                         $request->incurance_type_id
+    //                     ));
+    //                 }
+    //             }
+    //         }
+
+    //         return back()->with('success', 'NDVI data saved for selected areas.');
+    //     } catch (\Throwable $e) {
+    //         return back()->withErrors(['error' => $e->getMessage()])->withInput();
+    //     }
+    // }
 
 
     // Delete an entry

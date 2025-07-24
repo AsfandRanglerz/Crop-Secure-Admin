@@ -46,7 +46,7 @@ class InsuranceHistoryController extends Controller
         })->update(['is_seen' => 1]);
 
         // Filters
-        $historiesQuery = InsuranceHistory::with('farmerLands')->orderBy('created_at', 'desc');
+        $historiesQuery = InsuranceHistory::orderBy('created_at', 'desc');
 
         if ($request->filled('year')) {
             $historiesQuery->whereYear('created_at', $request->year);

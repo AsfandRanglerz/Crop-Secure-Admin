@@ -1,6 +1,7 @@
 @extends('admin.layout.app')
 @section('title', 'Satellite Index (NDVI)')
 @section('content')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 
     {{-- Add Insurance Sub-Types Modal --}}
     <div class="modal fade" id="InsuranceTypesModal" tabindex="-1" role="dialog" aria-labelledby="InsuranceTypesModalLabel"
@@ -22,23 +23,29 @@
                                 <input type="date" class="form-control" name="date" id="ndvi_date">
                                 <div class="text-danger date-error mt-1"></div>
                             </div>
-
-                            <!-- Select Area -->
+                        </div>
+                        <!-- Select Area -->
+                        <div class="row">
                             <div class="col-md-6">
-                                <label for="area">Select Area</label>
-                                <select class="form-control" name="land_id" id="area" required
+                                <label for="area" class="d-block">Select Area</label>
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" id="select_all_areas">
+                                    <label class="form-check-label" for="select_all_areas">Select All</label>
+                                </div>
+                                <select class="form-control" name="land_id[]" id="area" multiple
                                     onchange="updateLatLon(this)">
                                     <option value="">Select</option>
                                     @foreach ($records as $record)
                                         <option value="{{ $record->id }}" data-demarcation='@json($record->demarcation_array)'>
-                                            {{ $record->location }}
+                                            {{ $record->farmer->name ?? 'Unknown User' }} - {{ $record->location }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <!-- Hidden textarea for demarcation_points -->
-                            <textarea name="demarcation_points" id="demarcation_points" cols="30" rows="10" hidden></textarea>
+                            {{-- <textarea name="demarcation_points" id="demarcation_points" cols="30" rows="10" hidden></textarea> --}}
+                            <input type="hidden" id="demarcation_points_map" name="demarcation_points_map" />
 
                             <!-- Hidden input for ndvi -->
                             <input type="hidden" id="ndvi" name="ndvi" value="">
@@ -115,7 +122,8 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $InsuranceSubType->date ?? '-' }}</td>
-                                                <td>{{ $InsuranceSubType->land->location ?? '-' }}</td>
+                                                <td>{{ $InsuranceSubType->land->farmer->name ?? '-' }} -
+                                                    {{ $InsuranceSubType->land->location ?? '-' }}</td>
                                                 {{-- <td>{{ $InsuranceSubType->b4 ?? '-' }}</td> --}}
                                                 {{-- <td>{{ $InsuranceSubType->b8 ?? '-' }}</td> --}}
                                                 <td>{{ $InsuranceSubType->ndvi ? round($InsuranceSubType->ndvi, 2) . '%' : '-' }}
@@ -162,6 +170,15 @@
 @section('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#area').select2({
+                placeholder: 'Select Area(s)',
+                width: '100%'
+            });
+        });
+    </script>
 
     @if (session('success'))
         <script>
@@ -277,6 +294,36 @@
                 toastr.error("{{ $error }}");
             @endforeach
         @endif
+
+        // Select All checkbox for area dropdown
+        $('#select_all_areas').on('change', function() {
+            const allOptions = $('#area option:not([value=""])');
+            if ($(this).is(':checked')) {
+                allOptions.prop('selected', true);
+            } else {
+                allOptions.prop('selected', false);
+            }
+
+            $('#area').trigger('change'); // Refresh Select2
+        });
     </script>
+    <script>
+    function updateLatLon(selectElement) {
+        const selectedOptions = Array.from(selectElement.selectedOptions);
+        const demarcationMap = {};
+
+        selectedOptions.forEach(option => {
+            const landId = option.value;
+            const demarcation = option.dataset.demarcation;
+
+            if (landId && demarcation) {
+                demarcationMap[landId] = JSON.parse(demarcation);
+            }
+        });
+
+        // Set to hidden input
+        document.getElementById('demarcation_points_map').value = JSON.stringify(demarcationMap);
+    }
+</script>
 
 @endsection
