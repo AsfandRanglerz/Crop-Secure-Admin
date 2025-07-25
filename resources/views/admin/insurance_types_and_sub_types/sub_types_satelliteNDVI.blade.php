@@ -26,7 +26,7 @@
                         </div>
                         <!-- Select Area -->
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="mt-3 col-md-6">
                                 <label for="area" class="d-block">Select Area</label>
                                 <div class="form-check mb-1">
                                     <input class="form-check-input" type="checkbox" id="select_all_areas">
@@ -92,9 +92,24 @@
                     <div class="col-12">
                         <a class="btn btn-primary mb-2" href="{{ route('insurance.type.index') }}">Back</a>
                         <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">{{ $InsuranceType->name }}</h4>
+                            <div class="card-header">
+                                <div class="col-12">
+                                    <h4 class="mb-0">{{ $InsuranceType->name }}</h4>
+                                    <div class="mt-2">
+                                        <p class="mt-2 mb-0 text-danger" style="font-style: italic; font-size: 14px;">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            <strong>Note:</strong> After saving NDVI data, results may not appear instantly
+                                            due to satellite processing time.
+                                            Sometimes, all results load after a single refresh; other times, data may appear
+                                            gradually.
+                                            If the table seems empty or incomplete, don't worry — your data is being
+                                            processed.
+                                            Please refresh the page periodically to view the latest results.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
+
 
                             <div class="card-body table-striped table-bordered table-responsive">
                                 @if (Auth::guard('admin')->check() ||
@@ -308,22 +323,22 @@
         });
     </script>
     <script>
-    function updateLatLon(selectElement) {
-        const selectedOptions = Array.from(selectElement.selectedOptions);
-        const demarcationMap = {};
+        function updateLatLon(selectElement) {
+            const selectedOptions = Array.from(selectElement.selectedOptions);
+            const demarcationMap = {};
 
-        selectedOptions.forEach(option => {
-            const landId = option.value;
-            const demarcation = option.dataset.demarcation;
+            selectedOptions.forEach(option => {
+                const landId = option.value;
+                const demarcation = option.dataset.demarcation;
 
-            if (landId && demarcation) {
-                demarcationMap[landId] = JSON.parse(demarcation);
-            }
-        });
+                if (landId && demarcation) {
+                    demarcationMap[landId] = JSON.parse(demarcation);
+                }
+            });
 
-        // Set to hidden input
-        document.getElementById('demarcation_points_map').value = JSON.stringify(demarcationMap);
-    }
-</script>
+            // Set to hidden input
+            document.getElementById('demarcation_points_map').value = JSON.stringify(demarcationMap);
+        }
+    </script>
 
 @endsection

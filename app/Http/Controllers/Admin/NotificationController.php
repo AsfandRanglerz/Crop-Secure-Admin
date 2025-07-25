@@ -17,11 +17,11 @@ class NotificationController extends Controller
     public function index()
     {
         $notifications = Notification::with('targets')
-        ->where('deleted_by_admin', false)
-        ->where('created_by_admin', true)
-        ->latest()
-        ->get();
-                
+            ->where('deleted_by_admin', false)
+            ->where('created_by_admin', true)
+            ->latest()
+            ->get();
+
         $farmers = Farmer::all()->keyBy('id');
 
         $sideMenuName = [];
@@ -46,64 +46,42 @@ class NotificationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'message' => 'required|string',
-            'farmers' => 'required|array',
             'title' => 'required|string|max:255',
-            'message' => 'nullable',
+            'message' => 'nullable|string',
+            'farmers' => 'required|array',
         ]);
 
         try {
-            // Save main notification record
+            // Save main notification
             $notification = Notification::create([
                 'user_type' => 'farmer',
                 'title' => $request->title,
                 'message' => $request->message,
                 'is_sent' => 0,
-                'created_by_admin' => 1, 
+                'created_by_admin' => 1,
             ]);
 
             foreach ($request->input('farmers', []) as $farmerId) {
-                // Create target entry for each farmer
                 $notification->targets()->create([
                     'targetable_id' => $farmerId,
                     'targetable_type' => \App\Models\Farmer::class,
                 ]);
 
-                // Send FCM to each farmer if they have a valid token
-                $farmer = \App\Models\Farmer::find($farmerId);
-
-                if ($farmer && $farmer->fcm_token) {
-                    $cleanToken = trim($farmer->fcm_token);
-
-                    // Skip if token is clearly invalid or too short
-                    if (strlen($cleanToken) < 20) {
-                        Log::warning("Skipped FCM for Farmer ID {$farmerId}: Token too short or invalid.");
-                        continue;
-                    }
-
-                    try {
-                        \App\Helpers\SimpleNotificationHelper::sendFcmNotification(
-                            $cleanToken,
-                            $request->title,
-                            $request->message
-                        );
-                    } catch (\Exception $e) {
-                        Log::error("FCM send failed for Farmer ID {$farmerId}: " . $e->getMessage());
-                    }
-                } else {
-                    Log::warning("Farmer ID {$farmerId} has no FCM token.");
-                }
+                // Dispatch FCM notification to queue
+                dispatch(new \App\Jobs\SendFarmerNotificationJob(
+                    $farmerId,
+                    $request->title,
+                    $request->message
+                ));
             }
 
-            return redirect()->route('notification.index')->with('success', 'Notification Sent Successfully');
+            return redirect()->route('notification.index')->with('success', 'Notification Scheduled Successfully');
         } catch (\Exception $e) {
             Log::error("Notification store failed: " . $e->getMessage());
 
             return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
     }
-
-
 
     public function edit($id)
     {
