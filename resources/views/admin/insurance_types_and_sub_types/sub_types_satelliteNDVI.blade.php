@@ -270,37 +270,28 @@
         $('#ndviForm').on('submit', function(e) {
             let isValid = true;
 
-            const dateInput = $('#ndvi_date');
-            const dateValue = dateInput.val();
-
-            // const b8Input = $('#b8');
-            // const b8Value = b8Input.val();
-
-            // const b4Input = $('#b4');
-            // const b4Value = b4Input.val();
-
-            // Clear all previous errors
+            // Clear previous errors
             $('.date-error').html('');
-            // $('.b8-error').html('');
-            // $('.b4-error').html('');
+            if ($('.area-error').length === 0) {
+                $('#area').after('<div class="text-danger area-error mt-1"></div>');
+            }
+            $('.area-error').html('');
+
+            const dateValue = $('#ndvi_date').val();
+            const areaValue = $('#area').val();
 
             if (!dateValue) {
                 $('.date-error').html('Date is required.');
                 isValid = false;
             }
 
-            // if (!b8Value) {
-            //     $('.b8-error').html('B8 is required.');
-            //     isValid = false;
-            // }
-
-            // if (!b4Value) {
-            //     $('.b4-error').html('B4 is required.');
-            //     isValid = false;
-            // }
+            if (!areaValue || areaValue.length === 0) {
+                $('.area-error').html('At least one area must be selected.');
+                isValid = false;
+            }
 
             if (!isValid) {
-                e.preventDefault(); // Prevent form submission
+                e.preventDefault(); // Stop form from submitting
             }
         });
 
