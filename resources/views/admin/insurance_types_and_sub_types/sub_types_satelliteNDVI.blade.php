@@ -141,7 +141,8 @@
                                                     {{ $InsuranceSubType->land->location ?? '-' }}</td>
                                                 {{-- <td>{{ $InsuranceSubType->b4 ?? '-' }}</td> --}}
                                                 {{-- <td>{{ $InsuranceSubType->b8 ?? '-' }}</td> --}}
-                                                <td>{{ $InsuranceSubType->ndvi ? round($InsuranceSubType->ndvi, 2) . '%' : '-' }}
+                                                <td>{{ $InsuranceSubType->ndvi . '%' ?? '-' }}</td>
+                                                {{-- <td>{{ $InsuranceSubType->ndvi ?? '-' }}</td> --}}
                                                 </td>
                                                 <td>
                                                     @if ($InsuranceSubType->ndvi < 0.4)

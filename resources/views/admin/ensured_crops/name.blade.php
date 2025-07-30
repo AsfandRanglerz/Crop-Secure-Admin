@@ -52,7 +52,7 @@
 
 
                         <div class="form-group">
-                            <label>Harvest Time Period</label>
+                            <label>Crop Start Period</label>
                             <div class="row">
                                 <div class="col">
                                     <select name="harvest_start" class="form-control">
@@ -162,7 +162,7 @@
 
                             </div>
                             <div class="form-group">
-                                <label>Harvest Time Period</label>
+                                <label>Crop Start Period</label>
                                 <div class="d-flex">
                                     <select name="harvest_start" class="form-control">
                                         @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
@@ -239,8 +239,8 @@
                                             <th>Sr.</th>
                                             <th>Name</th>
                                             <th>Sum Insured</th>
-                                            <th>Harvest Start</th>
-                                            <th>Harvest End</th>
+                                            <th>Crop Start</th>
+                                            <th>Crop End</th>
                                             <th>Insurance Start</th>
                                             <th>Insurance End</th>
                                             <th scope="col">Actions</th>
@@ -301,29 +301,29 @@
 
 @section('js')
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#table_id_events').DataTable()
-        })
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
-    <script type="text/javascript">
-        $('.show_confirm').click(function(event) {
-            var form = $(this).closest("form");
-            var name = $(this).data("name");
-            event.preventDefault();
-            swal({
-                    title: `Are you sure you want to delete this record?`,
+            // Initialize DataTable
+            $('#table_id_events').DataTable();
+
+            $(document).on('click', '.show_confirm', function(event) {
+                event.preventDefault();
+
+                var form = $(this).closest("form");
+
+                swal({
+                    title: "Are you sure you want to delete this record?",
                     text: "If you delete this, it will be gone forever.",
                     icon: "warning",
                     buttons: true,
                     dangerMode: true,
-                })
-                .then((willDelete) => {
+                }).then((willDelete) => {
                     if (willDelete) {
                         form.submit();
                     }
                 });
+            });
         });
     </script>
     <script>

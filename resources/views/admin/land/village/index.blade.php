@@ -258,11 +258,11 @@
     </script>
 
     <script>
-        // ✅ GLOBAL TRACKERS
+        // GLOBAL TRACKERS
         let placeSelectedAdd = false;
 
         function initAutocomplete() {
-            // ✅ For Add Form
+            // For Add Form
             const createInput = document.getElementById('village_name');
             if (createInput) {
                 const autocomplete = new google.maps.places.Autocomplete(createInput, {

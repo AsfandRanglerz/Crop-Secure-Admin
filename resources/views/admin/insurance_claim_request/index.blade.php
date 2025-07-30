@@ -17,44 +17,36 @@
                                         <tr>
                                             <th>Sr.</th>
                                             <th>Farmer Name</th>
+                                            <th>Bank Holder</th> <!-- New -->
+                                            <th>Bank Name</th> <!-- New -->
+                                            <th>Account Number</th> <!-- New -->
                                             <th>Claimed Amount</th>
                                             <th>Total Compensation</th>
                                             <th>Remaining Amount</th>
                                             <th>Insurance Type</th>
                                             <th>Company</th>
                                             <th>Claim Date</th>
-                                            <th>Bank Details</th>
                                             <th>Status</th>
                                             {{-- <th>Rejection Reason</th> --}}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($insuranceClaims as $key => $claim)
+                                            @php
+                                                $bankDetail = $claim->userBankDetail;
+                                            @endphp
                                             <tr>
                                                 <td>{{ $key + 1 }}</td>
                                                 <td>{{ $claim->farmer_name ?? '-' }}</td>
+                                                <td>{{ $bankDetail->bank_holder_name ?? '-' }}</td>
+                                                <td>{{ $bankDetail->bank_name ?? '-' }}</td>
+                                                <td>{{ $bankDetail->account_number ?? '-' }}</td>
                                                 <td>Rs. {{ number_format($claim->claimed_amount, 2) }}</td>
                                                 <td>Rs. {{ number_format($claim->compensation_amount, 2) }}</td>
                                                 <td>Rs. {{ number_format($claim->remaining_amount, 2) }}</td>
                                                 <td>{{ $claim->insuranceType->name ?? '-' }}</td>
                                                 <td>{{ $claim->company ?? '-' }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($claim->claimed_at)->format('d M Y') }}</td>
-                                                <td>
-                                                    @php
-                                                        $bankDetail = $claim->userBankDetail;
-                                                    @endphp
-                                                    @if ($bankDetail)
-                                                        <button class="btn btn-info btn-sm view-bank-btn"
-                                                            data-toggle="modal" data-target="#bankModalUniversal"
-                                                            data-holder="{{ $bankDetail->bank_holder_name ?? 'N/A' }}"
-                                                            data-bank="{{ $bankDetail->bank_name ?? 'N/A' }}"
-                                                            data-account="{{ $bankDetail->account_number ?? 'N/A' }}">
-                                                            View
-                                                        </button>
-                                                    @else
-                                                        <span class="text-muted">No Bank Info</span>
-                                                    @endif
-                                                </td>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-1">
                                                         <div class="dropdown mr-2">
@@ -71,20 +63,31 @@
 
                                                             @if ($claim->status !== 'approved')
                                                                 <div class="dropdown-menu">
-                                                                    <a class="dropdown-item approve-btn" href="#"
-                                                                        data-id="{{ $claim->id }}" data-toggle="modal"
-                                                                        data-target="#uploadModal{{ $claim->id }}">
-                                                                        Approve
-                                                                    </a>
+                                                                    @if ($claim->status === 'pending')
+                                                                        <a class="dropdown-item approve-btn" href="#"
+                                                                            data-id="{{ $claim->id }}"
+                                                                            data-toggle="modal"
+                                                                            data-target="#uploadModal{{ $claim->id }}">
+                                                                            Approve
+                                                                        </a>
 
-                                                                    <form method="POST"
-                                                                        action="{{ route('insurance.claim.reject', $claim->id) }}">
-                                                                        @csrf
-                                                                        <button type="submit"
-                                                                            class="dropdown-item text-danger">Reject</button>
-                                                                    </form>
+                                                                        <form method="POST"
+                                                                            action="{{ route('insurance.claim.reject', $claim->id) }}">
+                                                                            @csrf
+                                                                            <button type="submit"
+                                                                                class="dropdown-item text-danger">Reject</button>
+                                                                        </form>
+                                                                    @elseif ($claim->status === 'rejected')
+                                                                        <a class="dropdown-item approve-btn" href="#"
+                                                                            data-id="{{ $claim->id }}"
+                                                                            data-toggle="modal"
+                                                                            data-target="#uploadModal{{ $claim->id }}">
+                                                                            Approve
+                                                                        </a>
+                                                                    @endif
                                                                 </div>
                                                             @endif
+
                                                         </div>
 
                                                         @if ($claim->bill_image)
@@ -202,36 +205,43 @@
 @endsection
 
 @section('js')
-    <!-- DataTables -->
     <script>
         $(document).ready(function() {
             $('#table_id_events').DataTable({
                 paging: true,
-                info: false
+                info: false,
+                dom: 'Bfrtip',
+                buttons: [{
+                    extend: 'excelHtml5',
+                    text: 'Generate Excel Report',
+                    exportOptions: {
+                        columns: ':not(.noExport)' // Is class wali columns export nahi hongi
+                    }
+                }]
+            });
+
+            $('#bankModalUniversal').on('show.bs.modal', function(event) {
+                var button = $(event.relatedTarget);
+                $('#bankHolder').text(button.data('holder'));
+                $('#bankName').text(button.data('bank'));
+                $('#bankAccount').text(button.data('account'));
+            });
+
+            $('.show_confirm').click(function(event) {
+                event.preventDefault();
+                var form = $(this).closest("form");
+
+                swal({
+                    title: `Are you sure you want to delete this record?`,
+                    text: "If you delete this, it will be gone forever.",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) form.submit();
+                });
             });
         });
     </script>
-    <script>
-        $('#bankModalUniversal').on('show.bs.modal', function(event) {
-            var button = $(event.relatedTarget);
-            $('#bankHolder').text(button.data('holder'));
-            $('#bankName').text(button.data('bank'));
-            $('#bankAccount').text(button.data('account'));
-        });
 
-        $('.show_confirm').click(function(event) {
-            event.preventDefault();
-            var form = $(this).closest("form");
-
-            swal({
-                title: `Are you sure you want to delete this record?`,
-                text: "If you delete this, it will be gone forever.",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            }).then((willDelete) => {
-                if (willDelete) form.submit();
-            });
-        });
-    </script>
 @endsection

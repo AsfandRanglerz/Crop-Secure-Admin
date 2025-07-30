@@ -47,6 +47,8 @@ class ProcessProductionPriceNotificationJob implements ShouldQueue
             if (!$user) continue;
 
             $comp = 0;
+            $lossStatus = 'no loss';
+
             if (
                 $this->subType->cost_of_production !== null &&
                 $this->subType->average_yield !== null &&
@@ -55,27 +57,41 @@ class ProcessProductionPriceNotificationJob implements ShouldQueue
                 $record->benchmark !== null
             ) {
                 $bep = $this->subType->cost_of_production / $this->subType->average_yield;
-                $triggerPrice = $record->benchmark;
                 $marketPrice = $this->subType->real_time_market_price;
+                $ppi = ($marketPrice / $bep) * 100;
+                $threshold = $record->benchmark;
+                $triggerPrice = ($threshold / 100) * $bep;
 
-                if ($marketPrice < $triggerPrice) {
-                    $comp = $this->subType->ensured_yield * ($triggerPrice - $marketPrice) * $record->area;
+                if ($ppi < $threshold && $marketPrice < $triggerPrice) {
+                    $ensuredYield = $this->subType->ensured_yield; // ✅ Don't divide by 100
+                    $area = $record->area ?? 1;
+
+                    $comp = $ensuredYield * ($triggerPrice - $marketPrice) * $area;
+                    $lossStatus = 'loss';
+
+                    if ($user->fcm_token) {
+                        ProductionPriceNotificationHelper::notifyFarmer(
+                            $user,
+                            $this->year,
+                            $this->insuranceTypeId,
+                            $this->districtId,
+                            $this->tehsilId,
+                            [
+                                'ppi' => round($ppi, 2) . '%',
+                                'trigger_price' => round($triggerPrice, 2),
+                                'real_time_price' => $marketPrice,
+                                'compensation' => round($comp, 2),
+                            ]
+                        );
+                    }
                 }
             }
 
-            $record->update([
-                'compensation_amount' => round($comp, 2),
-                'remaining_amount' => round($comp, 2),
-            ]);
-
-            if ($user->fcm_token) {
-                ProductionPriceNotificationHelper::notifyFarmer(
-                    $user,
-                    $this->year,
-                    $this->insuranceTypeId,
-                    $this->districtId,
-                    $this->tehsilId
-                );
+            if ($comp > 0) {
+                $record->update([
+                    'compensation_amount' => round($comp, 2),
+                    'remaining_amount' => round($comp, 2),
+                ]);
             }
         }
     }

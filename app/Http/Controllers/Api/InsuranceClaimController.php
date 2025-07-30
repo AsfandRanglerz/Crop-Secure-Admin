@@ -61,52 +61,67 @@ class InsuranceClaimController extends Controller
             }
         }
 
-        // ✅ Recalculate max compensation
-        $maxCompensation = 0;
+        // Calculate maximum compensation based on current loss
+        $amountToClaim = 0;
 
-        if ((int) $insurance->insurance_type_id === 11) {
-            $sub = \App\Models\InsuranceSubType::where('incurance_type_id', 11)->latest()->first();
-            if ($sub && $sub->current_yield !== null) {
-                $loss = $insurance->benchmark - $sub->current_yield;
-                $maxCompensation = $loss > 0 ? ($loss / 100) * $insurance->sum_insured : 0;
-            }
-        } elseif ((int) $insurance->insurance_type_id === 12) {
-            $sub = \App\Models\InsuranceSubType::where('incurance_type_id', 12)->latest()->first();
-            if ($sub && $sub->real_time_market_price < $insurance->benchmark) {
-                $maxCompensation = $sub->ensured_yield * ($insurance->benchmark - $sub->real_time_market_price) * $insurance->area;
-            }
-        } elseif ((int) $insurance->insurance_type_id === 13) {
-            $ndvi = \App\Models\InsuranceSubTypeSatelliteNDVI::where('insurance_type_id', 13)->latest('date')->first();
-            if ($ndvi && $ndvi->ndvi < 0.4) {
-                $maxCompensation = $insurance->sum_insured * $insurance->area;
-            }
-        } elseif ((int) $insurance->insurance_type_id === 8) {
-            if ($insurance->compensation_amount) {
-                $maxCompensation = $insurance->compensation_amount;
+        // Use already calculated compensation_amount from database if present
+        if ($insurance->compensation_amount !== null) {
+            $amountToClaim = $insurance->remaining_amount ?? $insurance->compensation_amount;
+        } else {
+            // Fallback if not stored before
+            if ((int) $insurance->insurance_type_id === 11) {
+                $sub = \App\Models\InsuranceSubType::where('incurance_type_id', 11)->latest()->first();
+                if ($sub && $sub->current_yield !== null) {
+                    $loss = $insurance->benchmark - $sub->current_yield;
+                    $amountToClaim = $loss > 0 ? ($loss / 100) * $insurance->sum_insured : 0;
+                }
+            } elseif ((int) $insurance->insurance_type_id === 12) {
+                $sub = \App\Models\InsuranceSubType::where('incurance_type_id', 12)->latest()->first();
+                if ($sub && $sub->real_time_market_price < $insurance->benchmark) {
+                    $amountToClaim = $sub->ensured_yield * ($insurance->benchmark - $sub->real_time_market_price) * $insurance->area;
+                }
+            } elseif ((int) $insurance->insurance_type_id === 13) {
+                $ndvi = \App\Models\InsuranceSubTypeSatelliteNDVI::where('insurance_type_id', 13)->latest('date')->first();
+                if ($ndvi && $ndvi->ndvi < 0.4) {
+                    $amountToClaim = $insurance->sum_insured * $insurance->area;
+                }
+            } elseif ((int) $insurance->insurance_type_id === 8) {
+                if ($insurance->compensation_amount) {
+                    $amountToClaim = $insurance->compensation_amount;
+                }
             }
         }
 
+        // ✅ Ensure only remaining amount is claimed
+        $amountToClaim = min($amountToClaim, $insurance->remaining_amount ?? $amountToClaim);
 
-        if ($maxCompensation <= 0) {
+        if ($amountToClaim <= 0) {
             return response()->json([
                 'message' => 'You are not eligible to claim. No compensation available.',
             ], 400);
         }
 
-        // ✅ Save claim
-        $insurance->update([
+
+        // Save claim
+        $updateData = [
             'claimed_at' => now(),
-            'claimed_amount' => round($maxCompensation, 2),
-            'compensation_amount' => round($maxCompensation, 2),
+            'claimed_amount' => round($amountToClaim, 2),
             'remaining_amount' => 0,
             'status' => 'pending',
+        ];
 
-        ]);
+        if (is_null($insurance->compensation_amount)) {
+            $updateData['compensation_amount'] = round($amountToClaim, 2); // only set if not already set
+        }
+
+        $insurance->update($updateData);
+
+
 
         return response()->json([
             'message' => 'Claim submitted successfully.',
             'data' => [
-                'claimed_amount' => round($maxCompensation, 2),
+                'claimed_amount' => round($amountToClaim, 2),
                 'claimed_at' => now(),
                 'insurance_type_id' => $insurance->insurance_type_id,
                 'bank_details' => $bankDetails,

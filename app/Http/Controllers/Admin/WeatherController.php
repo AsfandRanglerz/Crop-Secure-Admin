@@ -85,5 +85,9 @@ class WeatherController extends Controller
         VillageWeatherHistory::where('village_id', $village->id)
             ->where('date', '<', now()->subDays(14)->toDateString())
             ->delete();
+
+        VillageWeatherDailySummary::where('village_id', $village->id)
+            ->where('date', '<', now()->subDays(14)->toDateString())
+            ->delete();
     }
 }

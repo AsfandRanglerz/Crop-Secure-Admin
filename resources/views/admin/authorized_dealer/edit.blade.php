@@ -79,7 +79,7 @@
                                         <div class="form-group">
                                             <label for="dob">DOB (Optional)</label>
                                             <input type="date" class="form-control" id="dob" name="dob"
-                                                value="{{ $dealer->dob ? \Carbon\Carbon::parse($dealer->dob)->format('Y-m-d') : '' }}">
+                                                value="{{ $dealer->dob ? \Carbon\Carbon::createFromFormat('d/m/Y', $dealer->dob)->format('Y-m-d') : '' }}">
                                             <div class="invalid-feedback"></div>
                                             @error('dob')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -144,8 +144,7 @@
                                             <input type="file" class="form-control" id="image" name="image">
                                             <div class="mt-2">
                                                 @if ($dealer->image)
-                                                    <img src="{{ asset($dealer->image) }}" alt="Image"
-                                                        width="100">
+                                                    <img src="{{ asset($dealer->image) }}" alt="Image" width="100">
                                                 @endif
                                             </div>
                                             <div class="invalid-feedback"></div>

@@ -64,9 +64,9 @@
                                     <div class="input-group">
                                         <input type="number" name="ndvi_fixed_benchmark" id="ndvi_fixed_benchmark"
                                             class="form-control" value="0.4" readonly disabled>
-                                        <div class="input-group-append">
+                                        {{-- <div class="input-group-append">
                                             <span class="input-group-text">%</span>
-                                        </div>
+                                        </div> --}}
                                     </div>
                                     {{-- <small class="text-muted mt-2 d-block">Fixed benchmark value for NDVI</small> --}}
                                 </div>
@@ -492,7 +492,7 @@
                                                             @if ($InsuranceType->insuranceType->name === 'Satellite Index (NDVI)')
                                                                 <br>
                                                                 NDVI Benchmark:
-                                                                {{ $InsuranceType->benchmark ?? '0.4' }}%
+                                                                {{ $InsuranceType->benchmark ?? '0.4' }}
                                                             @endif
                                                         </div>
                                                     @endif
