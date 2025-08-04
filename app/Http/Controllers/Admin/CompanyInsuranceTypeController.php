@@ -79,7 +79,7 @@ class CompanyInsuranceTypeController extends Controller
 
                 if ($existing) {
                     return redirect()->route('company.insurance.types.index', ['id' => $request->insurance_company_id])
-                        ->with(['error' => "{$insuranceType->name} for one or more crops already exists."]);
+                        ->with(['error' => "{$insuranceType->name} crop already exists."]);
                 }
 
                 $cropList = implode(", ", array_map('trim', $request->weather_ndvi_crops));
@@ -145,7 +145,6 @@ class CompanyInsuranceTypeController extends Controller
     }
 
 
-
     public function update(Request $request, $id)
     {
         try {
@@ -161,6 +160,21 @@ class CompanyInsuranceTypeController extends Controller
                     ]);
 
                     $cropList = implode(", ", array_map('trim', $request->crop));
+
+                    // Check for duplicates (excluding current ID)
+                    $existing = CompanyInsuranceType::where('insurance_company_id', $company->insurance_company_id)
+                        ->where('insurance_type_id', $company->insurance_type_id)
+                        ->where('id', '!=', $id)
+                        ->where(function ($query) use ($request) {
+                            foreach ($request->crop as $crop) {
+                                $query->orWhere('crop', 'like', "%{$crop}%");
+                            }
+                        })
+                        ->exists();
+
+                    if ($existing) {
+                        return redirect()->back()->with(['error' => "{$insuranceType->name} crop already exists."]);
+                    }
 
                     $company->update([
                         'premium_price' => $request->premium_price,
@@ -186,6 +200,21 @@ class CompanyInsuranceTypeController extends Controller
                     $district = $request->input('district_name')[0] ?? null;
                     $tehsil = $request->input('tehsil_id')[0] ?? null;
 
+                    // Duplicate check
+                    $exists = CompanyInsuranceType::where([
+                        ['insurance_company_id', '=', $company->insurance_company_id],
+                        ['insurance_type_id', '=', $company->insurance_type_id],
+                        ['crop', '=', $crop],
+                        ['district_name', '=', $district],
+                        ['tehsil_id', '=', $tehsil],
+                    ])
+                        ->where('id', '!=', $id)
+                        ->exists();
+
+                    if ($exists) {
+                        return redirect()->back()->with(['error' => 'The Crop, District, and Tehsil already exist for this Insurance.']);
+                    }
+
                     $company->update([
                         'crop' => $crop,
                         'district_name' => $district,
@@ -204,7 +233,6 @@ class CompanyInsuranceTypeController extends Controller
             return redirect()->back()->withErrors(['error' => 'Something went wrong: ' . $e->getMessage()]);
         }
     }
-
 
 
 

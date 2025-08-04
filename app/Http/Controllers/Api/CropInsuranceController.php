@@ -18,7 +18,7 @@ class CropInsuranceController extends Controller
     {
         $user = Auth::user();
         return response()->json([
-            'crops' => EnsuredCropName::select('id','name', 'sum_insured_value', 'insurance_start_time', 'insurance_end_time')->get(),
+            'crops' => EnsuredCropName::select('id', 'name', 'sum_insured_value', 'insurance_start_time', 'insurance_end_time')->get(),
         ]);
     }
 
@@ -66,41 +66,49 @@ class CropInsuranceController extends Controller
     // Get companies based on selected insurance type
     public function getCompaniesByInsuranceType($insuranceTypeId)
     {
-        $companies = CompanyInsuranceType::where('insurance_type_id', $insuranceTypeId)
-            ->with(['insuranceCompany:id,name', 'tehsil:id,name', 'district:id,name',  'insuranceType:id,name']) // eager load only required fields
-            ->get()
-            ->map(function ($item) {
-                $insuranceTypeName = $item->insuranceType->name ?? null;
+        $companiesQuery = CompanyInsuranceType::where('insurance_type_id', $insuranceTypeId)
+            ->with(['insuranceCompany:id,name', 'tehsil:id,name', 'district:id,name', 'insuranceType:id,name'])
+            ->get();
 
-                $benchmarks = preg_split('/\r\n|\r|\n/', $item->benchmark);
-                $prices = preg_split('/\r\n|\r|\n/', $item->price_benchmark);
+        $insuranceTypeName = optional($companiesQuery->first())->insuranceType->name;
 
-                // Clean up extra whitespace and match lengths
-                $benchmarks = array_map('trim', $benchmarks);
-                $prices = array_map('trim', $prices);
+        // Remove duplicate companies for Satellite and Weather types
+        if (in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index'])) {
+            $companiesQuery = $companiesQuery->unique('company_id');
+        }
 
-                $combined = [];
-                foreach ($benchmarks as $index => $value) {
-                    $combined[] = [
-                        'benchmark' => $value,
-                        'price_benchmark' => $prices[$index] ?? null,
-                    ];
-                }
+        $companies = $companiesQuery->map(function ($item) use ($insuranceTypeName) {
+            $benchmarks = preg_split('/\r\n|\r|\n/', $item->benchmark);
+            $prices = preg_split('/\r\n|\r|\n/', $item->price_benchmark);
 
-                return [
-                    'company_name' => $item->insuranceCompany->name,
-                    'tehsil_name' => $item->tehsil->name ?? null,
-                    'district_name' => $item->district->name ?? null,
-                    'premium_price' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index'])
-                        ? $item->premium_price
-                        : null,
-                    'benchmark_data' => $combined,
+            $benchmarks = array_map('trim', $benchmarks);
+            $prices = array_map('trim', $prices);
+
+            $combined = [];
+            foreach ($benchmarks as $index => $value) {
+                $combined[] = [
+                    'benchmark' => $value,
+                    'price_benchmark' => $prices[$index] ?? null,
                 ];
-            });
+            }
 
+            return [
+                'company_name' => $item->insuranceCompany->name,
+                'tehsil_name' => $item->tehsil->name ?? null,
+                'district_name' => $item->district->name ?? null,
+                'premium_price' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index'])
+                    ? $item->premium_price
+                    : null,
+                'benchmark_data' => $combined,
+            ];
+        })->values(); // Reset index keys
 
-        return response()->json(['message' => 'Companies retrieved successfully', 'data' => $companies], 200);
+        return response()->json([
+            'message' => 'Companies retrieved successfully',
+            'data' => $companies
+        ], 200);
     }
+
 
     // Get benchmarks based on selected insurance type
     public function getBenchmarksByInsuranceType($insuranceTypeId)

@@ -933,7 +933,7 @@
                         isValid = false;
                         $('#weather_ndvi_crops_select2').after(
                             `<span class="text-danger d-block mt-1">Please select at least one crop.</span>`
-                            );
+                        );
                     }
 
                     const premium = $('#premium_price').val();
@@ -953,7 +953,7 @@
                             isValid = false;
                             cropErrorContainer.html(
                                 `<span class="text-danger d-block mt-1">Please select a crop.</span>`
-                                );
+                            );
                         }
                     });
 
@@ -964,7 +964,7 @@
                             isValid = false;
                             $(this).after(
                                 `<span class="text-danger d-block mt-1">Please select a district.</span>`
-                                );
+                            );
                         }
                     });
 
@@ -974,7 +974,7 @@
                             isValid = false;
                             $(this).after(
                                 `<span class="text-danger d-block mt-1">Please select a tehsil.</span>`
-                                );
+                            );
                         }
                     });
 
@@ -1000,67 +1000,70 @@
     </script>
 
     <script>
-       $(document).on('submit', '.editInsuranceTypeForm', function (e) {
-    const form = $(this);
-    let isValid = true;
+        $(document).on('submit', '.editInsuranceTypeForm', function(e) {
+            const form = $(this);
+            let isValid = true;
 
-    // Clear old error messages
-    form.find('.text-danger').remove();
+            // Clear old error messages
+            form.find('.text-danger').remove();
 
-    const insuranceTypeName = $.trim(form.find('input[readonly]').val());
+            const insuranceTypeName = $.trim(form.find('input[readonly]').val());
 
-    // Premium Price required only for Weather Index or Satellite Index (NDVI)
-    if (insuranceTypeName === 'Weather Index' || insuranceTypeName === 'Satellite Index (NDVI)') {
-        const premiumPriceInput = form.find('input[name="premium_price"]');
-        if (!premiumPriceInput.val()) {
-            isValid = false;
-            premiumPriceInput
-                .closest('.form-group')
-                .append('<span class="text-danger d-block mt-1">Please enter premium price.</span>');
-        }
-    }
+            // Premium Price required only for Weather Index or Satellite Index (NDVI)
+            if (insuranceTypeName === 'Weather Index' || insuranceTypeName === 'Satellite Index (NDVI)') {
+                const premiumPriceInput = form.find('input[name="premium_price"]');
+                if (!premiumPriceInput.val()) {
+                    isValid = false;
+                    premiumPriceInput
+                        .closest('.form-group')
+                        .append('<span class="text-danger d-block mt-1">Please enter premium price.</span>');
+                }
+            }
 
-    // Validate crop[] (either single or multiple select)
-    form.find('select[name="crop[]"]').each(function () {
-        const cropField = $(this);
-        if (!cropField.val() || (Array.isArray(cropField.val()) && cropField.val().length === 0)) {
-            isValid = false;
-            cropField
-                .closest('.form-group')
-                .append('<span class="text-danger d-block mt-1">Please select at least one crop.</span>');
-        }
-    });
+            // Validate crop[] (either single or multiple select)
+            form.find('select[name="crop[]"]').each(function() {
+                const cropField = $(this);
+                if (!cropField.val() || (Array.isArray(cropField.val()) && cropField.val().length === 0)) {
+                    isValid = false;
+                    cropField
+                        .closest('.form-group')
+                        .append(
+                            '<span class="text-danger d-block mt-1">Please select at least one crop.</span>'
+                            );
+                }
+            });
 
-    // Only apply district/tehsil check for non-NDVI/weather
-    if (insuranceTypeName !== 'Weather Index' && insuranceTypeName !== 'Satellite Index (NDVI)') {
-        // District check
-        form.find('select[name="district_name[]"]').each(function () {
-            const districtField = $(this);
-            if (!districtField.val()) {
-                isValid = false;
-                districtField
-                    .closest('.form-group')
-                    .append('<span class="text-danger d-block mt-1">Please select a district.</span>');
+            // Only apply district/tehsil check for non-NDVI/weather
+            if (insuranceTypeName !== 'Weather Index' && insuranceTypeName !== 'Satellite Index (NDVI)') {
+                // District check
+                form.find('select[name="district_name[]"]').each(function() {
+                    const districtField = $(this);
+                    if (!districtField.val()) {
+                        isValid = false;
+                        districtField
+                            .closest('.form-group')
+                            .append(
+                                '<span class="text-danger d-block mt-1">Please select a district.</span>');
+                    }
+                });
+
+                // Tehsil check
+                form.find('select[name="tehsil_id[]"]').each(function() {
+                    const tehsilField = $(this);
+                    if (!tehsilField.val()) {
+                        isValid = false;
+                        tehsilField
+                            .closest('.form-group')
+                            .append(
+                            '<span class="text-danger d-block mt-1">Please select a tehsil.</span>');
+                    }
+                });
+            }
+
+            if (!isValid) {
+                e.preventDefault();
             }
         });
-
-        // Tehsil check
-        form.find('select[name="tehsil_id[]"]').each(function () {
-            const tehsilField = $(this);
-            if (!tehsilField.val()) {
-                isValid = false;
-                tehsilField
-                    .closest('.form-group')
-                    .append('<span class="text-danger d-block mt-1">Please select a tehsil.</span>');
-            }
-        });
-    }
-
-    if (!isValid) {
-        e.preventDefault();
-    }
-});
-
     </script>
 
 
