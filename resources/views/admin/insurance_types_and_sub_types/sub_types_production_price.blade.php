@@ -10,7 +10,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="InsuranceTypesModalLabel">Create Production Price Index</h5>
+                    <h5 class="modal-title" id="InsuranceTypesModalLabel">Announce Result</h5>
                     {{-- ({{ $InsuranceType->name }}) --}}
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -183,7 +183,7 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="EditInsuranceTypesModalLabel">Edit Production Price Index</h5>
+                        <h5 class="modal-title" id="EditInsuranceTypesModalLabel">Edit Announce Result</h5>
                         {{-- ({{ $InsuranceType->name }}) --}}
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>

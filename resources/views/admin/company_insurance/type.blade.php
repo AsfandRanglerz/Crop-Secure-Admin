@@ -45,7 +45,7 @@
                                 <div class="form-group">
                                     <label for="weather_ndvi_crops">Select Crops</label>
                                     <select name="weather_ndvi_crops[]" id="weather_ndvi_crops_select2" class="form-control"
-                                        multiple>
+                                        >
                                         @foreach ($ensuredCrops as $crop)
                                             <option value="{{ $crop->name }}">{{ $crop->name }}</option>
                                         @endforeach
@@ -256,7 +256,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Crop</label>
-                                            <select name="crop[]" class="form-control" multiple>
+                                            <select name="crop[]" class="form-control">
                                                 <option value="" disabled>Select Crop</option>
                                                 @php
                                                     $selectedCrops = is_array($InsuranceType->crop)
@@ -314,13 +314,13 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Crop</label>
-                                            <select name="crop[]" class="form-control" multiple>
+                                            <select name="crop[]" class="form-control">
                                                 <option value="" disabled>Select Crop</option>
                                                 @php
                                                     $selectedCrops = is_array($InsuranceType->crop)
                                                         ? $InsuranceType->crop
                                                         : explode(',', $InsuranceType->crop);
-                                                    $selectedCrops = array_map('trim', $selectedCrops); // remove whitespace
+                                                    $selectedCrops = array_map('trim', $selectedCrops);
                                                 @endphp
 
                                                 @foreach ($ensuredCrops as $crop)

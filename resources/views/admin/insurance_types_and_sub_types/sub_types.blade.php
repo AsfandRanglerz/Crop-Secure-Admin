@@ -12,7 +12,7 @@
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="InsuranceTypesModalLabel">Create Insurance Sub-Type</h5>
+                        <h5 class="modal-title" id="InsuranceTypesModalLabel">Announce Result</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span>&times;</span>
                         </button>
@@ -122,7 +122,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Edit Insurance Sub-Type</h5>
+                        <h5 class="modal-title">Edit Announce Result</h5>
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <form class="editInsuranceSubTypeForm"

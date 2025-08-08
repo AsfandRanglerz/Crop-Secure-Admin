@@ -64,50 +64,55 @@ class CropInsuranceController extends Controller
     }
 
     // Get companies based on selected insurance type
-    public function getCompaniesByInsuranceType($insuranceTypeId)
+    public function getCompaniesByInsuranceType($insuranceTypeId, Request $request)
     {
-        $companiesQuery = CompanyInsuranceType::where('insurance_type_id', $insuranceTypeId)
+        $selectedCropName = $request->crop_id;
+
+        $companiesQuery = \App\Models\CompanyInsuranceType::where('insurance_type_id', $insuranceTypeId)
+            ->when($selectedCropName, fn($q) => $q->where('crop', $selectedCropName))
             ->with(['insuranceCompany:id,name', 'tehsil:id,name', 'district:id,name', 'insuranceType:id,name'])
             ->get();
 
         $insuranceTypeName = optional($companiesQuery->first())->insuranceType->name;
 
-        // Remove duplicate companies for Satellite and Weather types
-        if (in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index'])) {
-            $companiesQuery = $companiesQuery->unique('company_id');
+        if ($companiesQuery->isEmpty()) {
+            return response()->json([
+                'message' => 'Invalid crop selected or no companies available',
+                'data' => [],
+            ], 404);
         }
 
         $companies = $companiesQuery->map(function ($item) use ($insuranceTypeName) {
-            $benchmarks = preg_split('/\r\n|\r|\n/', $item->benchmark);
-            $prices = preg_split('/\r\n|\r|\n/', $item->price_benchmark);
-
-            $benchmarks = array_map('trim', $benchmarks);
-            $prices = array_map('trim', $prices);
+            $benchmarks = preg_split('/\r\n|\r|\n/', $item->benchmark ?? '');
+            $prices = preg_split('/\r\n|\r|\n/', $item->price_benchmark ?? '');
 
             $combined = [];
-            foreach ($benchmarks as $index => $value) {
+            foreach ($benchmarks as $i => $b) {
                 $combined[] = [
-                    'benchmark' => $value,
-                    'price_benchmark' => $prices[$index] ?? null,
+                    'benchmark' => trim($b),
+                    'price_benchmark' => trim($prices[$i] ?? ''),
                 ];
             }
 
             return [
                 'company_name' => $item->insuranceCompany->name,
-                'tehsil_name' => $item->tehsil->name ?? null,
-                'district_name' => $item->district->name ?? null,
-                'premium_price' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index'])
-                    ? $item->premium_price
-                    : null,
+                'tehsil_name' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index']) ? null : $item->tehsil->name ?? null,
+                'district_name' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index']) ? null : $item->district->name ?? null,
+                'premium_price' => in_array($insuranceTypeName, ['Satellite Index (NDVI)', 'Weather Index']) ? $item->premium_price : null,
                 'benchmark_data' => $combined,
             ];
-        })->values(); // Reset index keys
+        })
+            ->unique('company_name') // 👈 removes duplicate companies
+            ->values(); // reset keys
 
         return response()->json([
             'message' => 'Companies retrieved successfully',
             'data' => $companies
         ], 200);
     }
+
+
+
 
 
     // Get benchmarks based on selected insurance type
